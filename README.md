@@ -13,5 +13,5 @@ Static HTML/CSS site for https://www.fulllotushealth.com, hosted on GitHub Pages
 3. Commit and push to `main`. GitHub Pages publishes within a minute.
 
 Copy lives in `_src/build.py`; styling in `assets/style.css` (colours, type and spacing follow the Full Lotus Health design system).
-Logos in `assets/`: `logo-horizontal.svg` (header), `logo-ring.svg` (home hero), `logo-seal.svg` / `logo-seal.png` (footer, social image, structured data), `favicon-64.png`, `apple-touch-icon.png`.
+Logos in `assets/`: `logo-horizontal.svg` (header), `logo-badge.svg` (home hero), `logo-ring.svg` (spare), `logo-seal.svg` / `logo-seal.png` (footer, social image, structured data), `favicon-64.png`, `apple-touch-icon.png`.
 The SVGs are auto-traced from the design-system files. Have a designer redraw them before any trademark filing.

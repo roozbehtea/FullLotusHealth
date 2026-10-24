@@ -116,7 +116,7 @@ img, svg { max-width: 100%; }
 @media (max-width: 52rem) {
   .hero .grid { grid-template-columns: 1fr; }
   .hero .seal-wrap { order: -1; justify-items: start; }
-  .hero .seal-wrap img { width: 9.5rem; }
+  .hero .seal-wrap img { width: 11rem; }
 }
 .page-hero { padding-block: clamp(2.2rem, 5vw, 4.2rem) clamp(1.5rem, 3vw, 2.5rem); }
 .page-hero h1 { max-width: 20ch; }
