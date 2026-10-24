@@ -2,7 +2,7 @@
 
 ## Before DNS
 1. Put the Google Calendar booking link and the intake Google Form link in `_src/config.json`.
-2. Replace `assets/logo.svg` (and `assets/favicon.svg`) with the real seal-stamp lotus. Rebuild: `python3 _src/build.py --launch`.
+2. Logo is already in place (`assets/logo-*.svg`, favicons). Add real photos of the clinic and treatment room if you have them. Then rebuild: `python3 _src/build.py --launch`.
 3. Confirm prices ($500 / $350 / $250) and the 60-minute length of cosmetic acupuncture.
 4. Push to `main`. In the repo: Settings > Pages > Source: Deploy from a branch, `main`, `/ (root)`. Custom domain: `www.fulllotushealth.com` (the `CNAME` file already says this).
 5. Check the site at `https://roozbehtea.github.io/<repo-name>/` (links to /treatments etc. need the custom domain, so check the pages by their file names there).

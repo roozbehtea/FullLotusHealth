@@ -209,8 +209,8 @@ def business_ld():
         "description": "Acupuncture and Chinese herbal medicine clinic in Burbank, CA offering microneedling, nanoneedling, cosmetic acupuncture, cupping, moxibustion, and tea ceremony.",
         "telephone": PHONE_TEL,
         "email": EMAIL,
-        "image": f"{SITE}/assets/logo.svg",
-        "logo": f"{SITE}/assets/logo.svg",
+        "image": f"{SITE}/assets/logo-seal.png",
+        "logo": f"{SITE}/assets/logo-seal.png",
         "priceRange": "$35-$500",
         "address": {"@type": "PostalAddress", "streetAddress": ADDR["street"], "addressLocality": ADDR["city"],
                     "addressRegion": ADDR["region"], "postalCode": ADDR["zip"], "addressCountry": "US"},
@@ -270,12 +270,13 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(meta)}">
 <meta property="og:url" content="{canon}">
-<meta property="og:image" content="{SITE}/assets/logo.svg">
-<meta name="theme-color" content="#f2e9d3">
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<meta property="og:image" content="{SITE}/assets/logo-seal.png">
+<meta name="theme-color" content="#f4ecdf">
+<link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Hanken+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
 {ld_blocks}</head>
 <body>
@@ -283,9 +284,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <div class="band" aria-hidden="true"></div>
 <header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/" aria-label="{NAME}, home">
-      <img src="/assets/logo.svg" width="46" height="46" alt="">
-      <span>{NAME}<small>Acupuncture &amp; Chinese medicine, Burbank</small></span>
+    <a class="brand" href="/" aria-label="Full Lotus Health, home">
+      <img src="/assets/logo-horizontal.svg" width="187" height="56" alt="{NAME}">
     </a>
     <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
     <label for="menu-check" class="menu-toggle">Menu</label>
@@ -303,7 +303,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
   <div class="wrap">
     <div class="cols">
       <div>
-        <a class="brand" href="/"><img src="/assets/logo.svg" width="46" height="46" alt=""><span>{NAME}</span></a>
+        <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal.png" width="84" height="84" alt=""></a>
         <p>Roozbeh Ghobadpour, L.Ac.<br>{ADDR["street"]}<br>{ADDR["city"]}, {ADDR["region"]} {ADDR["zip"]}</p>
         <p><a href="{MAPS}" rel="noopener">Get directions</a></p>
       </div>
@@ -352,10 +352,10 @@ def contact_block():
 
 
 def cta(heading, text, label="Book a visit", extra=""):
-    return f"""<section class="cta"><div class="wrap"><div class="box">
+    return f"""<section class="cta"><div class="wrap">
 <h2>{heading}</h2><p>{text}</p>
 <p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.4rem">{book_btn(label)} <a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>{extra}</p>
-</div></div></section>"""
+</div></section>"""
 
 
 def quotes(items):
@@ -385,12 +385,13 @@ def home():
     <p class="lede">Come find your center, and express it in greater vitality and a radiant glow.</p>
     <div class="actions">{book_btn("Book your visit")}<a class="btn ghost" href="/new-patients">New patients start here</a></div>
   </div>
-  <div class="seal-wrap"><img src="/assets/logo.svg" width="352" height="352" alt="Full Lotus Health lotus seal"></div>
+  <div class="seal-wrap"><img src="/assets/logo-ring.svg" width="400" height="400" alt="Full Lotus Health: a lotus rising from an offering dish inside a hand-drawn ring"></div>
 </div></section>
 
 <div class="trust"><div class="wrap"><p>Trusted by 300+ patients for over 10 years in Burbank for integrative healing, stress relief, natural beauty, pain relief, sleep, and lasting vitality.</p></div></div>
 
 <section><div class="wrap">
+  <p class="eyebrow">Care at Full Lotus</p>
   <h2>Healing paths</h2>
   <div class="paths">
     <div class="path"><h3>Acupuncture</h3><p>Dedicated acupuncture and specialized recovery treatments for jet lag and travel fatigue, tailored for those visiting the Burbank area.</p><p><a href="/acupuncture">Acupuncture in Burbank</a></p></div>
@@ -399,8 +400,9 @@ def home():
   </div>
 </div></section>
 
-<section class="tint"><div class="wrap split">
+<section class="wash-c"><div class="wrap split">
   <div>
+    <p class="eyebrow">Cosmetic acupuncture and skin</p>
     <h2>Facial and skin treatments in Burbank</h2>
     <p>Each treatment uses custom Chinese herbal serums chosen for your skin, and red light therapy is included. A licensed acupuncturist performs every session.</p>
     <p>{book_btn("Book a treatment")}</p>
@@ -417,13 +419,14 @@ def home():
   <p>At Full Lotus Health, we treat the whole person, not just the symptom. Our integrative approach harmonizes your nervous system and internal vitality to create a state of lasting balance, allowing your natural radiance to flourish from within.</p>
 </div></section>
 
-<section class="deep"><div class="wrap">
+<section class="wash-c"><div class="wrap">
+  <p class="eyebrow">Reviews</p>
   <h2>What patients say</h2>
   {quotes(TESTIMONIALS_HOME)}
 </div></section>
 
 <section><div class="wrap split">
-  <div><h2>Meet Roozbeh</h2></div>
+  <div><p class="eyebrow">Your practitioner</p><h2>Meet Roozbeh</h2></div>
   <div>
     <p>Hi, I'm Roozbeh. I've been studying and practicing the healing arts for over twenty-five years and have been a licensed acupuncturist and practitioner of Traditional Chinese Medicine since 2015. Over the years I have learned and integrated many modalities into my treatment method. Many of these ways of looking at the body and the world have been inspired by obstacles I have encountered in my own health journey.</p>
     <p>Full Lotus Health is a special place where I present everything I have learned to the local community: from acupuncture to herbal medicine, gut testing, tea ceremony, and truly natural cosmetic acupuncture. It is my sincere wish that everyone who comes here leaves a happier person.</p>
@@ -431,8 +434,8 @@ def home():
   </div>
 </div></section>
 
-<section class="tint"><div class="wrap split">
-  <div><h2>The art of tea</h2></div>
+<section class="night"><div class="wrap split">
+  <div><p class="eyebrow">Tea ceremony</p><h2>The art of tea</h2></div>
   <div>
     <p>Experience the best Chinese medicinal herb for calming and energizing the mind: old growth tea in a ritual where it can truly shine. If you are not sure about Chinese medicine, this is the best place to start.</p>
     <p><a class="btn ghost" href="/tea-ceremonies">Reserve your seat</a></p>
@@ -450,6 +453,7 @@ def treatments():
     main = hero("Turn back the clock, naturally.",
         "Advanced, chemical-free facial rejuvenation that restores your skin and hair from the inside out. Holistic beauty that heals the mind while elevating your natural radiance.") + f"""
 <section><div class="wrap">
+  <p class="eyebrow">Skin treatments</p>
   <h2>Facial and skin treatments in Burbank</h2>
   <ul class="rates">
     {rate_item("medical-microneedling-session", "Collagen induction therapy using medical-grade microneedles to trigger your skin's natural repair response. Targets fine lines, acne scarring, uneven texture, and hair loss, stimulating deep renewal that builds over time. Custom Chinese herbal serums are applied during treatment and absorbed far more efficiently than topical application alone. Red light therapy is included.")}
@@ -460,7 +464,8 @@ def treatments():
   <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Prices are per session.</p>
 </div></section>
 
-<section class="deep"><div class="wrap">
+<section class="wash-c"><div class="wrap">
+  <p class="eyebrow">Reviews</p>
   <h2>What patients say</h2>
   {quotes(TESTIMONIALS_BEAUTY)}
   <p class="fine">Individual results vary.</p>
@@ -500,7 +505,7 @@ def acupuncture():
 </div></section>
 
 <section class="tint"><div class="wrap split">
-  <div><h2>Healing beyond the surface</h2></div>
+  <div><p class="eyebrow m">Acupuncture</p><h2>Healing beyond the surface</h2></div>
   <div>
     <p>Acupuncture is more than a physical treatment; it is a method of regulating the nervous system. By gently stimulating specific points, we signal the body to shift from a state of stress into deep restoration. This physiological reset supports healthy circulation and a return to your natural state of whole-body harmony and lasting vitality.</p>
     <p>Fees: <a href="/service-page/acupuncture-initial-treatment">initial treatment $180</a> (60 minutes), <a href="/service-page/acupuncture-repeat-treatment">repeat treatment $120</a> (45 minutes).</p>
@@ -508,6 +513,7 @@ def acupuncture():
 </div></section>
 
 <section><div class="wrap">
+  <p class="eyebrow">Your first visit</p>
   <h2>What to expect</h2>
   <ol class="steps">
     <li><h3>Consultation</h3><p>We begin with a deep dive into your health history, lifestyle, and goals to create a personalized treatment mapping.</p></li>
@@ -517,7 +523,7 @@ def acupuncture():
   </ol>
 </div></section>
 
-<section class="deep"><div class="wrap">
+<section class="sand"><div class="wrap">
   <h2>Patient journeys</h2>
   {quotes([TESTIMONIALS_HOME[0], TESTIMONIALS_HOME[3], TESTIMONIALS_HOME[4]])}
 </div></section>
@@ -534,7 +540,7 @@ def consult():
   <p>{book_btn("Book your online consultation")}</p>
 </div></section>
 <section class="tint"><div class="wrap split">
-  <div><h2>We treat the whole system</h2></div>
+  <div><p class="eyebrow m">Chinese herbal medicine</p><h2>We treat the whole system</h2></div>
   <div>
     <p>Most medicine asks: what is the symptom? Chinese medicine asks: why is the system out of balance? Roozbeh's approach combines classical diagnosis with modern clinical insight, drawing on long-form published writing in a tea magazine.</p>
     <h3>Who this is for</h3>
@@ -554,7 +560,7 @@ def consult():
   </ul>
   <p class="fine" style="margin-top:1rem">Follow-up sessions: <a href="/service-page/repeat-consultation-online">repeat online consultation $180</a> (45 minutes).</p>
 </div></section>
-<section class="deep"><div class="wrap">
+<section class="sand"><div class="wrap">
   <h2>How it works</h2>
   <ol class="steps">
     <li><h3>Book a consultation</h3><p>Choose a time that works for you. Then complete the <a href="/new-patients">new patient intake form</a> with a brief health history.</p></li>
@@ -579,8 +585,8 @@ def tea():
     <li><span class="name"><a href="/service-page/private-gong-fu-tea-ceremony">Private Gong Fu ceremony</a></span><span class="price">$250</span><p class="desc">A private session for up to five guests.</p></li>
   </ul>
 </div></section>
-<section class="tint"><div class="wrap split">
-  <div><h2>The magic of tea</h2></div>
+<section class="night"><div class="wrap split">
+  <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2></div>
   <div>
     <p>In Chinese medicine, tea is known as the premier Chinese herb for the mind. In tea ceremony we drink aged, old growth, organic teas, which have a profound ability to calm and energize the mind and allow one to access the heart/mind in meditation.</p>
     <p>We provide tea ceremony in the tradition of Wu De, a foremost expert on tea who has written many books on tea and owns Global Tea Hut. Roozbeh has been studying with Wu De for over fifteen years, and Wu De has served tea at Full Lotus Health.</p>
