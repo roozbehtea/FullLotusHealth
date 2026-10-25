@@ -255,3 +255,10 @@ section { padding-block: var(--section); }
   .hero .seal-wrap.has-photo .photo img { max-height: 18rem; aspect-ratio: 16 / 11; object-position: 50% 12%; }
   .hero .seal-wrap.has-photo .corner-seal { width: 5.5rem; height: 5.5rem; left: 0.6rem; bottom: -1.6rem; }
 }
+
+/* SEO pass: h2 styled like h3, visible FAQ blocks */
+h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
+.faq h3 { font-size: 1.2rem; margin-top: 1.3rem; }
+.faq p { margin-top: 0.3rem; max-width: var(--measure); }
+.guide-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.faq { padding: 0; background: none; }

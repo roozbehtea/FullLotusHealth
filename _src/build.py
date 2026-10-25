@@ -222,15 +222,16 @@ def business_ld():
     }
 
 
-def service_ld(s):
+def service_ld(s, url=None, desc=None, priced=True):
     d = {
         "@context": "https://schema.org", "@type": "Service",
-        "name": s["name"], "description": s["meta"],
-        "url": f"{SITE}/service-page/{s['slug']}",
+        "name": s["name"], "description": desc or s["meta"],
+        "url": url or f"{SITE}/service-page/{s['slug']}",
         "provider": {"@id": f"{SITE}/#business"},
         "areaServed": {"@type": "City", "name": "Burbank"},
-        "offers": {"@type": "Offer", "price": money(s["price"]), "priceCurrency": "USD", "url": BOOK or f"{SITE}/book-online"},
     }
+    if priced:
+        d["offers"] = {"@type": "Offer", "price": money(s["price"]), "priceCurrency": "USD", "url": BOOK or f"{SITE}/book-online"}
     return d
 
 
@@ -246,6 +247,10 @@ def book_btn(label="Book", cls="", small=False):
     return f'<a class="{c.strip()}" href="{e(BOOK_HREF)}"{rel}>{e(label)}</a>'
 
 
+OG_IMAGE = f"{SITE}/assets/og-share.jpg"
+OG_ALT = "A quiet tea table at Full Lotus Health, an acupuncture and skin clinic in Burbank, CA"
+
+
 def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website"):
     canon = SITE + (path if path != "/" else "/")
     nav_items = []
@@ -255,7 +260,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
     nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
-    robots = '<meta name="robots" content="noindex, follow">\n' if noindex else ""
+    robots = ('<meta name="robots" content="noindex, follow">\n' if noindex
+              else '<meta name="robots" content="index, follow, max-image-preview:large">\n')
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -269,7 +275,16 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <meta property="og:title" content="{e(title)}">
 <meta property="og:description" content="{e(meta)}">
 <meta property="og:url" content="{canon}">
-<meta property="og:image" content="{SITE}/assets/logo-seal.png">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="{OG_IMAGE}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{e(OG_ALT)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{e(title)}">
+<meta name="twitter:description" content="{e(meta)}">
+<meta name="twitter:image" content="{OG_IMAGE}">
+<meta name="twitter:image:alt" content="{e(OG_ALT)}">
 <meta name="theme-color" content="#f4ecdf">
 <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
@@ -370,7 +385,15 @@ def photo(name, alt):
     root = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "assets", "photos")
     for ext in ("jpg", "jpeg", "webp", "png"):
         if _os.path.exists(_os.path.join(root, f"{name}.{ext}")):
-            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}" loading="lazy"></figure>'
+            fp = _os.path.join(root, f"{name}.{ext}")
+            try:
+                from PIL import Image
+                with Image.open(fp) as im:
+                    w, h = im.size
+                dims = f' width="{w}" height="{h}"'
+            except Exception:
+                dims = ""
+            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}"{dims} loading="lazy"></figure>'
     return ""
 
 
@@ -478,6 +501,7 @@ def treatments():
     {rate_item("full-lotus-lift", "Cosmetic acupuncture (the Full Lotus Lift). In Chinese medicine the mind is represented by the heart, and it opens to the face. We calm the mind, balance the body, and focus on specific tension-releasing and lifting points on the face. Includes red light therapy.")}
   </ul>
   <p style="margin-top:1.6rem">{book_btn("Book a treatment")}</p>
+  <p style="margin-top:1.6rem">Read more: <a href="/microneedling-burbank">microneedling in Burbank</a>, <a href="/nanoneedling-burbank">nanoneedling in Burbank</a>, <a href="/cosmetic-acupuncture-burbank">cosmetic acupuncture in Burbank</a>.</p>
   <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Fees are on each treatment page.</p>
 </div></section>
 
@@ -514,7 +538,8 @@ def acupuncture():
         "Acupuncture at Full Lotus Health is a ritual of restoration. By harmonizing your nervous system and internal vitality, we help you return to a state of wholeness where healing happens naturally.", tone="m") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book your session")}</p>
-  <div class="paths" style="margin-top:2.2rem">
+  <h2 style="margin-top:2.2rem">Types of acupuncture care</h2>
+  <div class="paths" style="margin-top:1.2rem">
     <div class="path"><h3>Traditional acupuncture</h3><p>A precise modality to balance the body's vital energy, addressing chronic pain, digestive issues, and nervous system health.</p></div>
     <div class="path"><h3>Cosmetic acupuncture</h3><p>Unlock natural radiance and skin vitality using constitutional techniques for rejuvenation and lasting facial glow.</p><p><a href="/service-page/full-lotus-lift">Cosmetic acupuncture in Burbank</a></p></div>
     <div class="path"><h3>Recovery and wellness</h3><p>Integrated care designed to address travel fatigue, jet lag, and immune depletion through advanced restorative protocols.</p></div>
@@ -637,6 +662,12 @@ def book_online():
   <p><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient intake form</a></p>
   {''.join(blocks)}
   <p class="fine" style="margin-top:2rem">Prices are per session. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p>
+  {faq_block([
+    ("Where are visits?", f"In person at {ADDR_LINE}, except the online consultations, which are by video."),
+    ("I'm new. What should I do first?", "Complete the <a href=\"/new-patients\">new patient intake form</a> before your first visit. It is reviewed before you arrive."),
+    ("Which treatment should I choose?", "Not sure? Book the session closest to what you need and we'll decide together, or text a question. Skin treatments are described on the <a href=\"/treatments\">natural beauty page</a> and acupuncture on the <a href=\"/acupuncture\">acupuncture page</a>."),
+    ("How long are visits?", "Times are listed beside each service above. Visits are unhurried and often end with tea."),
+  ], "Before you book")}
 </div></section>"""
     OUT["book-online.html"] = page("/book-online", "Book Online | Full Lotus Health",
         "Book acupuncture, microneedling, nanoneedling, cosmetic acupuncture, consultations, or tea ceremony at Full Lotus Health in Burbank, CA.",
@@ -650,7 +681,7 @@ def blog():
 </div></section>"""
     OUT["blog.html"] = page("/blog", "Blog | Full Lotus Health",
         "Notes on acupuncture, Chinese herbal medicine, skin care, and tea from Full Lotus Health in Burbank, CA.",
-        main, ld=[business_ld()])
+        main, ld=[business_ld()], noindex=True)
 
 
 def new_patients():
@@ -672,13 +703,47 @@ def new_patients():
     <h2>Intake form</h2>
     {action}
     <div class="notice" style="margin-top:1.6rem"><p><strong>Please keep health details off text and email.</strong> This website does not collect health information. Share it on the intake form or in person.</p></div>
-    <h3 style="margin-top:2rem">Questions</h3>
+    <h2 class="h3" style="margin-top:2rem">Questions</h2>
     {contact_block()}
   </div>
-</div></section>"""
+</div></section>
+<section class="sand"><div class="wrap">{faq_block([
+    ("Do I need to fill out the form before I come?", "Yes. Complete it before your first visit so your appointment can begin with what matters most."),
+    ("Where do I go for my visit?", f"{ADDR_LINE}. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."),
+    ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>."),
+    ("What treatments can I book?", "Acupuncture, microneedling, nanoneedling, cosmetic acupuncture, online consultations, and tea ceremonies. See <a href=\"/book-online\">all services</a>."),
+  ], "New patient questions")}</div></section>"""
     OUT["new-patients.html"] = page("/new-patients", "New Patients | Full Lotus Health, Burbank",
         "New to Full Lotus Health? Book a time, then complete the new patient intake form before your first visit in Burbank, CA.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("New patients", "/new-patients")])], current="/new-patients")
+
+
+def faq_block(items, h="Common questions"):
+    """Visible FAQ only (no FAQPage schema). items: list of (question, answer-html)."""
+    rows = "".join(f"<h3>{e(q)}</h3><p>{a}</p>" for q, a in items)
+    return f'<section class="faq" aria-label="{e(h)}"><h2 style="margin-top:2rem">{e(h)}</h2>{rows}</section>'
+
+
+GUIDES = {
+    "medical-microneedling-session": ("/microneedling-burbank", "Microneedling in Burbank: a guide"),
+    "facial-nano-needling": ("/nanoneedling-burbank", "Nanoneedling in Burbank: a guide"),
+    "full-lotus-lift": ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank: a guide"),
+}
+
+
+def service_faq(s):
+    online = "Online" in s["name"]
+    loc = ("This visit is online, by video. " if online else f"Full Lotus Health is at {ADDR_LINE}. ")
+    items = []
+    if not online:
+        items.append(("Where do I go?", f"{e(loc)}Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."))
+    else:
+        items.append(("Where does this visit happen?", "Online, by video. You only need a private spot and a device with a camera."))
+    if s["minutes"]:
+        items.append((f"How long is a {s['name'].split(':')[-1].strip().lower()} visit?", f"Plan on {s['minutes']} minutes. Visits are unhurried."))
+    items.append(("How do I book?", f"Use the Book button on this page to pick a time on the calendar. New patients, please complete the <a href=\"/new-patients\">intake form</a> before your first visit."))
+    items.append(("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>."))
+    return faq_block(items)
 
 
 def service_pages():
@@ -697,6 +762,8 @@ def service_pages():
             elif k == "small":
                 parts.append(f'<p class="fine">{e(item[1])}</p>')
         rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a> <span class="fine">${BY_SLUG[r]["price"]}</span></li>' for r in s["related"])
+        g = GUIDES.get(s["slug"])
+        guide = f'<li><a href="{g[0]}">{e(g[1])}</a></li>' if g else ""
         dur = f'<dt>Time</dt><dd>{s["minutes"]} minutes</dd>' if s["minutes"] else ""
         loc = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone={"beauty":"c","acu":"m","consult":"n","tea":"n"}[s["group"]]) + f"""
@@ -705,10 +772,11 @@ def service_pages():
     <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
     <p>{book_btn("Book")}</p>
     <p class="fine">Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
-    <h3 style="margin-top:2rem">Also see</h3>
-    <ul class="checks">{rel}</ul>
+    <h2 class="h3" style="margin-top:2rem">Also see</h2>
+    <ul class="checks">{rel}{guide}</ul>
   </div>
   <div>{''.join(parts)}
+    {service_faq(s)}
     <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
   </div>
 </div></section>"""
@@ -722,17 +790,113 @@ def service_pages():
 """
 
 
+def landing_pages():
+    """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages)."""
+    mi, na, li = BY_SLUG["medical-microneedling-session"], BY_SLUG["facial-nano-needling"], BY_SLUG["full-lotus-lift"]
+    def link(slug, label=None):
+        return f'<a href="/service-page/{slug}">{e(label or BY_SLUG[slug]["name"])}</a>'
+    where = f"Full Lotus Health is at {ADDR_LINE}, convenient to Glendale, Toluca Lake, North Hollywood, and Studio City."
+    pages = [
+      dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
+           title="Microneedling Burbank: What to Expect | Full Lotus Health",
+           meta="Microneedling in Burbank for fine lines, acne scars, texture, and thinning hair. What a 90-minute session involves, and how a series works.",
+           h1="Microneedling in Burbank, CA",
+           lede="Medical microneedling for skin and hair, with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
+           body=f"""
+<h2>What microneedling does</h2>
+<p>Microneedling, also called collagen induction therapy, uses fine, sterile, medical-grade needles to create tiny controlled channels in the skin. This prompts your skin's natural repair process, which builds new collagen over the following weeks.</p>
+<h2>What it can help with</h2>
+<ul class="checks"><li>Fine lines and wrinkles, including crow's feet</li><li>Acne scarring</li><li>Uneven texture and tone</li><li>Enlarged pores</li><li>Thinning hair along the hairline (scalp microneedling)</li></ul>
+<h2>Why come to Full Lotus Health</h2>
+<p>Your treatment is performed by Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience. Every session uses custom Chinese herbal serums chosen for your skin, and red light therapy is included. Because he is trained in Chinese medicine, your skin is looked at as part of your whole health, not in isolation.</p>
+<h2>A session, start to finish</h2>
+<p>Sessions are 90 minutes, and your first visit includes an intake and a treatment plan. A numbing cream goes on first, and most people find the treatment comfortable. Some redness afterward, similar to a mild sunburn, usually settles within a day or two.</p>
+<p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>
+<h2>What patients say</h2>
+<div class="quotes" style="columns:1"><blockquote><p>I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.</p><cite>Rosa</cite></blockquote></div>
+<p class="fine">Individual results vary.</p>
+{faq_block([
+  ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
+  ("How long does redness last?", "Expect some redness afterward, similar to a mild sunburn. It usually settles within a day or two."),
+  ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
+  ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered. Individual results vary."),
+  ("Microneedling or nanoneedling?", f"Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
+  ("Where is the clinic?", where),
+])}
+""", more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
+      dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="m",
+           title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
+           meta="Nanoneedling facial in Burbank: a gentle, no-downtime surface treatment with herbal serums and red light therapy for glowing, hydrated skin.",
+           h1="Nanoneedling in Burbank, CA",
+           lede="A gentle facial with custom Chinese herbal serums and red light therapy. No downtime.",
+           body=f"""
+<h2>What nanoneedling is</h2>
+<p>Nanoneedling is a gentle alternative to microneedling. It uses ultra-fine nano-tips that open microscopic channels in the very surface of the skin, without going deeper. Those channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb where your skin needs them.</p>
+<h2>Who it suits</h2>
+<ul class="checks"><li>Dull, dehydrated, or tired-looking skin</li><li>Fine lines and uneven texture</li><li>Sensitive skin that doesn't do well with stronger treatments</li><li>A glow before an event</li><li>Maintenance between microneedling sessions</li></ul>
+<h2>What happens at Full Lotus Health</h2>
+<p>Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience, chooses the herbal serums for your skin, and red light therapy is included. Sessions are 60 minutes.</p>
+<p>There's no downtime, so you can go straight back to your day. Skin often looks brighter right away and keeps improving over the following days. It works well on its own or as a regular series.</p>
+<h2>What patients say</h2>
+<div class="quotes" style="columns:1"><blockquote><p>My skin feels smoother and firmer. (And neither hurt.)</p><cite>Rosa</cite></blockquote></div>
+<p class="fine">Individual results vary.</p>
+{faq_block([
+  ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
+  ("How long is a session?", "Sixty minutes."),
+  ("Nanoneedling or microneedling?", f"Nanoneedling is a surface-level treatment for glow and hydration. <a href=\"/microneedling-burbank\">Microneedling</a> works deeper, for scarring, lines, and thinning hair. If you're not sure which fits, book a session and we'll decide together, or text a question."),
+  ("Can I do nanoneedling as a series?", "Yes. It works well on its own or as a regular series."),
+  ("Where is the clinic?", where),
+])}
+""", more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
+      dict(path="/cosmetic-acupuncture-burbank", file="cosmetic-acupuncture-burbank.html", svc=li, tone="n",
+           title="Cosmetic Acupuncture Burbank: Facial Lift | Full Lotus Health",
+           meta="Cosmetic acupuncture in Burbank, the Full Lotus Lift: facial acupuncture at lifting and tension-releasing points, with red light therapy.",
+           h1="Cosmetic acupuncture in Burbank, CA",
+           lede="The Full Lotus Lift: facial acupuncture that calms the mind, balances the body, and brings out your natural glow.",
+           body=f"""
+<h2>Whatever resides in the heart is expressed in the face</h2>
+<p>In Chinese medicine the mind is represented by the heart, and it opens to the face. In this cosmetic acupuncture treatment, we calm the mind, balance the body, and focus on specific tension-releasing and lifting points on the face. Red light therapy is included.</p>
+<h2>What the treatment is</h2>
+<p>The Full Lotus Lift is a holistic, personalized beauty treatment designed to bring out your natural, radiant glow. It uses premium organic products and gentle techniques to nourish the skin while promoting a profound sense of inner calm.</p>
+<h2>Who gives it</h2>
+<p>Roozbeh Ghobadpour, L.Ac., is a licensed acupuncturist with over 10 years of clinical experience. Your first session includes a detailed intake and treatment plan. Then you relax and enjoy. It is best done as a series.</p>
+{faq_block([
+  ("What is cosmetic acupuncture?", "Facial acupuncture at tension-releasing and lifting points, combined with constitutional body points and red light therapy."),
+  ("Should I book one session or a series?", "Cosmetic acupuncture is best done as a series. Your first session includes a detailed intake and treatment plan."),
+  ("How is it different from microneedling?", f"Cosmetic acupuncture works with acupuncture points and the mind-body connection. <a href=\"/microneedling-burbank\">Microneedling</a> and <a href=\"/nanoneedling-burbank\">nanoneedling</a> work on the skin's surface and layers with herbal serums."),
+  ("Where is the clinic?", where),
+])}
+""", more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/nanoneedling-burbank", "Nanoneedling in Burbank")]),
+    ]
+    for pg in pages:
+        svc = pg["svc"]
+        more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
+        main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + f"""
+<section><div class="wrap split">
+  <div>
+    <p>{book_btn("Book a treatment")}</p>
+    <p class="fine">Fees and booking are on the <a href="/service-page/{svc['slug']}">{e(svc['name'])}</a> page. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
+    <h2 class="h3" style="margin-top:2rem">Also see</h2>
+    <ul class="checks">{more}<li><a href="/treatments">All natural beauty treatments</a></li></ul>
+  </div>
+  <div>{pg['body']}</div>
+</div></section>""" + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
+        OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
+            ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
+                breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
+
+
 def notfound():
     main = hero("Page not found.", "That address doesn't lead anywhere. Try one of these.", tone="c") + """
 <section><div class="wrap"><ul class="checks"><li><a href="/">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture</a></li><li><a href="/book-online">Book online</a></li></ul></div></section>"""
-    OUT["404.html"] = page("/404", "Page not found | Full Lotus Health", "Page not found.", main, noindex=True)
+    OUT["404.html"] = page("/404", "Page not found | Full Lotus Health", "That page was not found. Visit the Full Lotus Health home page or book acupuncture, microneedling, or a tea ceremony in Burbank, CA.", main, noindex=True)
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/blog"] + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank"] + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
-        pri = "1.0" if u == "/" else ("0.9" if u in ("/treatments",) or "needling" in u or "lift" in u or "microneedling" in u else "0.7")
+        pri = "1.0" if u == "/" else ("0.9" if u == "/treatments" or "burbank" in u or "needling" in u or "lift" in u else "0.7")
         sm.append(f"<url><loc>{SITE}{u if u != '/' else '/'}</loc><lastmod>{TODAY}</lastmod><priority>{pri}</priority></url>")
     sm.append("</urlset>")
     OUT["sitemap.xml"] = "\n".join(sm) + "\n"
@@ -741,7 +905,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, book_online, blog, new_patients, service_pages, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, book_online, blog, new_patients, service_pages, landing_pages, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
