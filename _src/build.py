@@ -461,6 +461,92 @@ OUT = {}
 
 
 # ------------------------------------------------------------------ pages
+# ------------------------------------------------------------------ homepage guide
+def _fee(slug):
+    sv = BY_SLUG[slug]
+    t = f'${sv["price"]}'
+    if sv["minutes"]:
+        t += f' · {sv["minutes"]} min'
+    return t
+
+
+GUIDE_RESULTS = {
+    # id: (service slug, tone, why, (link label, href))
+    "acu": ("acupuncture-initial-treatment", "malachite",
+            "A detailed intake, a treatment plan, and your first acupuncture treatment. Visits are unhurried and often end with tea.",
+            ("About acupuncture", "/acupuncture")),
+    "tea": ("gong-fu-tea-ceremony", "gold",
+            "In Chinese medicine, tea is the premier herb for the mind. Sit, sip, and slow down. No needles and no preparation.",
+            ("About tea ceremonies", "/tea-ceremonies")),
+    "consult": ("initial-consultation-online", "lapis",
+                "A full look at your health history and patterns, with herbal and dietary recommendations, by video from home.",
+                ("About consultations", "/consult-heal")),
+    "micro": ("medical-microneedling-session", "cinnabar",
+              "For fine lines, acne scars, texture, and thinning hair along the hairline, with custom herbal serums and red light therapy.",
+              ("Microneedling guide", "/microneedling-burbank")),
+    "nano": ("facial-nano-needling", "cinnabar",
+             "A gentle surface treatment with herbal serums and red light therapy. Skin often looks brighter right away.",
+             ("Nanoneedling guide", "/nanoneedling-burbank")),
+    "lift": ("full-lotus-lift", "cinnabar",
+             "Facial acupuncture at lifting, tension-releasing points to calm the mind and bring out your natural glow.",
+             ("Cosmetic acupuncture guide", "/cosmetic-acupuncture-burbank")),
+}
+
+# (panel id, question, [(title, sub, target panel or result id, fallback href, tone)])
+GUIDE_STEPS = [
+    ("start", "What brings you in?", [
+        ("Pain or tension", "Aches, stiffness, or something that keeps coming back", "r-acu", "/acupuncture", "malachite"),
+        ("Stress, sleep, or feeling run down", "Wound up, wiped out, or both", "stress", "/acupuncture", "gold"),
+        ("Digestion, hormones, or low energy", "A longer story that needs a closer look", "r-consult", "/consult-heal", "lapis"),
+        ("Skin or hair", "Lines, scars, glow, or thinning hair", "skin", "/treatments", "cinnabar"),
+        ("Not sure yet", "Talk it through before you book", "r-unsure", "/new-patients", "ink"),
+    ]),
+    ("stress", "How would you like to begin?", [
+        ("A treatment", "Acupuncture to settle the nervous system", "r-acu", "/acupuncture", "malachite"),
+        ("A quiet cup of tea", "A tea ceremony. No needles.", "r-tea", "/tea-ceremonies", "gold"),
+    ]),
+    ("skin", "What would you most like?", [
+        ("Soften lines and scars, or support thinning hair", "Microneedling", "r-micro", "/microneedling-burbank", "cinnabar"),
+        ("A glow with no downtime", "Nanoneedling", "r-nano", "/nanoneedling-burbank", "cinnabar"),
+        ("A lift and a calmer face", "Cosmetic acupuncture", "r-lift", "/cosmetic-acupuncture-burbank", "cinnabar"),
+    ]),
+]
+
+_GNAV_END = '<p class="gnav"><button type="button" class="glink" data-back>Back</button> <button type="button" class="glink" data-restart>Start over</button></p>'
+
+
+def guide_section():
+    out = []
+    for pid, q, choices in GUIDE_STEPS:
+        cs = "".join(
+            f'<a class="choice" style="--tone:var(--{tone})" href="{href}" data-go="{tgt}"><span class="ct">{e(t)}</span><span class="cs">{e(sub)}</span></a>'
+            for t, sub, tgt, href, tone in choices)
+        back = "" if pid == "start" else '<p class="gnav"><button type="button" class="glink" data-back>Back</button></p>'
+        on = " on" if pid == "start" else ""
+        out.append(f'<div class="gstep{on}" id="g-{pid}"><h3 class="gq" tabindex="-1">{e(q)}</h3><div class="choices">{cs}</div>{back}</div>')
+    for rid, (slug, tone, why, more) in GUIDE_RESULTS.items():
+        sv = BY_SLUG[slug]
+        out.append(
+            f'<div class="gstep" id="g-r-{rid}" style="--tone:var(--{tone})"><h3 class="gq" tabindex="-1">We would start with</h3>'
+            f'<div class="gresult"><p class="gname"><a href="/service-page/{slug}">{e(sv["name"])}</a></p>'
+            f'<p class="gfacts">{e(_fee(slug))}</p><p>{e(why)}</p>'
+            f'<p class="gacts">{book_btn("Book this visit")}<a class="btn ghost" href="{more[1]}">{e(more[0])}</a></p></div>'
+            f'{_GNAV_END}</div>')
+    out.append(
+        f'<div class="gstep" id="g-r-unsure" style="--tone:var(--ink)"><h3 class="gq" tabindex="-1">That is common. Here are two easy ways in.</h3>'
+        f'<div class="gresult"><p>Text a question and we will point you to the right visit, or read the new patient steps. '
+        f'You can also book a first acupuncture visit and decide your plan together. Please keep health details for the intake form.</p>'
+        f'<p class="gacts"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="/new-patients">New patient steps</a></p></div>'
+        f'{_GNAV_END}</div>')
+    return f"""<section class="wash-l guide" id="guide" aria-labelledby="guide-h"><div class="wrap">
+  <p class="eyebrow l">Not sure where to begin?</p>
+  <h2 id="guide-h">Find your starting point</h2>
+  <p class="guide-intro">Answer one or two quick questions and we will point you to the right visit. Nothing you choose here is saved or sent.</p>
+  <div class="gstage">{"".join(out)}</div>
+</div>
+<script src="/assets/guide.js" defer></script></section>"""
+
+
 def home():
     main = f"""
 <section class="hero"><div class="wrap grid">
@@ -475,6 +561,8 @@ def home():
 </div></section>
 
 <div class="trust"><div class="wrap"><p>Trusted by 300+ patients for over 10 years in Burbank for integrative healing, stress relief, natural beauty, pain relief, sleep, and lasting vitality.</p></div></div>
+
+{guide_section()}
 
 <section class="sand"><div class="wrap">
   <p class="eyebrow">Care at Full Lotus</p>
