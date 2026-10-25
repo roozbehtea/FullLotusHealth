@@ -399,3 +399,22 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .guide.js .gsignup { display: none; }
 .guide.js.at-result .gsignup { display: block; animation: gin 0.22s ease-out; }
 @media (prefers-reduced-motion: reduce) { .guide.js.at-result .gsignup { animation: none; } }
+
+/* ---- Acupuncture page: four care types in a 2 x 2 grid ---- */
+.paths.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 52rem) { .paths.four { grid-template-columns: 1fr; } }
+
+/* ---- Five Element Rejuvenation series: one row per element ---- */
+.elements { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-2); max-width: 60rem; }
+.element {
+  display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); gap: var(--space-1) var(--space-4);
+  padding: var(--space-3); background: var(--surface-100); border-radius: var(--radius-md); border-left: 6px solid var(--tone);
+}
+.element .es { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 0.2rem; }
+.element .en { font-size: 2rem; font-weight: 500; line-height: 1.05; margin: 0; }
+.element .et { font-family: var(--display); font-style: italic; font-weight: 300; font-size: 1.15rem; color: var(--ink-muted); margin: 0.1rem 0 0; }
+.element .ef { font-weight: 600; margin-bottom: 0.4rem; }
+.element p { max-width: 62ch; }
+.element .serum { font-size: 0.9375rem; color: var(--ink-muted); margin: 0; }
+.element .serum strong { color: var(--ink); font-weight: 600; }
+@media (max-width: 40rem) { .element { grid-template-columns: 1fr; } }

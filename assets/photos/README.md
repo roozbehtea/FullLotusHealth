@@ -6,3 +6,7 @@ Drop real photos here, then run `python3 _src/build.py`. Filenames the site look
 
 Each photo is shown at 4:3, so landscape shots work best. Keep files under about 400 KB (resize before adding).
 - hero           Home page hero (the current one is the AI-generated image from the old Wix site; replace with a real photo when you have one)
+- microneedling Microneedling guide page (you doing a treatment works best)
+- nanoneedling  Nanoneedling guide page
+
+Only use photos of clients with their written consent.
