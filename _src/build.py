@@ -374,6 +374,14 @@ def photo(name, alt):
     return ""
 
 
+def hero_art():
+    """Home hero art: the hero photo with the badge as a corner seal when assets/photos/hero.* exists, else the badge alone."""
+    ph = photo("hero", "A calm woman in front of a lotus-patterned wall")
+    if ph:
+        return f'<div class="seal-wrap has-photo">{ph}<img class="corner-seal" src="/assets/logo-seal.svg" width="120" height="120" alt="Full Lotus Health seal"></div>'
+    return '<div class="seal-wrap"><img src="/assets/logo-badge.svg" width="440" height="440" alt="Full Lotus Health badge: a lotus rising from an offering dish, ringed by the words Tea, Acupuncture, Herbal Medicine"></div>'
+
+
 def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
@@ -394,7 +402,7 @@ def home():
     <p class="lede">Come find your center, and express it in greater vitality and a radiant glow.</p>
     <div class="actions">{book_btn("Book your visit")}<a class="btn ghost" href="/new-patients">New patients start here</a></div>
   </div>
-  <div class="seal-wrap"><img src="/assets/logo-badge.svg" width="440" height="440" alt="Full Lotus Health badge: a lotus rising from an offering dish, ringed by the words Tea, Acupuncture, Herbal Medicine"></div>
+  {hero_art()}
 </div></section>
 
 <div class="trust"><div class="wrap"><p>Trusted by 300+ patients for over 10 years in Burbank for integrative healing, stress relief, natural beauty, pain relief, sleep, and lasting vitality.</p></div></div>

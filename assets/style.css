@@ -244,3 +244,14 @@ section { padding-block: var(--section); }
 .deep-m h2, .deep-m h3, .deep-m p { color: var(--on-cinnabar); }
 .deep-m a:not(.btn) { color: #f1dcb0; }
 .deep-m .eyebrow { color: #e7cf9c; }
+
+/* Home hero with photo */
+.hero .seal-wrap.has-photo { position: relative; place-items: stretch; }
+.hero .seal-wrap.has-photo .photo { margin: 0; }
+.hero .seal-wrap.has-photo .photo img { aspect-ratio: 4 / 5; border-radius: 12px; max-height: 34rem; width: 100%; object-fit: cover; }
+.hero .seal-wrap.has-photo .corner-seal { position: absolute; left: -1.6rem; bottom: -1.6rem; width: 7.5rem; height: 7.5rem; animation: none; border: 5px solid var(--surface-100); border-radius: 50%; }
+@media (max-width: 52rem) {
+  .hero .seal-wrap.has-photo { order: -1; margin-bottom: 1.6rem; }
+  .hero .seal-wrap.has-photo .photo img { max-height: 18rem; aspect-ratio: 16 / 11; object-position: 50% 12%; }
+  .hero .seal-wrap.has-photo .corner-seal { width: 5.5rem; height: 5.5rem; left: 0.6rem; bottom: -1.6rem; }
+}
