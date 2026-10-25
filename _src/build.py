@@ -26,6 +26,7 @@ MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blv
 
 BOOK = CFG.get("booking_url", "").strip()
 INTAKE = CFG.get("intake_url", "").strip()
+SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 missing = [k for k, v in (("booking_url", BOOK), ("intake_url", INTAKE)) if not v]
 if missing:
     msg = "Missing in _src/config.json: " + ", ".join(missing)
@@ -515,6 +516,23 @@ GUIDE_STEPS = [
 _GNAV_END = '<p class="gnav"><button type="button" class="glink" data-back>Back</button> <button type="button" class="glink" data-restart>Start over</button></p>'
 
 
+def guide_signup():
+    """Email-only signup. Saves nothing about what the visitor chose in the guide."""
+    if LAUNCH and not SIGNUP:
+        return ""
+    demo = "" if SIGNUP else " data-demo"
+    return f'''<form class="gsignup" id="g-signup" method="post" action="{e(SIGNUP) if SIGNUP else "#"}"{demo}>
+    <h3 id="g-signup-h">Get occasional notes from Full Lotus Health</h3>
+    <p>Notes on acupuncture, skin, and tea from Roozbeh. Unsubscribe anytime. Please don't send health details by email.</p>
+    <div class="grow"><label for="g-email" class="sr">Email address</label>
+      <input id="g-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+      <button class="btn" type="submit">Join the list</button></div>
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <input type="hidden" name="source" value="home-guide">
+    <p class="gmsg" role="status" aria-live="polite"></p>
+  </form>'''
+
+
 def guide_section():
     out = []
     for pid, q, choices in GUIDE_STEPS:
@@ -543,6 +561,7 @@ def guide_section():
   <h2 id="guide-h">Find your starting point</h2>
   <p class="guide-intro">Answer one or two quick questions and we will point you to the right visit. Nothing you choose here is saved or sent.</p>
   <div class="gstage">{"".join(out)}</div>
+  {guide_signup()}
 </div>
 <script src="/assets/guide.js" defer></script></section>"""
 

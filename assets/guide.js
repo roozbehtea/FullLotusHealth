@@ -9,6 +9,7 @@
   var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function show(id, moveFocus) {
+    g.classList.toggle("at-result", id.indexOf("r-") === 0);
     var panels = stage.querySelectorAll(".gstep");
     for (var i = 0; i < panels.length; i++) {
       panels[i].classList.toggle("on", panels[i].id === "g-" + id);
@@ -44,4 +45,36 @@
       show("start", true);
     }
   });
+
+  // Email signup: email only. Nothing about the guide choices is sent.
+  var form = document.getElementById("g-signup");
+  if (form) {
+    var msg = form.querySelector(".gmsg");
+    var btn = form.querySelector("button[type=submit]");
+    var thanks = function () {
+      form.querySelector(".grow").hidden = true;
+      msg.className = "gmsg";
+      msg.textContent = "Thank you. You are on the list.";
+    };
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      if (form.elements.website.value) { thanks(); return; }          // trap field filled: likely a bot
+      if (form.hasAttribute("data-demo")) { thanks(); return; }       // preview only: no address set up yet
+      var body = new URLSearchParams();
+      body.set("email", form.elements.email.value);
+      body.set("source", "home-guide");
+      body.set("website", "");
+      btn.disabled = true;
+      msg.className = "gmsg";
+      msg.textContent = "Sending...";
+      fetch(form.action, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body })
+        .then(thanks)
+        .catch(function () {
+          btn.disabled = false;
+          msg.className = "gmsg err";
+          msg.textContent = "That did not go through. Please email info@fulllotushealth.com and we will add you.";
+        });
+    });
+  }
 })();
