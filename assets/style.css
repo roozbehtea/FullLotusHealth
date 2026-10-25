@@ -226,3 +226,7 @@ section { padding-block: var(--section); }
   body { background: #fff; }
   .site-header .nav, .menu-toggle, .cta, .btn { display: none; }
 }
+
+/* Photos: shown only when a file exists in assets/photos/ */
+.photo { margin: 1.5rem 0 0; }
+.photo img { display: block; width: 100%; height: auto; border-radius: 12px; aspect-ratio: 4 / 3; object-fit: cover; }

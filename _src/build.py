@@ -198,7 +198,6 @@ def business_ld():
         offers.append({
             "@type": "Offer",
             "itemOffered": {"@type": "Service", "name": s["name"], "url": f"{SITE}/service-page/{s['slug']}"},
-            "price": money(s["price"]), "priceCurrency": "USD",
         })
     return {
         "@context": "https://schema.org",
@@ -365,10 +364,20 @@ def quotes(items):
     return '<div class="quotes">' + "".join(out) + "</div>"
 
 
+import os as _os
+def photo(name, alt):
+    """Returns a figure only when assets/photos/<name>.jpg exists, so the site is clean with or without photos."""
+    root = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "assets", "photos")
+    for ext in ("jpg", "jpeg", "webp", "png"):
+        if _os.path.exists(_os.path.join(root, f"{name}.{ext}")):
+            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}" loading="lazy"></figure>'
+    return ""
+
+
 def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
-    return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><span class="price">${s["price"]}</span><p class="desc">{e(desc or s["short"])}</p></li>'
+    return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
 
 
 OUT = {}
@@ -426,7 +435,7 @@ def home():
 </div></section>
 
 <section><div class="wrap split">
-  <div><p class="eyebrow">Your practitioner</p><h2>Meet Roozbeh</h2></div>
+  <div><p class="eyebrow">Your practitioner</p><h2>Meet Roozbeh</h2>{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
   <div>
     <p>Hi, I'm Roozbeh. I've been studying and practicing the healing arts for over twenty-five years and have been a licensed acupuncturist and practitioner of Traditional Chinese Medicine since 2015. Over the years I have learned and integrated many modalities into my treatment method. Many of these ways of looking at the body and the world have been inspired by obstacles I have encountered in my own health journey.</p>
     <p>Full Lotus Health is a special place where I present everything I have learned to the local community: from acupuncture to herbal medicine, gut testing, tea ceremony, and truly natural cosmetic acupuncture. It is my sincere wish that everyone who comes here leaves a happier person.</p>
@@ -435,7 +444,7 @@ def home():
 </div></section>
 
 <section class="night"><div class="wrap split">
-  <div><p class="eyebrow">Tea ceremony</p><h2>The art of tea</h2></div>
+  <div><p class="eyebrow">Tea ceremony</p><h2>The art of tea</h2>{photo("tea-space", "The tea space at Full Lotus Health")}</div>
   <div>
     <p>Experience the best Chinese medicinal herb for calming and energizing the mind: old growth tea in a ritual where it can truly shine. If you are not sure about Chinese medicine, this is the best place to start.</p>
     <p><a class="btn ghost" href="/tea-ceremonies">Reserve your seat</a></p>
@@ -461,7 +470,7 @@ def treatments():
     {rate_item("full-lotus-lift", "Cosmetic acupuncture (the Full Lotus Lift). In Chinese medicine the mind is represented by the heart, and it opens to the face. We calm the mind, balance the body, and focus on specific tension-releasing and lifting points on the face. Includes red light therapy.")}
   </ul>
   <p style="margin-top:1.6rem">{book_btn("Book a treatment")}</p>
-  <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Prices are per session.</p>
+  <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Fees are on each treatment page.</p>
 </div></section>
 
 <section class="wash-c"><div class="wrap">
@@ -473,7 +482,7 @@ def treatments():
 </div></section>
 
 <section><div class="wrap split">
-  <div><h2>Whatever resides in the heart is expressed in the face</h2></div>
+  <div><h2>Whatever resides in the heart is expressed in the face</h2>{photo("treatment-room", "The treatment room at Full Lotus Health in Burbank")}</div>
   <div>
     <p>Full Lotus Health treats skin as the visible end of your whole health. Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist, chooses the herbal serums, the points, and the pace of your series from a Chinese medicine assessment, not from a fixed protocol.</p>
     <p>Not sure which treatment fits? Book a session and we'll decide together, or text a question to <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p>
@@ -508,7 +517,7 @@ def acupuncture():
   <div><p class="eyebrow m">Acupuncture</p><h2>Healing beyond the surface</h2></div>
   <div>
     <p>Acupuncture is more than a physical treatment; it is a method of regulating the nervous system. By gently stimulating specific points, we signal the body to shift from a state of stress into deep restoration. This physiological reset supports healthy circulation and a return to your natural state of whole-body harmony and lasting vitality.</p>
-    <p>Fees: <a href="/service-page/acupuncture-initial-treatment">initial treatment $180</a> (60 minutes), <a href="/service-page/acupuncture-repeat-treatment">repeat treatment $120</a> (45 minutes).</p>
+    <p>Sessions: <a href="/service-page/acupuncture-initial-treatment">initial treatment</a> (60 minutes) and <a href="/service-page/acupuncture-repeat-treatment">repeat treatment</a> (45 minutes). Fees are on each session page.</p>
   </div>
 </div></section>
 
@@ -554,11 +563,11 @@ def consult():
 <section><div class="wrap">
   <h2>What's offered</h2>
   <ul class="rates">
-    <li><span class="name"><a href="/service-page/initial-consultation-online">Online consultation</a><span class="meta">60 min</span></span><span class="price">$180</span><p class="desc">Remote Chinese medicine consultation with herbal and dietary recommendations.</p></li>
-    <li><span class="name">Chinese herbal medicine for gut health</span><span class="price"></span><p class="desc">Custom herbal formulas targeting the root cause of digestive imbalance.</p></li>
-    <li><span class="name">Dietary guidance</span><span class="price"></span><p class="desc">Food as medicine. Practical recommendations rooted in Chinese medicine.</p></li>
+    <li><span class="name"><a href="/service-page/initial-consultation-online">Online consultation</a><span class="meta">60 min</span></span><p class="desc">Remote Chinese medicine consultation with herbal and dietary recommendations.</p></li>
+    <li><span class="name">Chinese herbal medicine for gut health</span><p class="desc">Custom herbal formulas targeting the root cause of digestive imbalance.</p></li>
+    <li><span class="name">Dietary guidance</span><p class="desc">Food as medicine. Practical recommendations rooted in Chinese medicine.</p></li>
   </ul>
-  <p class="fine" style="margin-top:1rem">Follow-up sessions: <a href="/service-page/repeat-consultation-online">repeat online consultation $180</a> (45 minutes).</p>
+  <p class="fine" style="margin-top:1rem">Follow-up sessions: <a href="/service-page/repeat-consultation-online">repeat online consultation</a> (45 minutes).</p>
 </div></section>
 <section class="sand"><div class="wrap">
   <h2>How it works</h2>
@@ -580,13 +589,13 @@ def tea():
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
-    <li><span class="name"><a href="/service-page/gong-fu-tea-ceremony">Gong Fu ceremony</a><span class="meta">60 min</span></span><span class="price">$55</span><p class="desc">Gong Fu ceremony is about making the perfect cup of tea. Every element of good tea, including water, teaware, tea, atmosphere, and heat, is controlled to create the perfect cup, an unattainable goal which we strive for each time.</p></li>
-    <li><span class="name"><a href="/service-page/bowl-tea-ceremony">Bowl tea ceremony</a></span><span class="price">$35</span><p class="desc">Bowl tea ceremony has been around for several centuries but has recently been adapted for the modern world by tea master Wu De. We drink tea in silence with mindfulness, observing its effect on our mind and experiencing meditation.</p></li>
-    <li><span class="name"><a href="/service-page/private-gong-fu-tea-ceremony">Private Gong Fu ceremony</a></span><span class="price">$250</span><p class="desc">A private session for up to five guests.</p></li>
+    <li><span class="name"><a href="/service-page/gong-fu-tea-ceremony">Gong Fu ceremony</a><span class="meta">60 min</span></span><p class="desc">Gong Fu ceremony is about making the perfect cup of tea. Every element of good tea, including water, teaware, tea, atmosphere, and heat, is controlled to create the perfect cup, an unattainable goal which we strive for each time.</p></li>
+    <li><span class="name"><a href="/service-page/bowl-tea-ceremony">Bowl tea ceremony</a></span><p class="desc">Bowl tea ceremony has been around for several centuries but has recently been adapted for the modern world by tea master Wu De. We drink tea in silence with mindfulness, observing its effect on our mind and experiencing meditation.</p></li>
+    <li><span class="name"><a href="/service-page/private-gong-fu-tea-ceremony">Private Gong Fu ceremony</a></span><p class="desc">A private session for up to five guests.</p></li>
   </ul>
 </div></section>
 <section class="night"><div class="wrap split">
-  <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2></div>
+  <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2>{photo("tea-space", "The tea space at Full Lotus Health")}</div>
   <div>
     <p>In Chinese medicine, tea is known as the premier Chinese herb for the mind. In tea ceremony we drink aged, old growth, organic teas, which have a profound ability to calm and energize the mind and allow one to access the heart/mind in meditation.</p>
     <p>We provide tea ceremony in the tradition of Wu De, a foremost expert on tea who has written many books on tea and owns Global Tea Hut. Roozbeh has been studying with Wu De for over fifteen years, and Wu De has served tea at Full Lotus Health.</p>
