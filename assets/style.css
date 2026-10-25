@@ -12,8 +12,13 @@
   --on-cinnabar: #f4ecdf;
   --malachite: #2f5d4e;
   --on-malachite: #f4ecdf;
-  --lapis: #2e4a7a;         /* focus ring only */
-  --gold: #a8843e;          /* ornament, never text on paper */
+  --lapis: #2e4a7a;         /* lapis lazuli: sections, accents, focus ring */
+  --lapis-deep: #243b64;
+  --on-lapis: #f4ecdf;
+  --lapis-wash: #d8dfeb;
+  --gold-wash: #efe3c3;
+  --gold-light: #e7cf9c;
+  --gold: #a8843e;          /* ornament, gold sections with ink text; never body text on paper */
   --night: #1e1b18;
   --on-night: #f4ecdf;
   --cinnabar-wash: #ecd6cf;
@@ -70,7 +75,7 @@ img, svg { max-width: 100%; }
 .site-header { position: relative; z-index: 20; background: var(--surface-100); box-shadow: 0 1px 0 var(--surface-300); }
 .site-header .bar { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding-block: 0.7rem; }
 .brand { display: block; line-height: 0; }
-.brand img { height: 56px; width: auto; display: block; }
+.brand img { height: 78px; width: auto; display: block; }
 
 .nav ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: clamp(0.8rem, 1.4vw, 1.4rem); }
 .nav a { color: var(--ink); text-decoration: none; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap; padding: 0.35rem 0; border-bottom: 2px solid transparent; }
@@ -94,7 +99,7 @@ img, svg { max-width: 100%; }
 .menu-check:focus-visible + .menu-toggle { outline: 2px solid var(--lapis); outline-offset: 2px; }
 @media (max-width: 70rem) {
   .site-header .bar { flex-wrap: wrap; }
-  .brand img { height: 48px; }
+  .brand img { height: 62px; }
   .menu-toggle { display: block; }
   .nav { display: none; width: 100%; }
   .menu-check:checked ~ .nav { display: block; }
@@ -277,3 +282,56 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .post-card h2 a { color: var(--ink); text-decoration: none; }
 .post-card h2 a:hover { color: var(--cinnabar); text-decoration: underline; }
 .post-card img { display: block; width: 100%; height: auto; border-radius: 12px; margin-bottom: 0.8rem; }
+
+
+/* ---- Full palette: lapis and gold join cinnabar, malachite and night ---- */
+.hero-band.tone-l { background: var(--lapis); }
+.hero-band.tone-g { background: var(--gold); }
+.hero-band.tone-g h1, .hero-band.tone-g .lede, .hero-band.tone-g .crumbs, .hero-band.tone-g .crumbs a { color: var(--ink); }
+.hero-band.tone-n .band.short { opacity: 1; }
+.wash-l { background: var(--lapis-wash); }
+.wash-g { background: var(--gold-wash); }
+.deep-l { background: var(--lapis); color: var(--on-lapis); }
+.deep-l h2, .deep-l h3, .deep-l p { color: var(--on-lapis); }
+.deep-l a:not(.btn) { color: var(--gold-light); }
+.deep-l .eyebrow { color: var(--gold-light); }
+.deep-l :focus-visible { outline-color: var(--on-lapis); }
+.wash-g .eyebrow { color: #7a5f25; }
+.wash-g .quotes cite { color: var(--lapis); }
+
+/* CTA colour variants */
+.cta.l { background: var(--lapis); }
+.cta.l .btn { color: var(--lapis); }
+.cta.l .btn:hover { color: var(--lapis-deep); }
+.cta.l .btn.ghost { color: var(--on-lapis); }
+.cta.l .btn.ghost:hover { background: var(--on-lapis); color: var(--lapis); }
+.cta.m { background: var(--malachite); }
+.cta.m .btn { color: var(--malachite); }
+.cta.m .btn:hover { color: var(--malachite); }
+.cta.m .btn.ghost { color: var(--on-cinnabar); }
+.cta.m .btn.ghost:hover { background: var(--on-cinnabar); color: var(--malachite); }
+.cta.g { background: var(--gold); color: var(--ink); }
+.cta.g h2, .cta.g p, .cta.g a:not(.btn) { color: var(--ink); }
+.cta.g .btn { background: var(--ink); color: var(--surface-100); border-color: var(--ink); }
+.cta.g .btn:hover { background: #3a342d; border-color: #3a342d; color: var(--surface-100); }
+.cta.g .btn.ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.cta.g .btn.ghost:hover { background: var(--ink); color: var(--surface-100); }
+.cta.g :focus-visible { outline-color: var(--ink); }
+
+/* Small colour touches */
+.paths .path { border-top: 5px solid var(--cinnabar); }
+.paths .path:nth-child(2) { border-top-color: var(--malachite); }
+.paths .path:nth-child(3) { border-top-color: var(--lapis); }
+.paths .path:nth-child(3) h3 { color: var(--lapis); }
+.paths .path:nth-child(1) h3 { color: var(--cinnabar); }
+.steps li:nth-child(4n+2)::before { background: var(--malachite); }
+.steps li:nth-child(4n+3)::before { background: var(--lapis); }
+.steps li:nth-child(4n+4)::before { background: var(--gold); color: var(--ink); }
+.quotes blockquote { border-left: 3px solid var(--gold); padding-left: 1.1rem; }
+.quotes blockquote:nth-child(3n+2) { border-left-color: var(--malachite); }
+.quotes blockquote:nth-child(3n+3) { border-left-color: var(--lapis); }
+.site-footer { border-top: 6px solid var(--gold); }
+.nav a[aria-current="page"] { border-bottom-color: var(--gold); }
+.rates li { border-left: 0; }
+
+@media (min-width: 70.01rem) and (max-width: 90rem) { .nav a.tel { display: none; } }

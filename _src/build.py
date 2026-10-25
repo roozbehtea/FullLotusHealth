@@ -300,7 +300,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <header class="site-header">
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Full Lotus Health, home">
-      <img src="/assets/logo-horizontal.svg" width="187" height="56" alt="{NAME}">
+      <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
     </a>
     <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
     <label for="menu-check" class="menu-toggle">Menu</label>
@@ -367,8 +367,8 @@ def contact_block():
 </ul>"""
 
 
-def cta(heading, text, label="Book a visit", extra=""):
-    return f"""<section class="cta"><div class="wrap">
+def cta(heading, text, label="Book a visit", extra="", tone=""):
+    return f"""<section class="cta {tone}"><div class="wrap">
 <h2>{heading}</h2><p>{text}</p>
 <p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.4rem">{book_btn(label)} <a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>{extra}</p>
 </div></section>"""
@@ -423,7 +423,7 @@ except ImportError:  # pip install markdown
 
 def load_posts():
     posts = []
-    for f in sorted((ROOT / "_src" / "posts").glob("*.md")):
+    for f in sorted(p for p in (ROOT / "_src" / "posts").glob("*.md") if p.name.lower() != "readme.md"):
         raw = f.read_text(encoding="utf-8")
         m = _re.match(r"---\s*\n(.*?)\n---\s*\n(.*)", raw, _re.S)
         if not m:
@@ -505,13 +505,13 @@ def home():
   <p>At Full Lotus Health, we treat the whole person, not just the symptom. Our integrative approach harmonizes your nervous system and internal vitality to create a state of lasting balance, allowing your natural radiance to flourish from within.</p>
 </div></section>
 
-<section class="wash-c"><div class="wrap">
+<section class="wash-g"><div class="wrap">
   <p class="eyebrow">Reviews</p>
   <h2>What patients say</h2>
   {quotes(TESTIMONIALS_HOME)}
 </div></section>
 
-<section><div class="wrap split">
+<section class="deep-l"><div class="wrap split">
   <div><p class="eyebrow">Your practitioner</p><h2>Meet Roozbeh</h2>{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
   <div>
     <p>Hi, I'm Roozbeh. I've been studying and practicing the healing arts for over twenty-five years and have been a licensed acupuncturist and practitioner of Traditional Chinese Medicine since 2015. Over the years I have learned and integrated many modalities into my treatment method. Many of these ways of looking at the body and the world have been inspired by obstacles I have encountered in my own health journey.</p>
@@ -551,7 +551,7 @@ def treatments():
   <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Fees are on each treatment page.</p>
 </div></section>
 
-<section class="wash-c"><div class="wrap">
+<section class="wash-g"><div class="wrap">
   <p class="eyebrow">Reviews</p>
   <h2>What patients say</h2>
   {quotes(TESTIMONIALS_BEAUTY)}
@@ -573,7 +573,7 @@ def treatments():
   <p>Reach us directly. Please keep health details for the intake form.</p>
   {contact_block()}
 </div></section>
-""" + cta("Ready for your natural glow?", "Choose a time that works for you.", "Book a treatment")
+""" + cta("Ready for your natural glow?", "Choose a time that works for you.", "Book a treatment", tone="l")
     OUT["treatments.html"] = page("/treatments", "Cosmetic Acupuncture and Microneedling in Burbank, CA",
         "Microneedling, nanoneedling, and cosmetic acupuncture in Burbank with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments")])], current="/treatments")
@@ -611,11 +611,11 @@ def acupuncture():
   </ol>
 </div></section>
 
-<section class="sand"><div class="wrap">
+<section class="wash-g"><div class="wrap">
   <h2>Patient journeys</h2>
   {quotes([TESTIMONIALS_HOME[0], TESTIMONIALS_HOME[3], TESTIMONIALS_HOME[4]])}
 </div></section>
-""" + cta("Begin your journey to vitality", "Reserve your personalized treatment in Burbank and discover the benefits of whole-system harmony.", "Book online now")
+""" + cta("Begin your journey to vitality", "Reserve your personalized treatment in Burbank and discover the benefits of whole-system harmony.", "Book online now", tone="l")
     OUT["acupuncture.html"] = page("/acupuncture", "Acupuncture in Burbank, CA | Full Lotus Health",
         "Acupuncture in Burbank, CA with Roozbeh Ghobadpour, L.Ac.: pain, digestion, stress, sleep, and recovery, with herbal recommendations and tea.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Acupuncture", "/acupuncture")])], current="/acupuncture")
@@ -623,7 +623,7 @@ def acupuncture():
 
 def consult():
     main = hero("Your health has a story. Let's read it together.",
-        "Roozbeh brings over 15 years of Chinese medicine training to every consultation, reading your body as a whole system, not a list of isolated symptoms.", tone="n") + f"""
+        "Roozbeh brings over 15 years of Chinese medicine training to every consultation, reading your body as a whole system, not a list of isolated symptoms.", tone="l") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book your online consultation")}</p>
 </div></section>
@@ -648,7 +648,7 @@ def consult():
   </ul>
   <p class="fine" style="margin-top:1rem">Follow-up sessions: <a href="/service-page/repeat-consultation-online">repeat online consultation</a> (45 minutes).</p>
 </div></section>
-<section class="sand"><div class="wrap">
+<section class="wash-g"><div class="wrap">
   <h2>How it works</h2>
   <ol class="steps">
     <li><h3>Book a consultation</h3><p>Choose a time that works for you. Then complete the <a href="/new-patients">new patient intake form</a> with a brief health history.</p></li>
@@ -656,7 +656,7 @@ def consult():
     <li><h3>Follow up and refine</h3><p>We adjust your herbs and diet as your system responds, aiming for steady, sustainable change.</p></li>
   </ol>
 </div></section>
-""" + cta("Ready to begin?", "Your first consultation is the first step toward a plan built around you.", "Book your online consultation")
+""" + cta("Ready to begin?", "Your first consultation is the first step toward a plan built around you.", "Book your online consultation", tone="m")
     OUT["consult-heal.html"] = page("/consult-heal", "Chinese Herbal Medicine Consultation | Burbank or Remote",
         "Chinese herbal medicine consultations in Burbank or online with Roozbeh Ghobadpour, L.Ac.: gut health, hormones, fatigue, stress, and dietary guidance.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Consult & heal", "/consult-heal")])], current="/consult-heal")
@@ -664,7 +664,7 @@ def consult():
 
 def tea():
     main = hero("The sacred art of presence.",
-        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="m") + f"""
+        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
@@ -684,7 +684,7 @@ def tea():
   <h2>Join the circle</h2>
   <p>To hear about special community tea sits, events, and unique tea offerings, email <a href="mailto:{EMAIL}?subject=Tea%20circle">{EMAIL}</a> and ask to be added.</p>
 </div></section>
-""" + cta("Reserve your seat", "Pour a cup and slow down.", "Book a seat")
+""" + cta("Reserve your seat", "Pour a cup and slow down.", "Book a seat", tone="g")
     OUT["tea-ceremonies.html"] = page("/tea-ceremonies", "Chinese Tea Ceremony in Burbank | Full Lotus Health",
         "Gong Fu and bowl tea ceremony in Burbank in the tradition of Wu De: aged, old growth, organic tea for stress relief and inner balance.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies")])], current="/tea-ceremonies")
@@ -702,7 +702,7 @@ def book_online():
     fallback = ""
     if not BOOK:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book online.", "Pick a service, then choose a time on the calendar. New patients, please complete the intake form before your first visit.", tone="c") + f"""
+    main = hero("Book online.", "Pick a service, then choose a time on the calendar. New patients, please complete the intake form before your first visit.", tone="l") + f"""
 <section><div class="wrap">
   {fallback}
   <p><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient intake form</a></p>
@@ -785,7 +785,7 @@ def new_patients():
         action = f'<p><a class="btn" href="{e(INTAKE)}" rel="noopener">Open the intake form</a></p><p class="fine">The form opens in Google Forms. It is not part of this website.</p>'
     else:
         action = f'<div class="notice"><p><strong>The intake form link is being added.</strong> Until then, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we will send it to you.</p></div>'
-    main = hero("New patients.", "Welcome. Two steps before your first visit: choose a time, then fill out the intake form.", tone="m") + f"""
+    main = hero("New patients.", "Welcome. Two steps before your first visit: choose a time, then fill out the intake form.", tone="g") + f"""
 <section><div class="wrap split">
   <div>
     <h2>Before your first visit</h2>
@@ -862,7 +862,7 @@ def service_pages():
         guide = f'<li><a href="{g[0]}">{e(g[1])}</a></li>' if g else ""
         dur = f'<dt>Time</dt><dd>{s["minutes"]} minutes</dd>' if s["minutes"] else ""
         loc = "Online, by video" if "Online" in s["name"] else ADDR_LINE
-        main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone={"beauty":"c","acu":"m","consult":"n","tea":"n"}[s["group"]]) + f"""
+        main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone={"beauty":"c","acu":"m","consult":"l","tea":"n"}[s["group"]]) + f"""
 <section><div class="wrap split">
   <div>
     <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
@@ -920,7 +920,7 @@ def landing_pages():
   ("Where is the clinic?", where),
 ])}
 """, more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
-      dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="m",
+      dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
            title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
            meta="Nanoneedling facial in Burbank: a gentle, no-downtime surface treatment with herbal serums and red light therapy for glowing, hydrated skin.",
            h1="Nanoneedling in Burbank, CA",
