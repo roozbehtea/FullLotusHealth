@@ -251,7 +251,7 @@ OG_IMAGE = f"{SITE}/assets/og-share.jpg"
 OG_ALT = "A quiet tea table at Full Lotus Health, an acupuncture and skin clinic in Burbank, CA"
 
 
-def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website"):
+def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None):
     canon = SITE + (path if path != "/" else "/")
     nav_items = []
     for href, label in NAV:
@@ -260,6 +260,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
     nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
+    feed_link = f'<link rel="alternate" type="application/rss+xml" title="{NAME} blog" href="/feed.xml">\n' if POSTS else ""
     robots = ('<meta name="robots" content="noindex, follow">\n' if noindex
               else '<meta name="robots" content="index, follow, max-image-preview:large">\n')
     return f"""<!doctype html>
@@ -276,14 +277,14 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <meta property="og:description" content="{e(meta)}">
 <meta property="og:url" content="{canon}">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="{OG_IMAGE}">
+<meta property="og:image" content="{og_image or OG_IMAGE}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="{e(OG_ALT)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{e(title)}">
 <meta name="twitter:description" content="{e(meta)}">
-<meta name="twitter:image" content="{OG_IMAGE}">
+<meta name="twitter:image" content="{og_image or OG_IMAGE}">
 <meta name="twitter:image:alt" content="{e(OG_ALT)}">
 <meta name="theme-color" content="#f4ecdf">
 <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
@@ -292,7 +293,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
-{ld_blocks}</head>
+{feed_link}{ld_blocks}</head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="band" aria-hidden="true"></div>
@@ -338,6 +339,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
           <li><a href="/consult-heal">Consult &amp; heal</a></li>
           <li><a href="/tea-ceremonies">Tea ceremonies</a></li>
           <li><a href="/new-patients">New patients</a></li>
+          <li><a href="/blog">Blog</a></li>
           <li><a href="/book-online">Book online</a></li>
         </ul>
       </div>
@@ -409,6 +411,50 @@ def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
     return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
+
+
+# ------------------------------------------------------------------ blog posts
+import re as _re
+try:
+    import markdown as _md
+except ImportError:  # pip install markdown
+    sys.exit("The blog needs the 'markdown' package: pip install markdown")
+
+
+def load_posts():
+    posts = []
+    for f in sorted((ROOT / "_src" / "posts").glob("*.md")):
+        raw = f.read_text(encoding="utf-8")
+        m = _re.match(r"---\s*\n(.*?)\n---\s*\n(.*)", raw, _re.S)
+        if not m:
+            sys.exit(f"{f.name}: missing front matter (--- title/description/date ---)")
+        meta = {}
+        for line in m.group(1).splitlines():
+            if ":" in line:
+                k, v = line.split(":", 1)
+                meta[k.strip()] = v.strip()
+        if meta.get("draft", "").lower() in ("true", "yes"):
+            continue
+        for k in ("title", "description", "date"):
+            if not meta.get(k):
+                sys.exit(f"{f.name}: front matter needs {k}")
+        slug = meta.get("slug") or _re.sub(r"^\d{4}-\d{2}-\d{2}-", "", f.stem)
+        body_md = m.group(2).strip()
+        body = _md.markdown(body_md, extensions=["extra", "smarty"])
+        words = len(_re.sub(r"<[^>]+>", " ", body).split())
+        posts.append(dict(slug=slug, title=meta["title"], desc=meta["description"], date=meta["date"],
+                          image=meta.get("image", ""), alt=meta.get("image_alt", ""), body=body,
+                          minutes=max(1, round(words / 220))))
+    posts.sort(key=lambda p: p["date"], reverse=True)
+    return posts
+
+
+POSTS = load_posts()
+
+
+def pretty_date(iso):
+    d = datetime.date.fromisoformat(iso)
+    return d.strftime("%B ") + str(d.day) + d.strftime(", %Y")
 
 
 OUT = {}
@@ -675,13 +721,63 @@ def book_online():
 
 
 def blog():
-    main = hero("Blog.", "Notes on acupuncture, Chinese herbal medicine, skin, and tea are coming soon.", tone="m") + f"""
+    if not POSTS:
+        main = hero("Blog.", "Notes on acupuncture, Chinese herbal medicine, skin, and tea are coming soon.", tone="m") + f"""
 <section><div class="wrap">
   <p>In the meantime, explore <a href="/treatments">natural beauty treatments</a>, <a href="/acupuncture">acupuncture</a>, or <a href="/tea-ceremonies">tea ceremonies</a>.</p>
 </div></section>"""
-    OUT["blog.html"] = page("/blog", "Blog | Full Lotus Health",
-        "Notes on acupuncture, Chinese herbal medicine, skin care, and tea from Full Lotus Health in Burbank, CA.",
-        main, ld=[business_ld()], noindex=True)
+        OUT["blog.html"] = page("/blog", "Blog | Full Lotus Health",
+            "Notes on acupuncture, Chinese herbal medicine, skin care, and tea from Full Lotus Health in Burbank, CA.",
+            main, ld=[business_ld()], noindex=True)
+        return
+    cards = []
+    for p in POSTS:
+        img = ""
+        if p["image"]:
+            img = f'<img src="{e(p["image"])}" alt="{e(p["alt"])}" loading="lazy">'
+        cards.append(f'<li class="post-card">{img}<h2><a href="/post/{p["slug"]}">{e(p["title"])}</a></h2>'
+                     f'<p class="fine">{pretty_date(p["date"])} &middot; {p["minutes"]} min read</p><p>{e(p["desc"])}</p></li>')
+    main = hero("Blog.", "Notes on acupuncture, Chinese herbal medicine, skin, and tea from Roozbeh Ghobadpour, L.Ac.", tone="m") + f"""
+<section><div class="wrap"><ul class="post-list">{''.join(cards)}</ul></div></section>""" + cta("Questions about your own care?", "Choose a time, or text a question first.", "Book online")
+    OUT["blog.html"] = page("/blog", "Blog: Acupuncture and Skin Care | Full Lotus Health",
+        "Notes on acupuncture, Chinese herbal medicine, skin care, and tea from Roozbeh Ghobadpour, L.Ac., at Full Lotus Health in Burbank, CA.",
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Blog", "/blog")])])
+
+
+def blog_posts():
+    for i, p in enumerate(POSTS):
+        url = f"/post/{p['slug']}"
+        img_abs = (SITE + p["image"]) if p["image"].startswith("/") else None
+        others = [q for q in POSTS if q is not p][:3]
+        more = ""
+        if others:
+            more = '<h2 class="h3" style="margin-top:2.4rem">More from the blog</h2><ul class="checks">' + "".join(f'<li><a href="/post/{q["slug"]}">{e(q["title"])}</a></li>' for q in others) + "</ul>"
+        main = hero(e(p["title"]), f'By Roozbeh Ghobadpour, L.Ac. &middot; {pretty_date(p["date"])} &middot; {p["minutes"]} min read',
+                    crumbs=[("Home", "/"), ("Blog", "/blog")], tone="m") + f"""
+<section><div class="wrap"><article class="prose">
+{p["body"]}
+<hr>
+<p class="fine">This article is educational and is not a substitute for medical advice. Individual results vary.</p>
+<p>{book_btn("Book a visit")}</p>
+{more}
+</article></div></section>"""
+        ld = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"], "description": p["desc"],
+              "datePublished": p["date"], "dateModified": p["date"], "mainEntityOfPage": SITE + url,
+              "author": {"@type": "Person", "name": "Roozbeh Ghobadpour", "jobTitle": "Licensed Acupuncturist (L.Ac.)"},
+              "publisher": {"@id": f"{SITE}/#business"}, "image": img_abs or OG_IMAGE}
+        OUT[f"post/{p['slug']}.html"] = page(url, p["title"][:60], p["desc"], main,
+            ld=[business_ld(), ld, breadcrumb_ld([("Home", "/"), ("Blog", "/blog"), (p["title"], url)])],
+            og_type="article", og_image=img_abs)
+
+
+def feed():
+    if not POSTS:
+        return
+    items = "".join(
+        f"<item><title>{e(p['title'])}</title><link>{SITE}/post/{p['slug']}</link><guid>{SITE}/post/{p['slug']}</guid>"
+        f"<pubDate>{datetime.date.fromisoformat(p['date']).strftime('%a, %d %b %Y')} 12:00:00 GMT</pubDate><description>{e(p['desc'])}</description></item>"
+        for p in POSTS)
+    OUT["feed.xml"] = f'<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>{NAME} blog</title><link>{SITE}/blog</link><description>Notes on acupuncture, Chinese herbal medicine, skin, and tea.</description><language>en-us</language>{items}</channel></rss>\n'
 
 
 def new_patients():
@@ -893,11 +989,12 @@ def notfound():
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank"] + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
-        pri = "1.0" if u == "/" else ("0.9" if u == "/treatments" or "burbank" in u or "needling" in u or "lift" in u else "0.7")
-        sm.append(f"<url><loc>{SITE}{u if u != '/' else '/'}</loc><lastmod>{TODAY}</lastmod><priority>{pri}</priority></url>")
+        post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
+        pri = "0.6" if post else "1.0" if u == "/" else ("0.9" if u == "/treatments" or "burbank" in u or "needling" in u or "lift" in u else "0.7")
+        sm.append(f"<url><loc>{SITE}{u if u != '/' else '/'}</loc><lastmod>{post['date'] if post else TODAY}</lastmod><priority>{pri}</priority></url>")
     sm.append("</urlset>")
     OUT["sitemap.xml"] = "\n".join(sm) + "\n"
     OUT["robots.txt"] = f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n"
@@ -905,7 +1002,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, book_online, blog, new_patients, service_pages, landing_pages, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, book_online, blog, new_patients, service_pages, landing_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
