@@ -335,11 +335,11 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 """
 
 
-def hero(title, lede, crumbs=None):
+def hero(title, lede, crumbs=None, tone="c"):
     cr = ""
     if crumbs:
         cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in crumbs) + "</p>"
-    return f'<div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p></div>'
+    return f'<div class="hero-band tone-{tone}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p></div></div>'
 
 
 def contact_block():
@@ -399,7 +399,7 @@ def home():
 
 <div class="trust"><div class="wrap"><p>Trusted by 300+ patients for over 10 years in Burbank for integrative healing, stress relief, natural beauty, pain relief, sleep, and lasting vitality.</p></div></div>
 
-<section><div class="wrap">
+<section class="sand"><div class="wrap">
   <p class="eyebrow">Care at Full Lotus</p>
   <h2>Healing paths</h2>
   <div class="paths">
@@ -423,7 +423,7 @@ def home():
   </ul>
 </div></section>
 
-<section><div class="wrap">
+<section class="deep-m"><div class="wrap">
   <h2>Healing is more than skin deep. It is a return to whole-system harmony.</h2>
   <p>At Full Lotus Health, we treat the whole person, not just the symptom. Our integrative approach harmonizes your nervous system and internal vitality to create a state of lasting balance, allowing your natural radiance to flourish from within.</p>
 </div></section>
@@ -460,7 +460,7 @@ def home():
 
 def treatments():
     main = hero("Turn back the clock, naturally.",
-        "Advanced, chemical-free facial rejuvenation that restores your skin and hair from the inside out. Holistic beauty that heals the mind while elevating your natural radiance.") + f"""
+        "Advanced, chemical-free facial rejuvenation that restores your skin and hair from the inside out. Holistic beauty that heals the mind while elevating your natural radiance.", tone="c") + f"""
 <section><div class="wrap">
   <p class="eyebrow">Skin treatments</p>
   <h2>Facial and skin treatments in Burbank</h2>
@@ -481,7 +481,7 @@ def treatments():
   <p>{book_btn("Book a treatment")}</p>
 </div></section>
 
-<section><div class="wrap split">
+<section class="deep-m"><div class="wrap split">
   <div><h2>Whatever resides in the heart is expressed in the face</h2>{photo("treatment-room", "The treatment room at Full Lotus Health in Burbank")}</div>
   <div>
     <p>Full Lotus Health treats skin as the visible end of your whole health. Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist, chooses the herbal serums, the points, and the pace of your series from a Chinese medicine assessment, not from a fixed protocol.</p>
@@ -490,7 +490,7 @@ def treatments():
   </div>
 </div></section>
 
-<section class="tint"><div class="wrap">
+<section class="sand"><div class="wrap">
   <h2>Questions before you book?</h2>
   <p>Reach us directly. Please keep health details for the intake form.</p>
   {contact_block()}
@@ -503,7 +503,7 @@ def treatments():
 
 def acupuncture():
     main = hero("Restore your natural rhythm.",
-        "Acupuncture at Full Lotus Health is a ritual of restoration. By harmonizing your nervous system and internal vitality, we help you return to a state of wholeness where healing happens naturally.") + f"""
+        "Acupuncture at Full Lotus Health is a ritual of restoration. By harmonizing your nervous system and internal vitality, we help you return to a state of wholeness where healing happens naturally.", tone="m") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book your session")}</p>
   <div class="paths" style="margin-top:2.2rem">
@@ -544,7 +544,7 @@ def acupuncture():
 
 def consult():
     main = hero("Your health has a story. Let's read it together.",
-        "Roozbeh brings over 15 years of Chinese medicine training to every consultation, reading your body as a whole system, not a list of isolated symptoms.") + f"""
+        "Roozbeh brings over 15 years of Chinese medicine training to every consultation, reading your body as a whole system, not a list of isolated symptoms.", tone="n") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book your online consultation")}</p>
 </div></section>
@@ -585,7 +585,7 @@ def consult():
 
 def tea():
     main = hero("The sacred art of presence.",
-        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.") + f"""
+        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="m") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
@@ -623,7 +623,7 @@ def book_online():
     fallback = ""
     if not BOOK:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book online.", "Pick a service, then choose a time on the calendar. New patients, please complete the intake form before your first visit.") + f"""
+    main = hero("Book online.", "Pick a service, then choose a time on the calendar. New patients, please complete the intake form before your first visit.", tone="c") + f"""
 <section><div class="wrap">
   {fallback}
   <p><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient intake form</a></p>
@@ -636,7 +636,7 @@ def book_online():
 
 
 def blog():
-    main = hero("Blog.", "Notes on acupuncture, Chinese herbal medicine, skin, and tea are coming soon.") + f"""
+    main = hero("Blog.", "Notes on acupuncture, Chinese herbal medicine, skin, and tea are coming soon.", tone="m") + f"""
 <section><div class="wrap">
   <p>In the meantime, explore <a href="/treatments">natural beauty treatments</a>, <a href="/acupuncture">acupuncture</a>, or <a href="/tea-ceremonies">tea ceremonies</a>.</p>
 </div></section>"""
@@ -650,7 +650,7 @@ def new_patients():
         action = f'<p><a class="btn" href="{e(INTAKE)}" rel="noopener">Open the intake form</a></p><p class="fine">The form opens in Google Forms. It is not part of this website.</p>'
     else:
         action = f'<div class="notice"><p><strong>The intake form link is being added.</strong> Until then, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we will send it to you.</p></div>'
-    main = hero("New patients.", "Welcome. Two steps before your first visit: choose a time, then fill out the intake form.") + f"""
+    main = hero("New patients.", "Welcome. Two steps before your first visit: choose a time, then fill out the intake form.", tone="m") + f"""
 <section><div class="wrap split">
   <div>
     <h2>Before your first visit</h2>
@@ -691,7 +691,7 @@ def service_pages():
         rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a> <span class="fine">${BY_SLUG[r]["price"]}</span></li>' for r in s["related"])
         dur = f'<dt>Time</dt><dd>{s["minutes"]} minutes</dd>' if s["minutes"] else ""
         loc = "Online, by video" if "Online" in s["name"] else ADDR_LINE
-        main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")]) + f"""
+        main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone={"beauty":"c","acu":"m","consult":"n","tea":"n"}[s["group"]]) + f"""
 <section><div class="wrap split">
   <div>
     <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
@@ -715,7 +715,7 @@ def service_pages():
 
 
 def notfound():
-    main = hero("Page not found.", "That address doesn't lead anywhere. Try one of these.") + """
+    main = hero("Page not found.", "That address doesn't lead anywhere. Try one of these.", tone="c") + """
 <section><div class="wrap"><ul class="checks"><li><a href="/">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture</a></li><li><a href="/book-online">Book online</a></li></ul></div></section>"""
     OUT["404.html"] = page("/404", "Page not found | Full Lotus Health", "Page not found.", main, noindex=True)
 

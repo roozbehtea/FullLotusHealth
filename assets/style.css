@@ -126,7 +126,6 @@ img, svg { max-width: 100%; }
 
 /* ---------- sections ---------- */
 section { padding-block: var(--section); }
-.page-hero + section { padding-top: 1rem; }
 .sand { background: var(--surface-200); }
 .wash-c { background: var(--cinnabar-wash); }
 .tint { background: var(--malachite-wash); }
@@ -230,3 +229,18 @@ section { padding-block: var(--section); }
 /* Photos: shown only when a file exists in assets/photos/ */
 .photo { margin: 1.5rem 0 0; }
 .photo img { display: block; width: 100%; height: auto; border-radius: 12px; aspect-ratio: 4 / 3; object-fit: cover; }
+
+/* Bold bands spread down the page */
+.hero-band.tone-c { background: var(--cinnabar); }
+.hero-band.tone-m { background: var(--malachite); }
+.hero-band.tone-n { background: var(--night); }
+.hero-band[class*="tone-"] h1, .hero-band[class*="tone-"] .lede, .hero-band[class*="tone-"] .crumbs, .hero-band[class*="tone-"] .crumbs a { color: var(--on-cinnabar); }
+.hero-band[class*="tone-"] .band.short { opacity: 0.95; }
+.hero-band .page-hero { padding-block: clamp(2.6rem, 6vw, 4.8rem); }
+.trust { background: var(--cinnabar); color: var(--on-cinnabar); border-block: 0; padding-block: clamp(1.8rem, 3vw, 2.6rem); }
+.trust p { color: var(--on-cinnabar); }
+.sand .path { background: var(--surface-100); }
+.deep-m { background: var(--malachite); color: var(--on-cinnabar); }
+.deep-m h2, .deep-m h3, .deep-m p { color: var(--on-cinnabar); }
+.deep-m a:not(.btn) { color: #f1dcb0; }
+.deep-m .eyebrow { color: #e7cf9c; }
