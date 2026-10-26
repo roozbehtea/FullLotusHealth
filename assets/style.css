@@ -421,13 +421,13 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 
 /* ---- Auspicious clouds (xiangyun) in gold on the black tea section ----
    Art from _src/make_clouds.py; the tile repeats seamlessly along the top and bottom edges. */
-.night { position: relative; padding-block: calc(var(--section) + 1.2rem); }
+.night { position: relative; padding-block: calc(var(--section) + 2.6rem); }
 .night::before, .night::after {
-  content: ""; position: absolute; left: 0; right: 0; height: 54px; pointer-events: none;
-  background: url("orn-clouds-gold.svg") repeat-x center / auto 54px;
+  content: ""; position: absolute; left: 0; right: 0; height: 78px; pointer-events: none;
+  background: url("orn-clouds-gold.svg") repeat-x center / auto 78px;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
 }
 .night::before { top: 1rem; }
-.night::after { bottom: 1rem; }
+.night::after { bottom: 1rem; transform: scaleY(-1); }
 @media print { .night::before, .night::after { display: none; } }

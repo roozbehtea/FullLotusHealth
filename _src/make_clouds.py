@@ -1,33 +1,66 @@
 #!/usr/bin/env python3
-"""Generate the gold auspicious-cloud (xiangyun) band, assets/orn-clouds-gold.svg.
+"""Generate the gold Tibetan-style cloud band, assets/orn-clouds-gold.svg.
 
-One hand-built cloud in the Chinese/Tibetan manner: a spiral head, a body that sweeps back
-into a long flowing tail, and two small trailing curls. Flat single-weight gold line work.
-The tile repeats seamlessly: the tail leaves and re-enters at the same height.
+An original drawing in the manner of thangka cloud painting: a mass of scalloped lobes stacked
+in rows, each lobe's tip curling into a hook, with a rolled inner edge and a scalloped underside.
+Flat single-weight gold line work. Lobes are filled with the black of the tea section so each
+row hides the one behind it. The tile repeats seamlessly (the cloud stays inside the tile).
 Run: python3 _src/make_clouds.py
 """
-import os
+import math, os
 
-W, H = 240, 72
+W, H = 420, 120
 GOLD = "#b8943f"
+NIGHT = "#1e1b18"
 OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "orn-clouds-gold.svg")
 
-PATHS = [
-    # head: rises out of the tail, loops over, and winds into a spiral
-    "M90 55 C82 50 80 40 86 30 C94 14 124 10 134 28 C142 42 132 56 118 54 "
-    "C106 52 102 38 112 32 C121 27 130 34 126 41 C123 46 116 45 117 40",
-    # lower lobe on the right of the head, flowing out into the tail
-    "M134 28 C146 26 156 34 154 44 C152 54 140 58 130 56",
-    # long tail: enters from the left edge, sweeps under the head, trails off right and re-joins the edge
-    "M0 60 C20 60 30 52 46 52 C62 52 70 58 86 56 C100 55 110 60 130 56 "
-    "C150 62 166 62 184 58 C206 53 220 60 240 60",
-    # two trailing curls riding the tail
-    "M46 52 C40 44 46 36 54 38 C61 40 60 49 53 48 C49 47 49 43 52 43",
-    "M186 58 C182 50 188 42 196 44 C203 46 201 55 195 54 C191 53 191 49 194 49",
-]
+def hook(cx, cy, R, start_deg, turns, sign, n=36):
+    pts, total = [], turns * 2 * math.pi
+    for i in range(n + 1):
+        t = total * i / n
+        r = R * (1 - .86 * t / total)
+        a = math.radians(start_deg) + sign * t
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return "M" + " L".join(f"{x:.1f} {y:.1f}" for x, y in pts)
 
-svg = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" fill="none" stroke="{GOLD}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">']
-svg += [f'<path d="{d}"/>' for d in PATHS]
-svg.append("</svg>")
-open(OUT, "w").write("\n".join(svg) + "\n")
+def scallop(x, y, w, h, flip=1, down=False, curl=True):
+    """One lobe on base line y from x to x+w, bulging up (or down), hook at the right (flip=1) or left tip."""
+    s = -1 if not down else 1
+    x0, x1 = (x, x + w) if flip > 0 else (x + w, x)
+    sweep = 1 if (flip > 0) != down else 0
+    out = []
+    body = f"M{x0:.1f} {y:.1f} A{w/2:.1f} {h:.1f} 0 0 {sweep} {x1:.1f} {y:.1f}"
+    out.append(f'<path d="{body} Z" fill="{NIGHT}" stroke="none"/>')
+    out.append(f'<path d="{body}" stroke-width="2"/>')
+    # rolled inner edge, on the lit side
+    iw, ih = w * .36, h * .72
+    ix0 = x + w * .13 if flip > 0 else x + w * .87
+    mid = x + w * .5
+    out.append(f'<path d="M{ix0:.1f} {y + s*h*.04:.1f} A{iw:.1f} {ih:.1f} 0 0 {sweep} {mid:.1f} {y + s*h*.78:.1f}" stroke-width="1.1" stroke-opacity=".8"/>')
+    if not curl:
+        return out
+    # tip curls into a hook inside the lobe
+    c = w * .2
+    hx = x1 - flip * c
+    hy = y
+    ang = 0 if flip > 0 else 180
+    sg = -1 if (flip > 0) != down else 1
+    out.append(f'<path d="{hook(hx, hy + s*c*.2, c, ang, 1.45, sg)}" stroke-width="1.7"/>')
+    return out
+
+parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" fill="none" stroke="{GOLD}" stroke-linecap="round" stroke-linejoin="round">']
+# back row, tallest in the middle
+for x, y, w, h, f in [(128, 50, 70, 38, 1), (275, 52, 60, 34, -1), (196, 50, 82, 44, 1)]:
+    parts += scallop(x, y, w, h, f)
+# middle row
+for x, y, w, h, f in [(70, 70, 64, 32, -1), (310, 70, 62, 30, 1), (126, 70, 62, 34, 1), (248, 70, 66, 34, -1), (184, 70, 70, 38, 1)]:
+    parts += scallop(x, y, w, h, f)
+# front row
+for x, y, w, h, f in [(32, 90, 60, 24, -1), (352, 90, 46, 22, 1), (86, 90, 56, 26, 1), (298, 90, 56, 26, -1), (138, 90, 60, 28, 1), (244, 90, 56, 28, -1), (190, 90, 60, 30, 1)]:
+    parts += scallop(x, y, w, h, f)
+# scalloped underside, lobes hanging down
+for x, y, w, h, f in [(40, 90, 50, 14, 1), (92, 90, 48, 16, -1), (142, 90, 52, 16, 1), (194, 90, 54, 18, -1), (246, 90, 52, 16, 1), (298, 90, 48, 14, -1), (346, 90, 44, 12, 1)]:
+    parts += scallop(x, y, w, h, f, down=True, curl=False)
+parts.append("</svg>")
+open(OUT, "w").write("\n".join(parts) + "\n")
 print("wrote", OUT)
