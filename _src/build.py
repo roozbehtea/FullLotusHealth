@@ -437,10 +437,10 @@ def photo(name, alt):
 
 
 def hero_art():
-    """Home hero art: the hero photo with the badge as a corner seal when assets/photos/hero.* exists, else the badge alone."""
+    """Home hero art: the hero photo (no logo overlay) when assets/photos/hero.* exists, else the badge alone."""
     ph = photo("hero", "A calm woman in front of a lotus-patterned wall")
     if ph:
-        return f'<div class="seal-wrap has-photo">{ph}<img class="corner-seal" src="/assets/logo-seal.svg" width="120" height="120" alt="Full Lotus Health seal"></div>'
+        return f'<div class="seal-wrap has-photo">{ph}</div>'
     return '<div class="seal-wrap"><img src="/assets/logo-badge.svg" width="440" height="440" alt="Full Lotus Health badge: a lotus rising from an offering dish, ringed by the words Tea, Acupuncture, Herbal Medicine"></div>'
 
 
