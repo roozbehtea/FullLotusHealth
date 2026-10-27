@@ -529,15 +529,18 @@ HOME_QUOTES = [
 
 # (heading, hub page, one line, [(link text, href)])
 HOME_WAYS = [
-    ("Skin and hair", "/treatments",
-     "Microneedling, nanoneedling and cosmetic acupuncture, with custom herbal serums and red light therapy.",
+    ("Facial and Hair Rejuvenation", "/treatments",
+     "Microneedling, nanoneedling and cosmetic acupuncture, with custom herbal serums and red light therapy. Scalp microneedling for thinning hair.",
      [("Microneedling", "/microneedling-burbank"), ("Nanoneedling", "/nanoneedling-burbank"),
-      ("Cosmetic acupuncture", "/cosmetic-acupuncture-burbank"), ("Skin conditions", "/skin-conditions-burbank")]),
-    ("Acupuncture and herbs", "/acupuncture",
+      ("Cosmetic acupuncture", "/cosmetic-acupuncture-burbank")]),
+    ("Chinese Medicine Dermatology", "/skin-conditions-burbank",
+     "Herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea and other skin conditions, treating the pattern underneath, not just the rash.",
+     [("Skin conditions", "/skin-conditions-burbank"), ("Online consultation", "/service-page/initial-consultation-online")]),
+    ("Acupuncture and Herbal Medicine", "/acupuncture",
      "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
      [("Acupuncture", "/acupuncture"), ("Fertility", "/fertility-acupuncture-burbank"), ("Herbal consultations", "/consult-heal")]),
-    ("Tea", "/tea-ceremonies",
-     "Gong fu and bowl tea ceremonies in the tradition of Wu De. A gentle first step if Chinese medicine is new to you.",
+    ("Tea: The Ultimate Chinese Herb", "/tea-ceremonies",
+     "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
      [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
       ("Private ceremony", "/service-page/private-gong-fu-tea-ceremony")]),
 ]
@@ -589,8 +592,8 @@ def home():
 
 <section class="sand" aria-labelledby="ways-h"><div class="wrap">
   <p class="eyebrow">Where to start</p>
-  <h2 id="ways-h">Three ways in</h2>
-  <div class="paths ways">{"".join(ways)}</div>
+  <h2 id="ways-h">Four ways in</h2>
+  <div class="paths four ways">{"".join(ways)}</div>
 </div></section>
 
 <section class="wash-g" aria-labelledby="reviews-h"><div class="wrap">

@@ -346,6 +346,8 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .ways .path h3 a:hover { text-decoration: underline; }
 .way-links { list-style: none; margin: 0; align-self: start; padding: 0.9rem 0 0; border-top: 1px solid var(--surface-300); display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; }
 .way-links a { font-weight: 500; font-size: 0.9375rem; }
+.ways .path:nth-child(4) { border-top-color: var(--gold); }
+.ways .path:nth-child(4) h3 { color: #7a5f25; }
 
 /* ---- Homepage: three short reviews side by side ---- */
 .quotes.three { columns: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.5rem, 4vw, 3rem); }
