@@ -1026,7 +1026,8 @@ def service_pages():
 
 
 def landing_pages():
-    """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages)."""
+    """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages).
+    The Five Element Rejuvenation series (pg["extra"]) sits at the top, right under the page title."""
     mi, na, li = BY_SLUG["medical-microneedling-session"], BY_SLUG["facial-nano-needling"], BY_SLUG["full-lotus-lift"]
     def link(slug, label=None):
         return f'<a href="/service-page/{slug}">{e(label or BY_SLUG[slug]["name"])}</a>'
@@ -1112,7 +1113,7 @@ def landing_pages():
     for pg in pages:
         svc = pg["svc"]
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
-        main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + f"""
+        main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + pg.get('extra', '') + f"""
 <section><div class="wrap split">
   <div>
     <p>{book_btn("Book a treatment")}</p>
@@ -1121,7 +1122,7 @@ def landing_pages():
     <ul class="checks">{more}<li><a href="/treatments">All natural beauty treatments</a></li></ul>
   </div>
   <div>{pg['body']}</div>
-</div></section>{pg.get('extra', '')}""" + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
+</div></section>""" + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
         OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
             ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
                 breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
