@@ -385,6 +385,41 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .gmsg { margin: var(--space-1) 0 0; min-height: 1.5em; font-weight: 500; color: var(--malachite); }
 .gmsg.err { color: var(--cinnabar-deep); }
 
+/* ---- Acupuncture and Herbal Medicine page ---- */
+.page-hero .actions { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 1.5rem; }
+.hero-band[class*="tone-"] .btn { background: var(--surface-100); color: var(--malachite); border-color: var(--surface-100); }
+.hero-band[class*="tone-"] .btn:hover { background: var(--surface-200); border-color: var(--surface-200); }
+.hero-band[class*="tone-"] .btn.ghost { background: transparent; color: var(--on-malachite); border-color: var(--on-malachite); }
+.hero-band[class*="tone-"] .btn.ghost:hover { background: var(--on-malachite); color: var(--malachite); }
+.hero-band[class*="tone-"] :focus-visible { outline-color: var(--on-malachite); }
+
+/* tap-to-open condition list */
+.conds { max-width: 52rem; border-top: 1px solid var(--surface-300); }
+.cond { border-bottom: 1px solid var(--surface-300); }
+.cond summary {
+  list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1rem; row-gap: 0.15rem;
+  align-items: center; padding: 1.05rem 0;
+}
+.cond summary::-webkit-details-marker { display: none; }
+.cond .ct { font-family: var(--display); font-size: clamp(1.25rem, 2.4vw, 1.45rem); font-weight: 500; line-height: 1.25; color: var(--ink); }
+.cond .cx { grid-column: 1; font-size: 0.9375rem; color: var(--ink-muted); line-height: 1.4; }
+.cond summary::after {
+  content: "+"; grid-column: 2; grid-row: 1 / span 2; width: 2.3rem; height: 2.3rem; display: grid; place-items: center;
+  border: 2px solid var(--malachite); border-radius: 50%; color: var(--malachite); font-size: 1.35rem; line-height: 1; transition: background 0.15s, color 0.15s;
+}
+.cond summary:hover .ct { color: var(--malachite); }
+.cond[open] summary::after { content: "\2212"; background: var(--malachite); color: var(--on-malachite); }
+.cond summary:focus-visible { outline-offset: 4px; }
+.cbody { padding: 0 0 1.5rem; }
+.cbody p { max-width: 62ch; }
+.cacts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 0.9rem; margin: 1.1rem 0 0; }
+.cmore { font-weight: 500; }
+.conds-note { margin-top: 1.2rem; }
+.visits .path { display: flex; flex-direction: column; }
+.visits .vbtn { margin: 1.2rem 0 0; }
+.visits .way-links { align-self: stretch; }
+@media (prefers-reduced-motion: reduce) { .cond summary::after { transition: none; } }
+
 /* ---- Acupuncture page: four care types in a 2 x 2 grid ---- */
 .paths.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 52rem) { .paths.four { grid-template-columns: 1fr; } }
