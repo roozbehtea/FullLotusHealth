@@ -442,6 +442,93 @@ def rate_item(slug, desc=None):
     return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
 
 
+# Five Element quiz on the microneedling and nanoneedling pages.
+# Answers are element indexes into FIVE_ELEMENTS: 0 Wood, 1 Fire, 2 Earth, 3 Metal, 4 Water.
+# Ties go to the answer to question 1 (what people notice first), then to cycle order.
+FEQ_QUESTIONS = [
+    ("When you look in the mirror, what do you notice first?", [
+        ("Uneven texture or visible pores", 3),
+        ("Lines between the brows or around the mouth", 0),
+        ("Dark circles or hollows under the eyes", 4),
+        ("Redness, or a tone that looks dull and tired", 1),
+        ("Puffiness, or skin starting to lose its shape", 2)]),
+    ("By the end of a long day, your face looks...", [
+        ("Heavy and a little puffy", 2),
+        ("Tight: jaw clenched, brow furrowed", 0),
+        ("Flushed, or washed out", 1),
+        ("Drawn, especially around the eyes", 4),
+        ("Dry, rough or congested", 3)]),
+    ("When life gets stressful, your skin...", [
+        ("Flares red or loses its color", 1),
+        ("Breaks out or turns rough", 3),
+        ("Shows it in tension and deeper lines", 0),
+        ("Looks older and more tired", 4),
+        ("Swells, especially in the morning", 2)]),
+    ("Which compliment would you most like to hear?", [
+        ("“You look so rested.”", 4),
+        ("“You’re glowing.”", 1),
+        ("“Your skin is so smooth.”", 3),
+        ("“You look so relaxed.”", 0),
+        ("“Your skin looks so firm.”", 2)]),
+    ("Which season feels most like you?", [
+        ("Spring: fresh starts and new growth", 0),
+        ("Late summer: ripe, warm and abundant", 2),
+        ("Winter: quiet, deep and inward", 4),
+        ("Summer: bright, warm and social", 1),
+        ("Autumn: crisp, clear and letting go", 3)]),
+]
+
+FEQ_RESULTS = [
+    "Your face holds on to tension. Expression lines, a furrowed brow or a set jaw are where it shows. The Wood session is about letting that go, so your features can soften and settle.",
+    "Your skin is asking for radiance. Redness, flushing or a dull, tired tone are your main signs. The Fire session calms heat and brings back a natural glow.",
+    "Your skin is asking for support. Puffiness, or a face that is starting to lose its shape, are your main signs. The Earth session focuses on firmness and lift.",
+    "Your skin is asking for refinement. Texture, pores and congestion are your main signs. The Metal session focuses on smoothness and clarity.",
+    "Your skin is asking to be restored. Dark circles, hollows and deeper signs of ageing are your main signs. The Water session works on these and seals in what the series has built.",
+]
+
+
+def five_element_quiz():
+    n = len(FEQ_QUESTIONS)
+    steps = []
+    for i, (q, opts) in enumerate(FEQ_QUESTIONS):
+        bs = "".join(f'<button type="button" class="feq-opt" data-el="{el}">{e(t)}</button>' for t, el in opts)
+        steps.append(f'<div class="feq-q"{"" if i == 0 else " hidden"}><p class="feq-n">Question {i + 1} of {n}</p>'
+                     f'<h4 class="feq-qt" tabindex="-1">{e(q)}</h4><div class="feq-opts" role="group" aria-label="{e(q)}">{bs}</div></div>')
+    results = []
+    for i, (el, theme, colour, focus, text, serum) in enumerate(FIVE_ELEMENTS):
+        results.append(f'<div class="feq-r" data-el="{i}" style="--tone:{colour}" hidden><p class="feq-n">Your leading element</p>'
+                       f'<h4 class="feq-rn" tabindex="-1">{el} <span>{e(theme)}</span></h4><p class="ef">{e(focus)}</p>'
+                       f'<p>{e(FEQ_RESULTS[i])}</p><p class="serum"><strong>Signature serum:</strong> {e(serum)}</p></div>')
+    signup = ""
+    if not (LAUNCH and not SIGNUP):
+        demo = "" if SIGNUP else " data-demo"
+        action = e(SIGNUP) if SIGNUP else "#"
+        signup = f"""<form class="signup feq-signup" id="fe-signup" method="post" action="{action}"{demo}>
+      <p class="feq-lbl"><label for="fe-email">Want Five Element tips and offers? Join the newsletter, and we'll note your element.</label></p>
+      <div class="grow"><input id="fe-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+        <button class="btn" type="submit">Sign up</button></div>
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input type="hidden" name="source" value="five-element">
+      <p class="gmsg" role="status" aria-live="polite"></p>
+    </form>"""
+    dots = "".join("<li></li>" for _ in range(n))
+    return f"""<div class="feq" id="fe-quiz" hidden>
+    <p class="eyebrow">Quiz</p>
+    <h3>Find your leading element</h3>
+    <p class="feq-intro">Five quick questions about your skin. It takes under a minute.</p>
+    <ol class="feq-dots" aria-hidden="true">{dots}</ol>
+    {"".join(steps)}
+    <div class="feq-results" hidden>
+      {"".join(results)}
+      <p class="feq-all">Your series covers all five elements, from Wood to Water. Your leading element is the session likely to matter most to you, and we'll talk it through at your first visit.</p>
+      <p class="feq-acts">{book_btn("Book your first session")}<a class="btn ghost" href="#five-element" data-feq-see>See your session</a></p>
+      {signup}
+    </div>
+    <p class="feq-nav"><button type="button" class="glink" data-feq-back hidden>Back</button><button type="button" class="glink" data-feq-restart hidden>Take it again</button></p>
+  </div>
+  <script src="/assets/fe-quiz.js" defer></script>{'<script src="/assets/signup.js" defer></script>' if signup else ''}"""
+
+
 def five_element_section(slug):
     """The Five Element Rejuvenation series, one section per element. No prices (fees stay on the service pages)."""
     if slug == "medical-microneedling-session":
@@ -458,13 +545,14 @@ def five_element_section(slug):
     rows = []
     for i, (el, theme, colour, focus, text, serum) in enumerate(FIVE_ELEMENTS, 1):
         rows.append(
-            f'<li class="element" style="--tone:{colour}"><div><p class="es">Session {i}</p><h3 class="en">{el}</h3><p class="et">{e(theme)}</p></div>'
+            f'<li class="element" id="fe-s{i}" style="--tone:{colour}"><div><p class="es">Session {i}</p><h3 class="en">{el}</h3><p class="et">{e(theme)}</p></div>'
             f'<div><p class="ef">{e(focus)}</p><p>{e(text)}</p><p class="serum"><strong>Signature serum:</strong> {e(serum)}</p></div></li>')
     return f"""<section class="sand" id="five-element" aria-labelledby="fe-h"><div class="wrap">
   <p class="eyebrow">Signature series</p>
   <h2 id="fe-h">{e(SERIES)}</h2>
   <p>{e(intro)}</p>
   <p>{e(pace)}</p>
+  {five_element_quiz()}
   <ol class="elements">{"".join(rows)}</ol>
   <p class="fine" style="margin-top:1.4rem">Your first session includes an intake and a plan. Individual results vary.</p>
   <p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.2rem">{book_btn("Book your first session")} <a class="btn ghost" href="/service-page/{slug}">Series fee and details</a></p>
