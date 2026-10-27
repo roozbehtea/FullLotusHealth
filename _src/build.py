@@ -22,6 +22,7 @@ PHONE_TEL = "+18182539307"
 EMAIL = "info@fulllotushealth.com"
 ADDR = dict(street="2116 N Glenoaks Blvd, Ste 3", city="Burbank", region="CA", zip="91504")
 ADDR_LINE = "2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504"
+GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:ChIJJVOw4haVwoARK0UW-MPNiMw"   # the clinic's Google listing
 MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504"
 
 BOOK = CFG.get("booking_url", "").strip()
@@ -585,10 +586,14 @@ def home():
       <h1 id="home-h1">The calmest hour of your week.</h1>
       <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
-      <p class="hh-proof">Trusted by 300+ patients since 2016</p>
     </div>
   </div>
 </section>
+
+<section class="proof-bar" aria-label="What patients say about Full Lotus Health"><div class="wrap">
+  <p class="pb-line">Trusted by 300+ patients since 2016</p>
+  <p class="pb-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>
+</div></section>
 
 <section class="sand" aria-labelledby="ways-h"><div class="wrap">
   <p class="eyebrow">Where to start</p>
