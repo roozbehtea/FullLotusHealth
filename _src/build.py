@@ -555,13 +555,13 @@ def home_signup():
     action = e(SIGNUP) if SIGNUP else "#"
     return f"""<section class="signup-band" aria-labelledby="signup-h"><div class="wrap signup-row">
   <div>
-    <h2 id="signup-h">Get occasional notes from Full Lotus Health</h2>
-    <p>Notes on acupuncture, skin, and tea from Roozbeh. Unsubscribe anytime. Please don't send health details by email.</p>
+    <h2 id="signup-h">Newsletter</h2>
+    <p>Unsubscribe anytime.</p>
   </div>
   <form class="signup" id="signup" method="post" action="{action}"{demo}>
     <div class="grow"><label for="signup-email" class="sr">Email address</label>
       <input id="signup-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
-      <button class="btn" type="submit">Join the list</button></div>
+      <button class="btn" type="submit">Sign up</button></div>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
     <input type="hidden" name="source" value="home">
     <p class="gmsg" role="status" aria-live="polite"></p>
