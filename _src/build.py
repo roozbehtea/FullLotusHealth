@@ -9,6 +9,8 @@ Output pages are plain .html files in the repo root. GitHub Pages serves
 treatments.html at /treatments, so the old Wix addresses keep working with no redirects.
 """
 import json, sys, html, pathlib, datetime
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import art
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "_src" / "config.json").read_text())
@@ -177,26 +179,6 @@ PACKAGES = {
 for _slug, _p in PACKAGES.items():
     _p["per"] = _p["price"] // 5
     _p["name"] = f'{SERIES} series: {BY_SLUG[_slug]["name"]}'
-
-# (element, theme, colour, focus, text, signature serum)
-# Fire and Water serums are not chosen yet, so the copy describes what they do rather than naming an ingredient.
-FIVE_ELEMENTS = [
-    ("Wood", "Release", "var(--malachite)", "Tension and expression lines",
-     "In Chinese medicine, Wood governs smooth, easy movement. When it is held back, it shows in the face as tension: a furrowed brow, a set jaw, lines that come from expression. This session focuses on letting that tension go.",
-     "Apple stem cell extract, for renewal and new growth"),
-    ("Fire", "Radiance", "var(--cinnabar)", "Redness and a lack of glow",
-     "Fire relates to the Heart, which Chinese medicine says shows in the complexion. Too much heat shows as redness and irritation; too little, as dullness. This session calms redness and brings back a natural glow.",
-     "A cooling, heat-clearing botanical serum"),
-    ("Earth", "Lift", "var(--gold)", "Puffiness and sagging",
-     "Earth holds things in place and keeps fluids moving. When it is weak, the face can look puffy or start to lose its shape. This session focuses on firmness and lift.",
-     "Shiitake mushroom extract"),
-    ("Metal", "Refine", "#9b968f", "Texture and pores",
-     "In Chinese medicine, Metal governs the skin and the pores. This session focuses on smoothness, texture, and pore size.",
-     "White snow fungus (tremella) extract, prized for moisture"),
-    ("Water", "Restore", "var(--lapis)", "Dark circles and deeper signs of ageing",
-     "Water is the body's deepest reserve, and Chinese medicine links it to ageing. It shows around the eyes as dark circles and hollowness. The final session works on these deeper signs and seals in what the series has built.",
-     "A deeply nourishing botanical serum"),
-]
 
 TESTIMONIALS_HOME = [
     ("Finding Roozbeh was like finding a rare and precious treasure. His insight and knowledge never ceases to amaze me and every treatment I have had from him over the past 5 years has felt in tune with what I needed at the time. His skillful application of needles means that even if in pain or sick, I can go to him for help and feel confident that he will be kind and gentle in his endeavor to help me feel better. After treatment I often stay for tea and meditation in the purpose built tea lounge… all in all Full Lotus Health is wonderful experience for body and mind and spirit.", "Sue"),
@@ -441,123 +423,6 @@ def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
     return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
-
-
-# Five Element quiz on the microneedling and nanoneedling pages.
-# Answers are element indexes into FIVE_ELEMENTS: 0 Wood, 1 Fire, 2 Earth, 3 Metal, 4 Water.
-# Ties go to the answer to question 1 (what people notice first), then to cycle order.
-FEQ_QUESTIONS = [
-    ("When you look in the mirror, what do you notice first?", [
-        ("Uneven texture or visible pores", 3),
-        ("Lines between the brows or around the mouth", 0),
-        ("Dark circles or hollows under the eyes", 4),
-        ("Redness, or a tone that looks dull and tired", 1),
-        ("Puffiness, or skin starting to lose its shape", 2)]),
-    ("By the end of a long day, your face looks...", [
-        ("Heavy and a little puffy", 2),
-        ("Tight: jaw clenched, brow furrowed", 0),
-        ("Flushed, or washed out", 1),
-        ("Drawn, especially around the eyes", 4),
-        ("Dry, rough or congested", 3)]),
-    ("When life gets stressful, your skin...", [
-        ("Flares red or loses its color", 1),
-        ("Breaks out or turns rough", 3),
-        ("Shows it in tension and deeper lines", 0),
-        ("Looks older and more tired", 4),
-        ("Swells, especially in the morning", 2)]),
-    ("Which compliment would you most like to hear?", [
-        ("“You look so rested.”", 4),
-        ("“You’re glowing.”", 1),
-        ("“Your skin is so smooth.”", 3),
-        ("“You look so relaxed.”", 0),
-        ("“Your skin looks so firm.”", 2)]),
-    ("Which season feels most like you?", [
-        ("Spring: fresh starts and new growth", 0),
-        ("Late summer: ripe, warm and abundant", 2),
-        ("Winter: quiet, deep and inward", 4),
-        ("Summer: bright, warm and social", 1),
-        ("Autumn: crisp, clear and letting go", 3)]),
-]
-
-FEQ_RESULTS = [
-    "Your face holds on to tension. Expression lines, a furrowed brow or a set jaw are where it shows. The Wood session is about letting that go, so your features can soften and settle.",
-    "Your skin is asking for radiance. Redness, flushing or a dull, tired tone are your main signs. The Fire session calms heat and brings back a natural glow.",
-    "Your skin is asking for support. Puffiness, or a face that is starting to lose its shape, are your main signs. The Earth session focuses on firmness and lift.",
-    "Your skin is asking for refinement. Texture, pores and congestion are your main signs. The Metal session focuses on smoothness and clarity.",
-    "Your skin is asking to be restored. Dark circles, hollows and deeper signs of ageing are your main signs. The Water session works on these and seals in what the series has built.",
-]
-
-
-def five_element_quiz():
-    n = len(FEQ_QUESTIONS)
-    steps = []
-    for i, (q, opts) in enumerate(FEQ_QUESTIONS):
-        bs = "".join(f'<button type="button" class="feq-opt" data-el="{el}">{e(t)}</button>' for t, el in opts)
-        steps.append(f'<div class="feq-q"{"" if i == 0 else " hidden"}><p class="feq-n">Question {i + 1} of {n}</p>'
-                     f'<h4 class="feq-qt" tabindex="-1">{e(q)}</h4><div class="feq-opts" role="group" aria-label="{e(q)}">{bs}</div></div>')
-    results = []
-    for i, (el, theme, colour, focus, text, serum) in enumerate(FIVE_ELEMENTS):
-        results.append(f'<div class="feq-r" data-el="{i}" style="--tone:{colour}" hidden><p class="feq-n">Your leading element</p>'
-                       f'<h4 class="feq-rn" tabindex="-1">{el} <span>{e(theme)}</span></h4><p class="ef">{e(focus)}</p>'
-                       f'<p>{e(FEQ_RESULTS[i])}</p><p class="serum"><strong>Signature serum:</strong> {e(serum)}</p></div>')
-    signup = ""
-    if not (LAUNCH and not SIGNUP):
-        demo = "" if SIGNUP else " data-demo"
-        action = e(SIGNUP) if SIGNUP else "#"
-        signup = f"""<form class="signup feq-signup" id="fe-signup" method="post" action="{action}"{demo}>
-      <p class="feq-lbl"><label for="fe-email">Want Five Element tips and offers? Join the newsletter, and we'll note your element.</label></p>
-      <div class="grow"><input id="fe-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
-        <button class="btn" type="submit">Sign up</button></div>
-      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <input type="hidden" name="source" value="five-element">
-      <p class="gmsg" role="status" aria-live="polite"></p>
-    </form>"""
-    dots = "".join("<li></li>" for _ in range(n))
-    return f"""<div class="feq" id="fe-quiz" hidden>
-    <p class="eyebrow">Quiz</p>
-    <h3>Find your leading element</h3>
-    <p class="feq-intro">Five quick questions about your skin. It takes under a minute.</p>
-    <ol class="feq-dots" aria-hidden="true">{dots}</ol>
-    {"".join(steps)}
-    <div class="feq-results" hidden>
-      {"".join(results)}
-      <p class="feq-all">Your series covers all five elements, from Wood to Water. Your leading element is the session likely to matter most to you, and we'll talk it through at your first visit.</p>
-      <p class="feq-acts">{book_btn("Book your first session")}<a class="btn ghost" href="#five-element" data-feq-see>See your session</a></p>
-      {signup}
-    </div>
-    <p class="feq-nav"><button type="button" class="glink" data-feq-back hidden>Back</button><button type="button" class="glink" data-feq-restart hidden>Take it again</button></p>
-  </div>
-  <script src="/assets/fe-quiz.js" defer></script>{'<script src="/assets/signup.js" defer></script>' if signup else ''}"""
-
-
-def five_element_section(slug):
-    """The Five Element Rejuvenation series, one section per element. No prices (fees stay on the service pages)."""
-    if slug == "medical-microneedling-session":
-        intro = ("Our signature microneedling series: five sessions, one for each element of Chinese medicine. "
-                 "Each session has its own focus and its own signature serum, mixed into a hyaluronic acid base in the clinic "
-                 "and carried into the skin during treatment. Together they treat your face as a whole, the way Chinese medicine treats the whole person.")
-        pace = ("The series follows the generating cycle, from Wood to Water, so each session builds on the one before. "
-                "Microneedling sessions are spaced about four weeks apart, so the full series takes around five months.")
-    else:
-        intro = ("The same five-element approach as a gentler series, with no downtime. Five sessions, one for each element of Chinese medicine, "
-                 "each with its own focus and its own signature serum, mixed into a hyaluronic acid base in the clinic and carried into the skin's surface.")
-        pace = ("The series follows the generating cycle, from Wood to Water, so each session builds on the one before. "
-                "Nanoneedling sessions can be closer together than microneedling, and your plan sets the pace.")
-    rows = []
-    for i, (el, theme, colour, focus, text, serum) in enumerate(FIVE_ELEMENTS, 1):
-        rows.append(
-            f'<li class="element" id="fe-s{i}" style="--tone:{colour}"><div><p class="es">Session {i}</p><h3 class="en">{el}</h3><p class="et">{e(theme)}</p></div>'
-            f'<div><p class="ef">{e(focus)}</p><p>{e(text)}</p><p class="serum"><strong>Signature serum:</strong> {e(serum)}</p></div></li>')
-    return f"""<section class="sand" id="five-element" aria-labelledby="fe-h"><div class="wrap">
-  <p class="eyebrow">Signature series</p>
-  <h2 id="fe-h">{e(SERIES)}</h2>
-  <p>{e(intro)}</p>
-  <p>{e(pace)}</p>
-  {five_element_quiz()}
-  <ol class="elements">{"".join(rows)}</ol>
-  <p class="fine" style="margin-top:1.4rem">Your first session includes an intake and a plan. Individual results vary.</p>
-  <p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.2rem">{book_btn("Book your first session")} <a class="btn ghost" href="/service-page/{slug}">Series fee and details</a></p>
-</div></section>"""
 
 
 # ------------------------------------------------------------------ blog posts
@@ -1111,9 +976,177 @@ def service_pages():
 """
 
 
+# ------------------------------------------------------------------ rich guide pages (microneedling, nanoneedling)
+STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>'
+TEA_ALT = "The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall"
+PORTRAIT_ALT = "Roozbeh Ghobadpour, L.Ac., licensed acupuncturist at Full Lotus Health in Burbank"
+
+
+def g_hero(tone, eyebrow, h1, lede, chips, art_svg):
+    cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in [("Home", "/"), ("Natural beauty", "/treatments")]) + "</p>"
+    ch = "".join(f"<li>{e(c)}</li>" for c in chips)
+    return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid">
+<div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><p class="eyebrow">{e(eyebrow)}</p><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
+<p class="g-actions">{book_btn("Book a treatment")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>
+<ul class="chips">{ch}</ul></div>
+<div class="g-hero-art">{art_svg}</div></div></div>"""
+
+
+def g_head(eyebrow, h2, lead=None):
+    lead_html = '<p class="g-lead">' + lead + "</p>" if lead else ""
+    return f'<header class="g-head"><p class="eyebrow">{e(eyebrow)}</p><h2>{e(h2)}</h2>{lead_html}</header>'
+
+
+def g_cards(items):
+    out = []
+    for ic, title, text in items:
+        body = "<p>" + text + "</p>" if text else ""
+        out.append(f'<li class="g-card">{art.icon(ic)}<h3>{e(title)}</h3>{body}</li>')
+    return '<ul class="g-cards">' + "".join(out) + "</ul>"
+
+
+def g_steps(items):
+    out = "".join(f'<li>{art.icon(ic, 44)}<div><h3>{e(t)}</h3><p>{tx}</p></div></li>' for ic, t, tx in items)
+    return f'<ol class="g-how">{out}</ol>'
+
+
+def g_timeline(items):
+    out = "".join(f'<li>{art.icon(ic, 44)}<h3>{e(t)}</h3><p>{tx}</p></li>' for ic, t, tx in items)
+    return f'<ol class="g-time">{out}</ol>'
+
+
+def g_quotes(slug, extra_quote_slugs=()):
+    qs = []
+    for s in (slug,) + tuple(extra_quote_slugs):
+        qs += [(it[1], it[2]) for it in BY_SLUG[s]["body"] if it[0] == "q"]
+    rating = f'<p class="pb-rating g-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>'
+    return quotes(qs) + rating + '<p class="fine">Individual results vary.</p>'
+
+
+def g_compare(current):
+    def card(kind, title, line, href, label):
+        here = " is-here" if kind == current else ""
+        tag = '<span class="g-here">You are here</span>' if kind == current else ""
+        return (f'<div class="g-cmp{here}"><div class="g-cmp-art">{art.depth(kind)}</div><h3>{e(title)}{tag}</h3><p>{line}</p>'
+                f'<p><a href="{href}">{e(label)}</a></p></div>')
+    return ('<div class="g-compare">'
+            + card("nano", "Nanoneedling", "A gentle surface treatment for glow and hydration, with no downtime. Sessions are 60 minutes.", "/nanoneedling-burbank", "Nanoneedling in Burbank")
+            + card("micro", "Microneedling", "Works deeper, for scarring, lines, and thinning hair. Sessions are 90 minutes, with redness that usually settles in a day or two.", "/microneedling-burbank", "Microneedling in Burbank")
+            + '</div>')
+
+
+def g_why(deep, points, treat_photo=""):
+    pts = "".join(f'<li>{art.icon(ic, 40)}<div><h3>{e(t)}</h3><p>{tx}</p></div></li>' for ic, t, tx in points)
+    return f"""<section class="{deep}"><div class="wrap g-why">
+<div class="g-why-photo">{photo("roozbeh", PORTRAIT_ALT)}</div>
+<div class="g-why-text"><p class="eyebrow">Why Full Lotus Health</p><h2>A licensed acupuncturist, treating your skin as part of you</h2>
+<ul class="g-points">{pts}</ul>
+<p class="g-sign">Roozbeh Ghobadpour, L.Ac. &middot; California license 17220 &middot; over 10 years of clinical experience</p></div>
+</div></section>"""
+
+
+def g_session(wash, head, steps, after_html, slug_photo, photo_alt):
+    treat = photo(slug_photo, photo_alt)
+    return f"""<section class="{wash}"><div class="wrap">
+{head}
+{g_timeline(steps)}
+<div class="g-after"><div>{after_html}</div><div class="g-after-photos">{treat}{photo("hero", TEA_ALT)}<p class="fine g-cap">Visits are unhurried and often end with tea.</p></div></div>
+</div></section>"""
+
+
+def g_related(svc, links):
+    lis = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in links)
+    return f"""<section><div class="wrap g-related"><div><h2 class="h3">Fees and booking</h2>
+<p>Fees, session length and booking are on the <a href="/service-page/{svc['slug']}">{e(svc['name'])}</a> page. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>. New patients, please fill out the <a href="{INTAKE_HREF}">intake form</a> before your first visit.</p></div>
+<div><h2 class="h3">Also see</h2><ul class="checks">{lis}<li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
+
+
+def micro_page(where):
+    mi = BY_SLUG["medical-microneedling-session"]
+    hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
+        "Medical microneedling for skin and hair, with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
+        ["90-minute sessions", "Custom herbal serums", "Red light therapy included", "Licensed acupuncturist"], art.skin_layers())
+    how = f"""<section><div class="wrap">
+{g_head("How it works", "Tiny channels, then your skin does the rest")}
+{g_steps([("needle", "Fine channels", "Fine, sterile, medical-grade needles create tiny controlled channels in the skin."),
+          ("heart", "Your skin repairs", "This prompts your skin's natural repair process."),
+          ("spark", "Collagen builds", "Your skin builds new collagen over the following weeks. Most people do a series of sessions spaced several weeks apart.")])}
+</div></section>"""
+    help_ = f"""<section class="sand"><div class="wrap">{g_head("What it can help with", "Skin and hair concerns we treat")}
+{g_cards([("lines", "Fine lines and wrinkles", "Including crow's feet."), ("scar", "Acne scarring", None), ("texture", "Uneven texture and tone", None),
+          ("pores", "Enlarged pores", None), ("hair", "Thinning hair", "Along the hairline, with scalp microneedling."),
+          ("chat", "Not sure it fits?", f'<a href="sms:{PHONE_TEL}">Text a question</a> or book a session and we will decide together.')])}
+<p class="g-cta-row">{book_btn("Book a treatment")}</p></div></section>"""
+    why = g_why("deep-m", [("bottle", "Custom herbal serums", "Chosen for your skin, and absorbed through the open channels during treatment."),
+                           ("light", "Red light therapy included", "Part of every session."),
+                           ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
+    compare = f'<section><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
+    session = g_session("wash-c", g_head("Your visit", "A session, start to finish", "Sessions are 90 minutes, and your first visit includes an intake and a treatment plan."),
+        [("intake", "Intake and plan", "Your first visit starts with an intake and a treatment plan."),
+         ("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
+         ("needle", "Treatment", "Microneedling with custom Chinese herbal serums chosen for your skin."),
+         ("light", "Red light therapy", "Included with every session.")],
+        "<h3>Afterward</h3><p>Some redness, similar to a mild sunburn, usually settles within a day or two.</p><p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>",
+        "microneedling", "A microneedling treatment at Full Lotus Health in Burbank")
+    say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("medical-microneedling-session")}</div></section>'
+    faq = f"""<section class="sand"><div class="wrap g-faq">{faq_block([
+  ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
+  ("How long does redness last?", "Expect some redness afterward, similar to a mild sunburn. It usually settles within a day or two."),
+  ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
+  ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered. Individual results vary."),
+  ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
+  ("Microneedling or nanoneedling?", "Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
+  ("Where is the clinic?", where),
+])}</div></section>"""
+    return (hero_html + how + help_ + why + compare + session + say + faq,
+            g_related(mi, [("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
+
+
+def nano_page(where):
+    na = BY_SLUG["facial-nano-needling"]
+    hero_html = g_hero("l", "Nanoneedling · Burbank", "Nanoneedling in Burbank, CA",
+        "A gentle facial with custom Chinese herbal serums and red light therapy. No downtime.",
+        ["60-minute sessions", "No downtime", "Custom herbal serums", "Red light therapy included"], art.nano_layers())
+    how = f"""<section><div class="wrap">
+{g_head("How it works", "Gentle at the surface, absorbed where you need it")}
+{g_steps([("needle", "Surface channels", "Ultra-fine nano-tips open microscopic channels in the very surface of the skin, without going deeper."),
+          ("drop", "Serum absorbs", "Hyaluronic acid, vitamins, and custom Chinese herbal serums absorb where your skin needs them."),
+          ("glow", "A brighter look", "Skin often looks brighter right away and keeps improving over the following days.")])}
+</div></section>"""
+    help_ = f"""<section class="wash-l"><div class="wrap">{g_head("Who it suits", "Nanoneedling is a good fit for")}
+{g_cards([("drop", "Dull, dehydrated, or tired-looking skin", None), ("lines", "Fine lines and uneven texture", None),
+          ("leaf", "Sensitive skin", "Skin that doesn't do well with stronger treatments."), ("spark", "A glow before an event", None),
+          ("repeat", "Maintenance", "Between microneedling sessions."),
+          ("chat", "Not sure it fits?", f'<a href="sms:{PHONE_TEL}">Text a question</a> or book a session and we will decide together.')])}
+<p class="g-cta-row">{book_btn("Book a treatment")}</p></div></section>"""
+    why = g_why("deep-l", [("bottle", "Custom herbal serums", "Chosen for your skin."),
+                           ("light", "Red light therapy included", "Part of every session."),
+                           ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
+    compare = f'<section><div class="wrap">{g_head("Which treatment", "Nanoneedling or microneedling?")}{g_compare("nano")}</div></section>'
+    session = g_session("sand", g_head("Your visit", "What happens at Full Lotus Health", "Sessions are 60 minutes."),
+        [("bottle", "Serums chosen", "Roozbeh chooses the herbal serums for your skin."),
+         ("needle", "Nano-tips", "A gentle treatment at the surface of the skin."),
+         ("light", "Red light therapy", "Included with every session."),
+         ("tea", "Back to your day", "There is no downtime, so you can go straight back to your day.")],
+        "<h3>It works on its own or as a series</h3><p>Nanoneedling suits a one-off glow and also works as a regular series. Your first visit starts the conversation about what fits your skin.</p>",
+        "nanoneedling", "A nanoneedling facial at Full Lotus Health in Burbank")
+    say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("facial-nano-needling")}</div></section>'
+    faq = f"""<section class="wash-l"><div class="wrap g-faq">{faq_block([
+  ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
+  ("How long is a session?", "Sixty minutes."),
+  ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
+  ("Nanoneedling or microneedling?", "Nanoneedling is a surface-level treatment for glow and hydration. <a href=\"/microneedling-burbank\">Microneedling</a> works deeper, for scarring, lines, and thinning hair. If you're not sure which fits, book a session and we'll decide together, or text a question."),
+  ("Can I do nanoneedling as a series?", "Yes. It works well on its own or as a regular series."),
+  ("Where is the clinic?", where),
+])}</div></section>"""
+    return (hero_html + how + help_ + why + compare + session + say + faq,
+            g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
+
+
+
 def landing_pages():
     """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages).
-    The Five Element Rejuvenation series (pg["extra"]) sits at the top, right under the page title."""
+    Microneedling and nanoneedling use the rich layout (micro_page, nano_page); cosmetic acupuncture uses the plain one."""
     mi, na, li = BY_SLUG["medical-microneedling-session"], BY_SLUG["facial-nano-needling"], BY_SLUG["full-lotus-lift"]
     def link(slug, label=None):
         return f'<a href="/service-page/{slug}">{e(label or BY_SLUG[slug]["name"])}</a>'
@@ -1122,59 +1155,12 @@ def landing_pages():
       dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
            title="Microneedling Burbank: What to Expect | Full Lotus Health",
            meta="Microneedling in Burbank for fine lines, acne scars, texture, and thinning hair. What a 90-minute session involves, and how a series works.",
-           h1="Microneedling in Burbank, CA",
-           lede="Medical microneedling for skin and hair, with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
-           body=f"""
-<h2>What microneedling does</h2>
-<p>Microneedling, also called collagen induction therapy, uses fine, sterile, medical-grade needles to create tiny controlled channels in the skin. This prompts your skin's natural repair process, which builds new collagen over the following weeks.</p>
-<h2>What it can help with</h2>
-<ul class="checks"><li>Fine lines and wrinkles, including crow's feet</li><li>Acne scarring</li><li>Uneven texture and tone</li><li>Enlarged pores</li><li>Thinning hair along the hairline (scalp microneedling)</li></ul>
-<h2>Why come to Full Lotus Health</h2>
-<p>Your treatment is performed by Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience. Every session uses custom Chinese herbal serums chosen for your skin, and red light therapy is included. Because he is trained in Chinese medicine, your skin is looked at as part of your whole health, not in isolation.</p>
-<p>Microneedling is also offered as the <a href="#five-element">{e(SERIES)}</a> series: five sessions, one for each element of Chinese medicine, each with its own signature serum.</p>
-{photo("microneedling", "A microneedling treatment at Full Lotus Health in Burbank")}
-<h2>A session, start to finish</h2>
-<p>Sessions are 90 minutes, and your first visit includes an intake and a treatment plan. A numbing cream goes on first, and most people find the treatment comfortable. Some redness afterward, similar to a mild sunburn, usually settles within a day or two.</p>
-<p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>
-<h2>What patients say</h2>
-<div class="quotes" style="columns:1"><blockquote><p>I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.</p><cite>Rosa</cite></blockquote></div>
-<p class="fine">Individual results vary.</p>
-{faq_block([
-  ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
-  ("How long does redness last?", "Expect some redness afterward, similar to a mild sunburn. It usually settles within a day or two."),
-  ("How many sessions will I need?", f"Results build over time, and most people do a series of sessions spaced several weeks apart. The five-session <a href=\"#five-element\">{e(SERIES)}</a> series is the simplest way to do it. Your first visit includes a treatment plan."),
-  ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered. Individual results vary."),
-  ("Microneedling or nanoneedling?", f"Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
-  ("Where is the clinic?", where),
-])}
-""", extra=five_element_section("medical-microneedling-session"),
+           h1="Microneedling in Burbank, CA", rich=micro_page(where),
            more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
            title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
            meta="Nanoneedling facial in Burbank: a gentle, no-downtime surface treatment with herbal serums and red light therapy for glowing, hydrated skin.",
-           h1="Nanoneedling in Burbank, CA",
-           lede="A gentle facial with custom Chinese herbal serums and red light therapy. No downtime.",
-           body=f"""
-<h2>What nanoneedling is</h2>
-<p>Nanoneedling is a gentle alternative to microneedling. It uses ultra-fine nano-tips that open microscopic channels in the very surface of the skin, without going deeper. Those channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb where your skin needs them.</p>
-<h2>Who it suits</h2>
-<ul class="checks"><li>Dull, dehydrated, or tired-looking skin</li><li>Fine lines and uneven texture</li><li>Sensitive skin that doesn't do well with stronger treatments</li><li>A glow before an event</li><li>Maintenance between microneedling sessions</li></ul>
-<h2>What happens at Full Lotus Health</h2>
-<p>Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience, chooses the herbal serums for your skin, and red light therapy is included. Sessions are 60 minutes.</p>
-<p>There's no downtime, so you can go straight back to your day. Skin often looks brighter right away and keeps improving over the following days. It works well on its own or as a regular series.</p>
-<p>Nanoneedling is also offered as the <a href="#five-element">{e(SERIES)}</a> series: five sessions, one for each element of Chinese medicine, each with its own signature serum.</p>
-{photo("nanoneedling", "A nanoneedling facial at Full Lotus Health in Burbank")}
-<h2>What patients say</h2>
-<div class="quotes" style="columns:1"><blockquote><p>My skin feels smoother and firmer. (And neither hurt.)</p><cite>Rosa</cite></blockquote></div>
-<p class="fine">Individual results vary.</p>
-{faq_block([
-  ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
-  ("How long is a session?", "Sixty minutes."),
-  ("Nanoneedling or microneedling?", f"Nanoneedling is a surface-level treatment for glow and hydration. <a href=\"/microneedling-burbank\">Microneedling</a> works deeper, for scarring, lines, and thinning hair. If you're not sure which fits, book a session and we'll decide together, or text a question."),
-  ("Can I do nanoneedling as a series?", f"Yes. It works well on its own or as a regular series, and the five-session <a href=\"#five-element\">{e(SERIES)}</a> series is the simplest way to do it."),
-  ("Where is the clinic?", where),
-])}
-""", extra=five_element_section("facial-nano-needling"),
+           h1="Nanoneedling in Burbank, CA", rich=nano_page(where),
            more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/cosmetic-acupuncture-burbank", file="cosmetic-acupuncture-burbank.html", svc=li, tone="n",
            title="Cosmetic Acupuncture Burbank: Facial Lift | Full Lotus Health",
@@ -1198,6 +1184,12 @@ def landing_pages():
     ]
     for pg in pages:
         svc = pg["svc"]
+        if "rich" in pg:
+            main = pg["rich"][0] + pg["rich"][1] + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
+            OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
+                ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
+                    breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
+            continue
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
         main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + pg.get('extra', '') + f"""
 <section><div class="wrap split">
