@@ -1034,11 +1034,11 @@ def g_compare(current):
 
 
 PEELS = ("Chemical peels", "",
-    "A fresher-looking surface.",
+    "A fresher surface.",
     "Burning, peeling and sun sensitivity. Can darken skin.")
 LASER = ("Laser resurfacing", "",
     "Resurfaces skin with heat.",
-    "Heat damage, real downtime, and a risk of burns and discoloration.")
+    "Heat damage, downtime, and a risk of burns and discoloration.")
 INJECT = ("Botox and fillers", "",
     "Smooths lines for a few months.",
     "Wears off, needs repeating, and does nothing for the skin itself.")
@@ -1061,11 +1061,11 @@ def g_table(title, lead, us, others):
 
 
 MICRO_TABLE = ("Microneedling", "",
-    "Deeper penetration into the skin, which stimulates collagen production. Profound absorption of nourishing herbal serums. Reduces wrinkles and fine lines and triggers anti-aging.",
+    "Reaches deep to stimulate collagen, softening wrinkles and fine lines. Nourishing herbal serums absorb profoundly. Natural anti-aging, from within.",
     "A day or two of redness.")
 NANO_TABLE = ("Nanoneedling", "",
-    "Herbal serums that deeply nourish the skin and support collagen growth naturally. Better absorption, a natural glow, no downtime.",
-    "Nothing to recover from. Gentle results that build with visits.")
+    "Nourishing herbal serums that absorb beautifully and support collagen. A natural glow, with no downtime.",
+    "Nothing to recover from. Results build gently with each visit.")
 
 
 def g_why(deep, points, treat_photo=""):
@@ -1163,7 +1163,7 @@ def nano_page(where):
     why = g_why("deep-l", [("bottle", "Custom herbal serums", "Chosen for your skin."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
-    table = f'<section><div class="wrap">{g_table("A natural path to glowing skin", "Nourish your skin from the surface in, instead of stripping, heating or injecting it.", NANO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
+    table = f'<section><div class="wrap">{g_table("A natural path to glowing skin", "Nourish your skin naturally, instead of stripping, heating or injecting it.", NANO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
     compare = f'<section class="wash-l"><div class="wrap">{g_head("Which treatment", "Nanoneedling or microneedling?")}{g_compare("nano")}</div></section>'
     session = g_session("sand", g_head("Your visit", "What happens at Full Lotus Health", "Sessions are 60 minutes."),
         [("bottle", "Serums chosen", "Roozbeh chooses the herbal serums for your skin."),
