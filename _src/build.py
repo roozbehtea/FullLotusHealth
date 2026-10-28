@@ -1069,7 +1069,7 @@ def g_table(title, lead, us, others):
 
 MICRO_TABLE = ("Microneedling",
     "Fine needles create tiny channels, and the skin repairs itself",
-    "Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair. Includes custom herbal serums and red light.",
+    "Deep rejuvenation that builds your own collagen and elastin, for firmer, smoother, more youthful-looking skin. Nourishes with custom herbal serums and red light. Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair.",
     "Redness and swelling, usually a day or two and sometimes longer. Bruising, and rarely infection or scarring. Results build over several sessions. Not suitable for everyone, for example active acne, blood thinners, or a tendency to raised scars, so we review your health first.")
 NANO_TABLE = ("Nanoneedling",
     "Ultra-fine tips work at the very surface of the skin",
@@ -1106,13 +1106,20 @@ def g_related(svc, links):
 def micro_page(where):
     mi = BY_SLUG["medical-microneedling-session"]
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
-        "Medical microneedling for skin and hair, with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
-        ["90-minute sessions", "Custom herbal serums", "Red light therapy included", "Licensed acupuncturist"], art.skin_layers())
+        "Deep rejuvenation for your face. Medical microneedling builds your skin's own collagen, softens the look of lines and scars, and nourishes the skin with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
+        ["Builds collagen", "Natural anti-aging", "Custom herbal serums", "Red light therapy included"], art.skin_layers())
+    pillars = f"""<section class="wash-c"><div class="wrap">
+{g_head("Why microneedling", "Natural anti-aging, from deep within the skin", "Instead of adding something to your face, microneedling asks your skin to renew itself.")}
+{g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
+          ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
+          ("leaf", "Nourished with herbs", "Custom Chinese herbal serums, chosen for your skin, are carried in through the fresh channels. Red light therapy is part of every session.")])}
+<p class="g-cta-row">{book_btn("Book a treatment")}</p><p class="fine">Individual results vary.</p>
+</div></section>"""
     how = f"""<section><div class="wrap">
-{g_head("How it works", "Tiny channels, then your skin does the rest")}
-{g_steps([("needle", "Fine channels", "Fine, sterile, medical-grade needles create tiny controlled channels in the skin."),
-          ("heart", "Your skin repairs", "This prompts your skin's natural repair process."),
-          ("spark", "Collagen builds", "Your skin builds new collagen over the following weeks. Most people do a series of sessions spaced several weeks apart.")])}
+{g_head("How it works", "Wake up your skin's own renewal")}
+{g_steps([("needle", "Fine channels, rich nourishment", "Fine, sterile, medical-grade needles create tiny controlled channels in the skin, and custom herbal serums are carried in."),
+          ("heart", "Your skin repairs", "This switches on your skin's natural repair process."),
+          ("spark", "Collagen builds", "Over the following weeks your skin builds new collagen and elastin, so it looks firmer, smoother and more youthful. Most people do a series of sessions spaced several weeks apart.")])}
 </div></section>"""
     help_ = f"""<section class="sand"><div class="wrap">{g_head("What it can help with", "Skin and hair concerns we treat")}
 {g_cards([("lines", "Fine lines and wrinkles", "Including crow's feet."), ("scar", "Acne scarring", None), ("texture", "Uneven texture and tone", None),
@@ -1141,7 +1148,7 @@ def micro_page(where):
   ("Microneedling or nanoneedling?", "Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
   ("Where is the clinic?", where),
 ])}</div></section>"""
-    return (hero_html + how + help_ + why + table + compare + session + say + faq,
+    return (hero_html + pillars + how + help_ + why + table + compare + session + say + faq,
             g_related(mi, [("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
