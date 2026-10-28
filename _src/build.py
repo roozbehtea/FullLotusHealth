@@ -1117,7 +1117,7 @@ def g_offer(name, line):
 <button class="g-offer-x" type="button" data-close aria-label="Close">&times;</button>
 <div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
 <p class="eyebrow">New patients</p><h2 class="h3" id="offer-pop-title" tabindex="-1" autofocus>20% off your first {e(name)}</h2><p>{line}</p>
-<div class="g-offer-cta">{book_btn("Book your first visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
+<div class="g-offer-cta">{book_btn("Book your first visit")}</div>
 {offer_email()}
 <p class="g-offer-later"><button type="button" data-close>Maybe later</button></p>
 </dialog><script src="/assets/offer-pop.js" defer></script><script src="/assets/signup.js" defer></script>"""
