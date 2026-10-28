@@ -1095,11 +1095,14 @@ def g_related(svc, links):
 
 
 def g_offer(name, line):
-    return f"""<section class="g-offer-sec"><div class="wrap"><div class="g-offer">
+    """First-visit offer, shown as a pop-up by /assets/offer-pop.js (no data collected)."""
+    return f"""<dialog class="g-offer-pop" id="offer-pop" aria-labelledby="offer-pop-title">
+<button class="g-offer-x" type="button" data-close aria-label="Close">&times;</button>
 <div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
-<div class="g-offer-text"><p class="eyebrow">New patients</p><h2 class="h3">20% off your first {e(name)}</h2><p>{line}</p></div>
+<p class="eyebrow">New patients</p><h2 class="h3" id="offer-pop-title" tabindex="-1" autofocus>20% off your first {e(name)}</h2><p>{line}</p>
 <div class="g-offer-cta">{book_btn("Book your first visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
-</div></div></section>"""
+<p class="g-offer-later"><button type="button" data-close>Maybe later</button></p>
+</dialog><script src="/assets/offer-pop.js" defer></script>"""
 
 
 def micro_page(where):
@@ -1148,7 +1151,7 @@ def micro_page(where):
   ("Where is the clinic?", where),
 ])}</div></section>"""
     offer = g_offer("microneedling session", "Deep rejuvenation, nourishing herbal serums and red light therapy, at a welcome price for your first visit.")
-    return (hero_html + offer + pillars + how + help_ + why + table + compare + session + say + faq,
+    return (hero_html + pillars + how + help_ + why + table + compare + session + say + faq + offer,
             g_related(mi, [("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
@@ -1191,7 +1194,7 @@ def nano_page(where):
   ("Where is the clinic?", where),
 ])}</div></section>"""
     offer = g_offer("nanoneedling facial", "Nourishing herbal serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
-    return (hero_html + offer + how + help_ + why + table + compare + session + say + faq,
+    return (hero_html + how + help_ + why + table + compare + session + say + faq + offer,
             g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
