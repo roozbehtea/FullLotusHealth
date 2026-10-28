@@ -1061,7 +1061,7 @@ def g_table(title, lead, us, others):
 
 
 MICRO_TABLE = ("Microneedling", "",
-    "Deep, natural rejuvenation. Herbal serums that deeply nourish the skin and support collagen growth naturally.",
+    "Deeper penetration into the skin, which stimulates collagen production. Profound absorption of nourishing herbal serums. Reduces wrinkles and fine lines and triggers anti-aging.",
     "A day or two of redness.")
 NANO_TABLE = ("Nanoneedling", "",
     "Herbal serums that deeply nourish the skin and support collagen growth naturally. Better absorption, a natural glow, no downtime.",
