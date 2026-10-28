@@ -758,10 +758,9 @@ def acupuncture():
 <section><div class="wrap">
   <p>{book_btn("Book your session")}</p>
   <h2 style="margin-top:2.2rem">Types of acupuncture care</h2>
-  <div class="paths four" style="margin-top:1.2rem">
+  <div class="paths" style="margin-top:1.2rem">
     <div class="path"><h3>Traditional acupuncture</h3><p>A precise modality to balance the body's vital energy, addressing chronic pain, digestive issues, and nervous system health.</p></div>
     <div class="path"><h3>Cosmetic acupuncture</h3><p>Unlock natural radiance and skin vitality using constitutional techniques for rejuvenation and lasting facial glow.</p><p><a href="/service-page/full-lotus-lift">Cosmetic acupuncture in Burbank</a></p></div>
-    <div class="path"><h3>Fertility support</h3><p>Acupuncture and herbal medicine to support you while you try to conceive, naturally or alongside IVF and IUI, working with your doctor.</p><p><a href="/fertility-acupuncture-burbank">Fertility acupuncture in Burbank</a></p></div>
     <div class="path"><h3>Recovery and wellness</h3><p>Integrated care designed to address travel fatigue, jet lag, and immune depletion through advanced restorative protocols.</p></div>
   </div>
 </div></section>
@@ -811,7 +810,6 @@ def consult():
       <li>Chronic gut issues and IBS</li><li>Hormonal imbalance</li><li>Chronic fatigue and low energy</li>
       <li>Stress and nervous system dysregulation</li>
       <li><a href="/skin-conditions-burbank">Skin conditions</a> such as acne, eczema, and psoriasis</li>
-      <li><a href="/fertility-acupuncture-burbank">Fertility</a>, while trying naturally or alongside IVF</li>
       <li>Conventional medicine that hasn't brought lasting results</li>
     </ul>
   </div>
@@ -1178,7 +1176,7 @@ def landing_pages():
 
 
 def condition_pages():
-    """Skin conditions and fertility. No prices (fees stay on the service pages); visits book as acupuncture or an online consultation."""
+    """Skin conditions. No prices (fees stay on the service pages); visits book as acupuncture or an online consultation."""
     where = f"Full Lotus Health is at {ADDR_LINE}, convenient to Glendale, Toluca Lake, North Hollywood, and Studio City."
     acu, onl = "acupuncture-initial-treatment", "initial-consultation-online"
     pages = [
@@ -1212,35 +1210,6 @@ def condition_pages():
   ("Where is the clinic?", where),
 ])}
 """, more=[("/consult-heal", "Chinese herbal medicine consultations"), ("/microneedling-burbank", "Microneedling in Burbank"), ("/treatments", "All natural beauty treatments")]),
-      dict(path="/fertility-acupuncture-burbank", file="fertility-acupuncture-burbank.html", tone="m",
-           name="Fertility acupuncture",
-           crumbs=[("Home", "/"), ("Acupuncture", "/acupuncture")],
-           title="Fertility Acupuncture in Burbank, CA | Full Lotus Health",
-           meta="Fertility acupuncture and Chinese herbal medicine in Burbank, alongside your doctor, IVF, or IUI: support for your cycle, stress, and sleep while you try to conceive.",
-           h1="Fertility acupuncture in Burbank, CA",
-           lede="Acupuncture and Chinese herbal medicine to support you while you try to conceive, naturally or alongside IVF and IUI.",
-           start=f'Start with an <a href="/service-page/{acu}">acupuncture initial treatment</a>. The fee is on that page.',
-           body=f"""
-<h2>Support, alongside your doctor</h2>
-<p>Fertility care at Full Lotus Health is support, not a replacement for your doctor or fertility clinic. Many people use acupuncture and Chinese medicine while trying naturally, or alongside IVF or IUI, to support their cycle, sleep, and stress through what can be a demanding time.</p>
-<h2>What we can help with</h2>
-<ul class="checks"><li>Preparing your body in the months before trying, or before an IVF cycle</li><li>Irregular or painful cycles</li><li>Stress, sleep, and the emotional weight of trying to conceive</li><li>Support around IVF and IUI, timed to your cycle</li><li>Partners too: fertility is a two-person picture</li></ul>
-<h2>How it works</h2>
-<ol class="steps">
-  <li><h3>A detailed intake</h3><p>We go through your health history, your cycle, and any testing and treatment so far. Bring recent test results to your first visit if you have them.</p></li>
-  <li><h3>A plan for your timeline</h3><p>Usually regular acupuncture, often weekly, with herbal medicine where it fits. If you're doing IVF, sessions are planned around your clinic's dates.</p></li>
-  <li><h3>Steady support</h3><p>Visits are unhurried and often end with tea. It is a calm place to come back to while you go through the process.</p></li>
-</ol>
-<h2>What we won't promise</h2>
-<p>No one can honestly promise a pregnancy, and we won't. What we offer is careful, consistent support that works with your medical care, not against it.</p>
-<p class="fine">Individual results vary.</p>
-{faq_block([
-  ("Can I have acupuncture during IVF?", "Yes, many people do. Sessions are planned around your clinic's schedule. Please let your fertility clinic know you're having acupuncture."),
-  ("Can I take Chinese herbs during IVF?", "Only with your fertility clinic's agreement. Many clinics ask patients to pause herbs during a cycle, and we follow their guidance."),
-  ("How often will I come in?", "Often weekly, with extra sessions timed to your cycle or IVF dates. Your plan is set at your first visit."),
-  ("Where is the clinic?", where),
-])}
-""", more=[("/acupuncture", "Acupuncture in Burbank"), ("/consult-heal", "Chinese herbal medicine consultations")]),
     ]
     for pg in pages:
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
@@ -1268,7 +1237,7 @@ def notfound():
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank", "/fertility-acupuncture-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
