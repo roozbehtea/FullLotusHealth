@@ -1072,9 +1072,9 @@ MICRO_TABLE = ("Microneedling",
     "Deep rejuvenation that builds your own collagen and elastin, for firmer, smoother, more youthful-looking skin. Nourishes with custom herbal serums and red light. Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair.",
     "Redness and swelling, usually a day or two and sometimes longer. Bruising, and rarely infection or scarring. Results build over several sessions. Not suitable for everyone, for example active acne, blood thinners, or a tendency to raised scars, so we review your health first.")
 NANO_TABLE = ("Nanoneedling",
-    "Ultra-fine tips work at the very surface of the skin",
-    "The gentlest option here, with no downtime. Suits dull, dehydrated or sensitive skin, and gives a glow before an event. Includes custom herbal serums and red light.",
-    "Works at the surface, so it is not the choice for deeper scars or lines. Results are subtle and build with repeat visits. Some people notice brief mild pinkness or sensitivity.")
+    "Ultra-fine tips carry nourishment into the surface of the skin",
+    "Deeply nourishing, with no downtime. Hyaluronic acid, vitamins and custom Chinese herbal serums are carried into the skin's surface, so skin looks brighter, more hydrated and radiant, often right away and improving over the following days. Gentle enough for sensitive skin, and ideal for a glow before an event. Red light therapy is included, and you go straight back to your day.",
+    "Works at the surface, so deeper scars and lines call for microneedling. Results are gentler and build with regular visits. Some people notice brief mild pinkness.")
 
 
 def g_why(deep, points, treat_photo=""):
