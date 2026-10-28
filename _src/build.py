@@ -669,9 +669,9 @@ def home():
     <figure class="hh-photo"><img src="/assets/photos/hero.jpg" width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
     <div class="hh-panel">
       <div class="band" aria-hidden="true"></div>
-      <p class="eyebrow">Chinese medicine clinic &middot; Burbank</p>
-      <h1 id="home-h1">Acupuncture and skin treatments in Burbank.</h1>
-      <p class="lede">The calmest hour of your week: acupuncture, herbal medicine, microneedling and facials from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
+      <p class="eyebrow">Acupuncture &amp; skin treatments &middot; Burbank</p>
+      <h1 id="home-h1">The calmest hour of your week.</h1>
+      <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
     </div>
   </div>
