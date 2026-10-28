@@ -1061,10 +1061,10 @@ def g_table(title, lead, us, others):
 
 
 MICRO_TABLE = ("Microneedling", "",
-    "Builds your own collagen. Deep, natural rejuvenation, nourished with herbs.",
+    "Deep, natural rejuvenation. Herbal serums that deeply nourish the skin and support collagen growth naturally.",
     "A day or two of redness.")
 NANO_TABLE = ("Nanoneedling", "",
-    "Herbal nourishment that absorbs better. A natural glow, with no downtime.",
+    "Herbal serums that deeply nourish the skin and support collagen growth naturally. Better absorption, a natural glow, no downtime.",
     "Nothing to recover from. Gentle results that build with visits.")
 
 
@@ -1103,7 +1103,7 @@ def micro_page(where):
 {g_head("Why microneedling", "Natural anti-aging, from deep within the skin", "Instead of adding something to your face, microneedling asks your skin to renew itself.")}
 {g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
           ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
-          ("leaf", "Nourished with herbs", "Custom Chinese herbal serums, chosen for your skin, absorb through the fresh channels and help increase collagen. Red light therapy is part of every session.")])}
+          ("leaf", "Nourished with herbs", "Herbal serums that deeply nourish the skin and support collagen growth naturally, chosen for your skin. Red light therapy is part of every session.")])}
 <p class="g-cta-row">{book_btn("Book a treatment")}</p>
 </div></section>"""
     how = f"""<section><div class="wrap">
