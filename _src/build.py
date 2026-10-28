@@ -1069,11 +1069,11 @@ def g_table(title, lead, us, others):
 
 MICRO_TABLE = ("Microneedling",
     "Fine needles create tiny channels, and the skin repairs itself",
-    "Deep rejuvenation that builds your own collagen and elastin, for firmer, smoother, more youthful-looking skin. Nourishes with custom herbal serums and red light. Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair.",
+    "Deep rejuvenation that builds your own collagen and elastin, for firmer, smoother, more youthful-looking skin. Custom herbal serums, absorbed through the fresh channels, add to the collagen boost, and red light is included. Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair.",
     "Redness and swelling, usually a day or two and sometimes longer. Bruising, and rarely infection or scarring. Results build over several sessions. Not suitable for everyone, for example active acne, blood thinners, or a tendency to raised scars, so we review your health first.")
 NANO_TABLE = ("Nanoneedling",
     "Ultra-fine tips carry nourishment into the surface of the skin",
-    "Deeply nourishing, with no downtime. Hyaluronic acid, vitamins and custom Chinese herbal serums are carried into the skin's surface, so skin looks brighter, more hydrated and radiant, often right away and improving over the following days. Gentle enough for sensitive skin, and ideal for a glow before an event. Red light therapy is included, and you go straight back to your day.",
+    "Deeply nourishing, with no downtime. Ultra-fine tips open microscopic channels for better absorption, so hyaluronic acid, vitamins and custom Chinese herbal serums go to work where your skin needs them. The herbs support collagen, and skin looks brighter, more hydrated and radiant, often right away and improving over the following days. Gentle enough for sensitive skin, and ideal for a glow before an event. Red light therapy is included, and you go straight back to your day.",
     "Works at the surface, so deeper scars and lines call for microneedling. Results are gentler and build with regular visits. Some people notice brief mild pinkness.")
 
 
@@ -1112,7 +1112,7 @@ def micro_page(where):
 {g_head("Why microneedling", "Natural anti-aging, from deep within the skin", "Instead of adding something to your face, microneedling asks your skin to renew itself.")}
 {g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
           ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
-          ("leaf", "Nourished with herbs", "Custom Chinese herbal serums, chosen for your skin, are carried in through the fresh channels. Red light therapy is part of every session.")])}
+          ("leaf", "Nourished with herbs", "Custom Chinese herbal serums, chosen for your skin, absorb through the fresh channels and help increase collagen. Red light therapy is part of every session.")])}
 <p class="g-cta-row">{book_btn("Book a treatment")}</p><p class="fine">Individual results vary.</p>
 </div></section>"""
     how = f"""<section><div class="wrap">
@@ -1160,7 +1160,7 @@ def nano_page(where):
     how = f"""<section><div class="wrap">
 {g_head("How it works", "Gentle at the surface, absorbed where you need it")}
 {g_steps([("needle", "Surface channels", "Ultra-fine nano-tips open microscopic channels in the very surface of the skin, without going deeper."),
-          ("drop", "Serum absorbs", "Hyaluronic acid, vitamins, and custom Chinese herbal serums absorb where your skin needs them."),
+          ("drop", "Better absorption", "The channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb better, where your skin needs them. The herbs help increase collagen."),
           ("glow", "A brighter look", "Skin often looks brighter right away and keeps improving over the following days.")])}
 </div></section>"""
     help_ = f"""<section class="wash-l"><div class="wrap">{g_head("Who it suits", "Nanoneedling is a good fit for")}
