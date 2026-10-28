@@ -1064,7 +1064,7 @@ def g_table(title, lead, us, others):
     return (f'{g_head("Side by side", title, lead)}'
             f'<div class="g-table-wrap"><table class="g-table"><caption class="sr-only">{e(title)}</caption>'
             f'<thead><tr><td></td>{head}</tr></thead><tbody>{row("Benefits", 2)}{row("Risks and trade-offs", 3)}</tbody></table></div>'
-            + CMP_SOURCES)
+            )
 
 
 MICRO_TABLE = ("Microneedling",
