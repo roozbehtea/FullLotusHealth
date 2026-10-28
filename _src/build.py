@@ -22,6 +22,7 @@ PHONE_TEL = "+18182539307"
 EMAIL = "info@fulllotushealth.com"
 ADDR = dict(street="2116 N Glenoaks Blvd, Ste 3", city="Burbank", region="CA", zip="91504")
 ADDR_LINE = "2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504"
+GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:ChIJJVOw4haVwoARK0UW-MPNiMw"   # the clinic's Google listing
 MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504"
 
 BOOK = CFG.get("booking_url", "").strip()
@@ -213,8 +214,7 @@ TESTIMONIALS_BEAUTY = [
 NAV = [
     ("/", "Home"),
     ("/treatments", "Natural beauty"),
-    ("/acupuncture", "Acupuncture"),
-    ("/consult-heal", "Consult & heal"),
+    ("/acupuncture", "Acupuncture & herbs"),
     ("/tea-ceremonies", "Tea ceremonies"),
     ("/new-patients", "New patients"),
 ]
@@ -372,8 +372,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
         <h2>Visit</h2>
         <ul>
           <li><a href="/treatments">Natural beauty</a></li>
-          <li><a href="/acupuncture">Acupuncture</a></li>
-          <li><a href="/consult-heal">Consult &amp; heal</a></li>
+          <li><a href="/acupuncture">Acupuncture &amp; herbal medicine</a></li>
           <li><a href="/tea-ceremonies">Tea ceremonies</a></li>
           <li><a href="/new-patients">New patients</a></li>
           <li><a href="/blog">Blog</a></li>
@@ -436,18 +435,98 @@ def photo(name, alt):
     return ""
 
 
-def hero_art():
-    """Home hero art: the hero photo (no logo overlay) when assets/photos/hero.* exists, else the badge alone."""
-    ph = photo("hero", "A calm woman in front of a lotus-patterned wall")
-    if ph:
-        return f'<div class="seal-wrap has-photo">{ph}</div>'
-    return '<div class="seal-wrap"><img src="/assets/logo-badge.svg" width="440" height="440" alt="Full Lotus Health badge: a lotus rising from an offering dish, ringed by the words Tea, Acupuncture, Herbal Medicine"></div>'
-
 
 def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
     return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
+
+
+# Five Element quiz on the microneedling and nanoneedling pages.
+# Answers are element indexes into FIVE_ELEMENTS: 0 Wood, 1 Fire, 2 Earth, 3 Metal, 4 Water.
+# Ties go to the answer to question 1 (what people notice first), then to cycle order.
+FEQ_QUESTIONS = [
+    ("When you look in the mirror, what do you notice first?", [
+        ("Uneven texture or visible pores", 3),
+        ("Lines between the brows or around the mouth", 0),
+        ("Dark circles or hollows under the eyes", 4),
+        ("Redness, or a tone that looks dull and tired", 1),
+        ("Puffiness, or skin starting to lose its shape", 2)]),
+    ("By the end of a long day, your face looks...", [
+        ("Heavy and a little puffy", 2),
+        ("Tight: jaw clenched, brow furrowed", 0),
+        ("Flushed, or washed out", 1),
+        ("Drawn, especially around the eyes", 4),
+        ("Dry, rough or congested", 3)]),
+    ("When life gets stressful, your skin...", [
+        ("Flares red or loses its color", 1),
+        ("Breaks out or turns rough", 3),
+        ("Shows it in tension and deeper lines", 0),
+        ("Looks older and more tired", 4),
+        ("Swells, especially in the morning", 2)]),
+    ("Which compliment would you most like to hear?", [
+        ("“You look so rested.”", 4),
+        ("“You’re glowing.”", 1),
+        ("“Your skin is so smooth.”", 3),
+        ("“You look so relaxed.”", 0),
+        ("“Your skin looks so firm.”", 2)]),
+    ("Which season feels most like you?", [
+        ("Spring: fresh starts and new growth", 0),
+        ("Late summer: ripe, warm and abundant", 2),
+        ("Winter: quiet, deep and inward", 4),
+        ("Summer: bright, warm and social", 1),
+        ("Autumn: crisp, clear and letting go", 3)]),
+]
+
+FEQ_RESULTS = [
+    "Your face holds on to tension. Expression lines, a furrowed brow or a set jaw are where it shows. The Wood session is about letting that go, so your features can soften and settle.",
+    "Your skin is asking for radiance. Redness, flushing or a dull, tired tone are your main signs. The Fire session calms heat and brings back a natural glow.",
+    "Your skin is asking for support. Puffiness, or a face that is starting to lose its shape, are your main signs. The Earth session focuses on firmness and lift.",
+    "Your skin is asking for refinement. Texture, pores and congestion are your main signs. The Metal session focuses on smoothness and clarity.",
+    "Your skin is asking to be restored. Dark circles, hollows and deeper signs of ageing are your main signs. The Water session works on these and seals in what the series has built.",
+]
+
+
+def five_element_quiz():
+    n = len(FEQ_QUESTIONS)
+    steps = []
+    for i, (q, opts) in enumerate(FEQ_QUESTIONS):
+        bs = "".join(f'<button type="button" class="feq-opt" data-el="{el}">{e(t)}</button>' for t, el in opts)
+        steps.append(f'<div class="feq-q"{"" if i == 0 else " hidden"}><p class="feq-n">Question {i + 1} of {n}</p>'
+                     f'<h4 class="feq-qt" tabindex="-1">{e(q)}</h4><div class="feq-opts" role="group" aria-label="{e(q)}">{bs}</div></div>')
+    results = []
+    for i, (el, theme, colour, focus, text, serum) in enumerate(FIVE_ELEMENTS):
+        results.append(f'<div class="feq-r" data-el="{i}" style="--tone:{colour}" hidden><p class="feq-n">Your leading element</p>'
+                       f'<h4 class="feq-rn" tabindex="-1">{el} <span>{e(theme)}</span></h4><p class="ef">{e(focus)}</p>'
+                       f'<p>{e(FEQ_RESULTS[i])}</p><p class="serum"><strong>Signature serum:</strong> {e(serum)}</p></div>')
+    signup = ""
+    if not (LAUNCH and not SIGNUP):
+        demo = "" if SIGNUP else " data-demo"
+        action = e(SIGNUP) if SIGNUP else "#"
+        signup = f"""<form class="signup feq-signup" id="fe-signup" method="post" action="{action}"{demo}>
+      <p class="feq-lbl"><label for="fe-email">Want Five Element tips and offers? Join the newsletter, and we'll note your element.</label></p>
+      <div class="grow"><input id="fe-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+        <button class="btn" type="submit">Sign up</button></div>
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input type="hidden" name="source" value="five-element">
+      <p class="gmsg" role="status" aria-live="polite"></p>
+    </form>"""
+    dots = "".join("<li></li>" for _ in range(n))
+    return f"""<div class="feq" id="fe-quiz" hidden>
+    <p class="eyebrow">Quiz</p>
+    <h3>Find your leading element</h3>
+    <p class="feq-intro">Five quick questions about your skin. It takes under a minute.</p>
+    <ol class="feq-dots" aria-hidden="true">{dots}</ol>
+    {"".join(steps)}
+    <div class="feq-results" hidden>
+      {"".join(results)}
+      <p class="feq-all">Your series covers all five elements, from Wood to Water. Your leading element is the session likely to matter most to you, and we'll talk it through at your first visit.</p>
+      <p class="feq-acts">{book_btn("Book your first session")}<a class="btn ghost" href="#five-element" data-feq-see>See your session</a></p>
+      {signup}
+    </div>
+    <p class="feq-nav"><button type="button" class="glink" data-feq-back hidden>Back</button><button type="button" class="glink" data-feq-restart hidden>Take it again</button></p>
+  </div>
+  <script src="/assets/fe-quiz.js" defer></script>{'<script src="/assets/signup.js" defer></script>' if signup else ''}"""
 
 
 def five_element_section(slug):
@@ -466,13 +545,14 @@ def five_element_section(slug):
     rows = []
     for i, (el, theme, colour, focus, text, serum) in enumerate(FIVE_ELEMENTS, 1):
         rows.append(
-            f'<li class="element" style="--tone:{colour}"><div><p class="es">Session {i}</p><h3 class="en">{el}</h3><p class="et">{e(theme)}</p></div>'
+            f'<li class="element" id="fe-s{i}" style="--tone:{colour}"><div><p class="es">Session {i}</p><h3 class="en">{el}</h3><p class="et">{e(theme)}</p></div>'
             f'<div><p class="ef">{e(focus)}</p><p>{e(text)}</p><p class="serum"><strong>Signature serum:</strong> {e(serum)}</p></div></li>')
     return f"""<section class="sand" id="five-element" aria-labelledby="fe-h"><div class="wrap">
   <p class="eyebrow">Signature series</p>
   <h2 id="fe-h">{e(SERIES)}</h2>
   <p>{e(intro)}</p>
   <p>{e(pace)}</p>
+  {five_element_quiz()}
   <ol class="elements">{"".join(rows)}</ol>
   <p class="fine" style="margin-top:1.4rem">Your first session includes an intake and a plan. Individual results vary.</p>
   <p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.2rem">{book_btn("Book your first session")} <a class="btn ghost" href="/service-page/{slug}">Series fee and details</a></p>
@@ -527,178 +607,105 @@ OUT = {}
 
 
 # ------------------------------------------------------------------ pages
-# ------------------------------------------------------------------ homepage guide
-def _fee(slug):
-    sv = BY_SLUG[slug]
-    t = f'${sv["price"]}'
-    if sv["minutes"]:
-        t += f' · {sv["minutes"]} min'
-    return t
-
-
-GUIDE_RESULTS = {
-    # id: (service slug, tone, why, (link label, href))
-    "acu": ("acupuncture-initial-treatment", "malachite",
-            "A detailed intake, a treatment plan, and your first acupuncture treatment. Visits are unhurried and often end with tea.",
-            ("About acupuncture", "/acupuncture")),
-    "tea": ("gong-fu-tea-ceremony", "gold",
-            "In Chinese medicine, tea is the premier herb for the mind. Sit, sip, and slow down. No needles and no preparation.",
-            ("About tea ceremonies", "/tea-ceremonies")),
-    "consult": ("initial-consultation-online", "lapis",
-                "A full look at your health history and patterns, with herbal and dietary recommendations, by video from home.",
-                ("About consultations", "/consult-heal")),
-    "micro": ("medical-microneedling-session", "cinnabar",
-              "For fine lines, acne scars, texture, and thinning hair along the hairline, with custom herbal serums and red light therapy.",
-              ("Microneedling guide", "/microneedling-burbank")),
-    "nano": ("facial-nano-needling", "cinnabar",
-             "A gentle surface treatment with herbal serums and red light therapy. Skin often looks brighter right away.",
-             ("Nanoneedling guide", "/nanoneedling-burbank")),
-    "lift": ("full-lotus-lift", "cinnabar",
-             "Facial acupuncture at lifting, tension-releasing points to calm the mind and bring out your natural glow.",
-             ("Cosmetic acupuncture guide", "/cosmetic-acupuncture-burbank")),
-}
-
-# (panel id, question, [(title, sub, target panel or result id, fallback href, tone)])
-GUIDE_STEPS = [
-    ("start", "What brings you in?", [
-        ("Pain or tension", "Aches, stiffness, or something that keeps coming back", "r-acu", "/acupuncture", "malachite"),
-        ("Stress, sleep, or feeling run down", "Wound up, wiped out, or both", "stress", "/acupuncture", "gold"),
-        ("Digestion, hormones, or low energy", "A longer story that needs a closer look", "r-consult", "/consult-heal", "lapis"),
-        ("Skin or hair", "Lines, scars, glow, or thinning hair", "skin", "/treatments", "cinnabar"),
-        ("Not sure yet", "Talk it through before you book", "r-unsure", "/new-patients", "ink"),
-    ]),
-    ("stress", "How would you like to begin?", [
-        ("A treatment", "Acupuncture to settle the nervous system", "r-acu", "/acupuncture", "malachite"),
-        ("A quiet cup of tea", "A tea ceremony. No needles.", "r-tea", "/tea-ceremonies", "gold"),
-    ]),
-    ("skin", "What would you most like?", [
-        ("Soften lines and scars, or support thinning hair", "Microneedling", "r-micro", "/microneedling-burbank", "cinnabar"),
-        ("A glow with no downtime", "Nanoneedling", "r-nano", "/nanoneedling-burbank", "cinnabar"),
-        ("A lift and a calmer face", "Cosmetic acupuncture", "r-lift", "/cosmetic-acupuncture-burbank", "cinnabar"),
-    ]),
+# ------------------------------------------------------------------ homepage
+HOME_QUOTES = [
+    ("Roozbeh is the best. Great knowledge, great tea, great acupuncture, great company. I always feel so much better and more grounded leaving his place than I did before I entered. Can't recommend it enough.", "Marcus"),
+    ("I've been a patient of Rooz's for 8 years now, and it's been life changing. He helped me overcome illness and has kept me healthy since. He's kind, patient and truly cares about his patients.", "Marissa"),
+    ("I highly recommend Roozbeh for micro needling. The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing!", "Stephany"),
 ]
 
-_GNAV_END = '<p class="gnav"><button type="button" class="glink" data-back>Back</button> <button type="button" class="glink" data-restart>Start over</button></p>'
+# (heading, hub page, one line, [(link text, href)])
+HOME_WAYS = [
+    ("Facial and Hair Rejuvenation", "/treatments",
+     "Microneedling, nanoneedling and cosmetic acupuncture, with custom herbal serums and red light therapy. Scalp microneedling for thinning hair.",
+     [("Microneedling", "/microneedling-burbank"), ("Nanoneedling", "/nanoneedling-burbank"),
+      ("Cosmetic acupuncture", "/cosmetic-acupuncture-burbank")]),
+    ("Chinese Medicine Dermatology", "/skin-conditions-burbank",
+     "Herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea and other skin conditions, treating the pattern underneath, not just the rash.",
+     [("Skin conditions", "/skin-conditions-burbank"), ("Online consultation", "/service-page/initial-consultation-online")]),
+    ("Acupuncture and Herbal Medicine", "/acupuncture",
+     "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
+     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine")]),
+    ("Tea: The Ultimate Chinese Herb", "/tea-ceremonies",
+     "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
+     [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
+      ("Private ceremony", "/service-page/private-gong-fu-tea-ceremony")]),
+]
 
 
-def guide_signup():
-    """Email-only signup. Saves nothing about what the visitor chose in the guide."""
+def signup_band(source):
+    """Newsletter signup. Saves the email address and which page it came from, nothing else."""
     if LAUNCH and not SIGNUP:
         return ""
     demo = "" if SIGNUP else " data-demo"
-    return f'''<form class="gsignup" id="g-signup" method="post" action="{e(SIGNUP) if SIGNUP else "#"}"{demo}>
-    <h3 id="g-signup-h">Get occasional notes from Full Lotus Health</h3>
-    <p>Notes on acupuncture, skin, and tea from Roozbeh. Unsubscribe anytime. Please don't send health details by email.</p>
-    <div class="grow"><label for="g-email" class="sr">Email address</label>
-      <input id="g-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
-      <button class="btn" type="submit">Join the list</button></div>
+    action = e(SIGNUP) if SIGNUP else "#"
+    return f"""<section class="signup-band" aria-labelledby="signup-h"><div class="wrap signup-row">
+  <div>
+    <h2 id="signup-h">Newsletter</h2>
+    <p>Keep up to date with the latest at Full Lotus Health, including tea sits, health advice, community events, and special offers. Unsubscribe anytime.</p>
+  </div>
+  <form class="signup" id="signup" method="post" action="{action}"{demo}>
+    <div class="grow"><label for="signup-email" class="sr">Email address</label>
+      <input id="signup-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+      <button class="btn" type="submit">Sign up</button></div>
     <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <input type="hidden" name="source" value="home-guide">
+    <input type="hidden" name="source" value="{source}">
     <p class="gmsg" role="status" aria-live="polite"></p>
-  </form>'''
-
-
-def guide_section():
-    out = []
-    for pid, q, choices in GUIDE_STEPS:
-        cs = "".join(
-            f'<a class="choice" style="--tone:var(--{tone})" href="{href}" data-go="{tgt}"><span class="ct">{e(t)}</span><span class="cs">{e(sub)}</span></a>'
-            for t, sub, tgt, href, tone in choices)
-        back = "" if pid == "start" else '<p class="gnav"><button type="button" class="glink" data-back>Back</button></p>'
-        on = " on" if pid == "start" else ""
-        out.append(f'<div class="gstep{on}" id="g-{pid}"><h3 class="gq" tabindex="-1">{e(q)}</h3><div class="choices">{cs}</div>{back}</div>')
-    for rid, (slug, tone, why, more) in GUIDE_RESULTS.items():
-        sv = BY_SLUG[slug]
-        out.append(
-            f'<div class="gstep" id="g-r-{rid}" style="--tone:var(--{tone})"><h3 class="gq" tabindex="-1">We would start with</h3>'
-            f'<div class="gresult"><p class="gname"><a href="/service-page/{slug}">{e(sv["name"])}</a></p>'
-            f'<p class="gfacts">{e(_fee(slug))}</p><p>{e(why)}</p>'
-            f'<p class="gacts">{book_btn("Book this visit")}<a class="btn ghost" href="{more[1]}">{e(more[0])}</a></p></div>'
-            f'{_GNAV_END}</div>')
-    out.append(
-        f'<div class="gstep" id="g-r-unsure" style="--tone:var(--ink)"><h3 class="gq" tabindex="-1">That is common. Here are two easy ways in.</h3>'
-        f'<div class="gresult"><p>Text a question and we will point you to the right visit, or read the new patient steps. '
-        f'You can also book a first acupuncture visit and decide your plan together. Please keep health details for the intake form.</p>'
-        f'<p class="gacts"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="/new-patients">New patient steps</a></p></div>'
-        f'{_GNAV_END}</div>')
-    return f"""<section class="wash-l guide" id="guide" aria-labelledby="guide-h"><div class="wrap">
-  <p class="eyebrow l">Not sure where to begin?</p>
-  <h2 id="guide-h">Find your starting point</h2>
-  <p class="guide-intro">Answer one or two quick questions and we will point you to the right visit. Nothing you choose here is saved or sent.</p>
-  <div class="gstage">{"".join(out)}</div>
-  {guide_signup()}
+  </form>
 </div>
-<script src="/assets/guide.js" defer></script></section>"""
+<script src="/assets/signup.js" defer></script></section>"""
 
 
 def home():
+    ways = []
+    for title, hub, line, links in HOME_WAYS:
+        ls = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for t, h in links)
+        ways.append(f'<div class="path"><h3><a href="{hub}">{e(title)}</a></h3><p>{e(line)}</p><ul class="way-links">{ls}</ul></div>')
+    quotes_html = "".join(f'<blockquote><p>{e(t)}</p><cite>{e(w)}</cite></blockquote>' for t, w in HOME_QUOTES)
     main = f"""
-<section class="hero"><div class="wrap grid">
-  <div>
-    <div class="band short" aria-hidden="true"></div>
-    <h1>When you're out of balance, it shows everywhere.</h1>
-    <p class="lede">Full Lotus Health is an acupuncture and Chinese herbal medicine clinic in Burbank, CA. Facial and skin treatments (microneedling, nanoneedling, and cosmetic acupuncture) sit alongside acupuncture, herbal medicine, and tea ceremony.</p>
-    <p class="lede">Come find your center, and express it in greater vitality and a radiant glow.</p>
-    <div class="actions">{book_btn("Book your visit")}<a class="btn ghost" href="/new-patients">New patients start here</a></div>
+<section class="home-hero" aria-labelledby="home-h1">
+  <div class="hh-grid">
+    <figure class="hh-photo"><img src="/assets/photos/hero.jpg" width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
+    <div class="hh-panel">
+      <div class="band" aria-hidden="true"></div>
+      <p class="eyebrow">Chinese medicine clinic &middot; Burbank</p>
+      <h1 id="home-h1">The calmest hour of your week.</h1>
+      <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
+      <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
+    </div>
   </div>
-  {hero_art()}
+</section>
+
+<section class="proof-bar" aria-label="What patients say about Full Lotus Health"><div class="wrap">
+  <p class="pb-line">Trusted by 300+ patients since 2016</p>
+  <p class="pb-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>
 </div></section>
 
-<div class="trust"><div class="wrap"><p>Trusted by 300+ patients for over 10 years in Burbank for integrative healing, stress relief, natural beauty, pain relief, sleep, and lasting vitality.</p></div></div>
-
-{guide_section()}
-
-<section class="sand"><div class="wrap">
-  <p class="eyebrow">Care at Full Lotus</p>
-  <h2>Healing paths</h2>
-  <div class="paths">
-    <div class="path"><h3>Acupuncture</h3><p>Dedicated acupuncture and specialized recovery treatments for jet lag and travel fatigue, tailored for those visiting the Burbank area.</p><p><a href="/acupuncture">Acupuncture in Burbank</a></p></div>
-    <div class="path"><h3>Natural beauty</h3><p>Unlock lasting vitality and skin rejuvenation through holistic facial treatments and constitutional cosmetic acupuncture techniques.</p><p><a href="/treatments">Explore treatments</a></p></div>
-    <div class="path"><h3>Heal from within</h3><p>Comprehensive integrative care addressing nervous system overload, chronic pain, and stress relief for deep restoration.</p><p><a href="/consult-heal">Consult &amp; heal</a></p></div>
-  </div>
+<section class="sand" aria-labelledby="ways-h"><div class="wrap">
+  <p class="eyebrow">Where to start</p>
+  <h2 id="ways-h">Four ways in</h2>
+  <div class="paths four ways">{"".join(ways)}</div>
 </div></section>
 
-<section class="wash-c"><div class="wrap split">
-  <div>
-    <p class="eyebrow">Cosmetic acupuncture and skin</p>
-    <h2>Facial and skin treatments in Burbank</h2>
-    <p>Each treatment uses custom Chinese herbal serums chosen for your skin, and red light therapy is included. A licensed acupuncturist performs every session.</p>
-    <p>{book_btn("Book a treatment")}</p>
-  </div>
-  <ul class="rates">
-    {rate_item("medical-microneedling-session")}
-    {rate_item("facial-nano-needling")}
-    {rate_item("full-lotus-lift")}
-  </ul>
-</div></section>
-
-<section class="deep-m"><div class="wrap">
-  <h2>Healing is more than skin deep. It is a return to whole-system harmony.</h2>
-  <p>At Full Lotus Health, we treat the whole person, not just the symptom. Our integrative approach harmonizes your nervous system and internal vitality to create a state of lasting balance, allowing your natural radiance to flourish from within.</p>
-</div></section>
-
-<section class="wash-g"><div class="wrap">
+<section class="wash-g" aria-labelledby="reviews-h"><div class="wrap">
   <p class="eyebrow">Reviews</p>
-  <h2>What patients say</h2>
-  {quotes(TESTIMONIALS_HOME)}
+  <h2 id="reviews-h">What patients say</h2>
+  <div class="quotes three">{quotes_html}</div>
+  <p class="fine">Individual results vary.</p>
 </div></section>
 
-<section class="deep-l"><div class="wrap split">
-  <div><p class="eyebrow">Your practitioner</p><h2>Meet Roozbeh</h2>{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
+<section class="deep-l" aria-labelledby="meet-h"><div class="wrap split">
+  <div>{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
   <div>
-    <p>Hi, I'm Roozbeh. I've been studying and practicing the healing arts for over twenty-five years and have been a licensed acupuncturist and practitioner of Traditional Chinese Medicine since 2015. Over the years I have learned and integrated many modalities into my treatment method. Many of these ways of looking at the body and the world have been inspired by obstacles I have encountered in my own health journey.</p>
-    <p>Full Lotus Health is a special place where I present everything I have learned to the local community: from acupuncture to herbal medicine, gut testing, tea ceremony, and truly natural cosmetic acupuncture. It is my sincere wish that everyone who comes here leaves a happier person.</p>
-    <p>If you have any questions about me or any of the offerings at Full Lotus Health, please feel free to reach out at <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+    <p class="eyebrow">Your practitioner</p>
+    <h2 id="meet-h">Meet Roozbeh</h2>
+    <p>Hi, I'm Roozbeh. I've been a licensed acupuncturist and practitioner of Traditional Chinese Medicine since 2015, and I opened Full Lotus Health in 2016. Many of the ways I look at the body were shaped by obstacles in my own health.</p>
+    <p>This is where I bring everything I've learned to the local community, from acupuncture and herbal medicine to tea ceremony and natural skin treatments. It is my sincere wish that everyone who comes here leaves a happier person.</p>
+    <p class="creds">L.Ac., California license 17220 &middot; NCCAOM Board-Certified Diplomate &middot; M.A. in Traditional Chinese Medicine, Yo San University</p>
   </div>
 </div></section>
 
-<section class="night"><div class="wrap split">
-  <div><p class="eyebrow">Tea ceremony</p><h2>The art of tea</h2>{photo("tea-space", "The tea space at Full Lotus Health")}</div>
-  <div>
-    <p>Experience the best Chinese medicinal herb for calming and energizing the mind: old growth tea in a ritual where it can truly shine. If you are not sure about Chinese medicine, this is the best place to start.</p>
-    <p><a class="btn ghost" href="/tea-ceremonies">Reserve your seat</a></p>
-  </div>
-</div></section>
+{signup_band("home")}
 
 {cta("Ready to feel like yourself again?", "Book online, or text us a question. New patients, please fill out the intake form before your first visit.", "Book now")}
 """
@@ -752,89 +759,122 @@ def treatments():
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments")])], current="/treatments")
 
 
+ONLINE_CONSULT = "/service-page/initial-consultation-online"
+
+# Tap-to-open "What we treat" list on the Acupuncture and Herbal Medicine page.
+# (anchor id, title, examples, [paragraphs], optional (link text, href))
+ACU_CONDITIONS = [
+    ("pain", "Pain and tension", "Back and neck pain, tight shoulders, headaches, old injuries",
+     ["Pain is one of the most common reasons people try acupuncture. Treatment works on the area that hurts and on what keeps it tight, such as stress, poor sleep, or an old injury that never fully settled. Cupping, moxibustion or massage are added when they help.",
+      "Expect a short series of visits rather than a single fix. For pain that keeps coming back, herbs can carry the work between visits."], None),
+    ("stress-sleep", "Stress, anxiety and sleep", "Feeling wired or worn out, trouble falling or staying asleep",
+     ["Chinese medicine treats stress as something the whole body carries, not only the mind. Acupuncture helps the nervous system shift out of a stressed state, and the quiet rest during treatment is part of the work.",
+      "For sleep, an herbal formula often carries the effect between visits. We also look at digestion and daily rhythm, which affect sleep more than most people expect."], None),
+    ("digestion", "Digestion and gut health", "Bloating, IBS, reflux, irregular bowels",
+     ["In the school of Chinese medicine I practice, digestion sits at the center. When it struggles, energy, sleep, mood and skin often follow, so for many people this is where treatment starts.",
+      "Herbal medicine usually leads, matched to your pattern and adjusted as things change, with acupuncture and practical food guidance alongside. This works well as an online consultation."], None),
+    ("fatigue", "Fatigue and low energy", "Running on empty, slow recovery after illness, tired after a full night's sleep",
+     ["Low energy has many roots: digestion, sleep, stress, hormones, or a body that never fully recovered from an illness. The first visit is about finding which one is driving yours.",
+      "Herbs usually do the steady rebuilding, with acupuncture to support it. Travel fatigue and jet lag get a shorter plan."], None),
+    ("hormones", "Hormones and women's health", "Painful or irregular cycles, PMS, perimenopause and menopause",
+     ["Chinese medicine pays close attention to the menstrual cycle, which shows a lot about your overall health. Treatment follows your cycle, usually combining acupuncture with an herbal formula adjusted month to month.",
+      "For perimenopause and menopause, treatment focuses on hot flashes, sleep and mood, built around your pattern rather than a fixed protocol."], None),
+    ("fertility", "Fertility", "Trying naturally, or alongside IVF and IUI",
+     ["Acupuncture and herbal medicine to support you while you try to conceive, working alongside your doctor or fertility clinic, not replacing them. Sessions can be timed around IVF or IUI dates."],
+     ("Fertility acupuncture in Burbank", "/fertility-acupuncture-burbank")),
+    ("skin", "Skin conditions", "Acne, eczema, psoriasis, rosacea",
+     ["Skin often shows what is happening inside. Herbal medicine taken internally is usually the main treatment, matched to the pattern underneath the rash."],
+     ("Chinese medicine dermatology", "/skin-conditions-burbank")),
+]
+
+
 def acupuncture():
-    main = hero("Restore your natural rhythm.",
-        "Acupuncture at Full Lotus Health is a ritual of restoration. By harmonizing your nervous system and internal vitality, we help you return to a state of wholeness where healing happens naturally.", tone="m") + f"""
-<section><div class="wrap">
-  <p>{book_btn("Book your session")}</p>
-  <h2 style="margin-top:2.2rem">Types of acupuncture care</h2>
-  <div class="paths" style="margin-top:1.2rem">
-    <div class="path"><h3>Traditional acupuncture</h3><p>A precise modality to balance the body's vital energy, addressing chronic pain, digestive issues, and nervous system health.</p></div>
-    <div class="path"><h3>Cosmetic acupuncture</h3><p>Unlock natural radiance and skin vitality using constitutional techniques for rejuvenation and lasting facial glow.</p><p><a href="/service-page/full-lotus-lift">Cosmetic acupuncture in Burbank</a></p></div>
-    <div class="path"><h3>Recovery and wellness</h3><p>Integrated care designed to address travel fatigue, jet lag, and immune depletion through advanced restorative protocols.</p></div>
-  </div>
+    conds = []
+    for cid, title, ex, paras, more in ACU_CONDITIONS:
+        body = "".join(f"<p>{e(p)}</p>" for p in paras)
+        more_html = f'<a class="cmore" href="{more[1]}">{e(more[0])}</a>' if more else ""
+        conds.append(
+            f'<details class="cond" id="{cid}"><summary><span class="ct">{e(title)}</span><span class="cx">{e(ex)}</span></summary>'
+            f'<div class="cbody">{body}<p class="cacts">{book_btn("Book in person", small=True)}'
+            f'<a class="btn ghost small" href="{ONLINE_CONSULT}">Online consultation</a>{more_html}</p></div></details>')
+    main = f"""
+<div class="hero-band tone-m"><div class="wrap page-hero">
+  <div class="band short" aria-hidden="true"></div>
+  <h1>Acupuncture and Herbal Medicine in Burbank</h1>
+  <p class="lede">Acupuncture in the clinic, and Chinese herbal medicine in person or by video. Find what you're dealing with below, or book now.</p>
+  <div class="actions">{book_btn("Book in person")}<a class="btn ghost" href="{ONLINE_CONSULT}">Book an online consultation</a></div>
+</div></div>
+
+<section id="what-we-treat" aria-labelledby="treat-h"><div class="wrap">
+  <p class="eyebrow m">Find your condition</p>
+  <h2 id="treat-h">What we treat</h2>
+  <p class="guide-intro">Tap a condition to see how Chinese medicine looks at it and what treatment involves.</p>
+  <div class="conds">{"".join(conds)}</div>
+  <p class="fine conds-note">Don't see yours? Book a first visit and we'll talk it through, or call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p>
 </div></section>
 
-<section class="tint"><div class="wrap split">
-  <div><p class="eyebrow m">Acupuncture</p><h2>Healing beyond the surface</h2></div>
-  <div>
-    <p>Acupuncture is more than a physical treatment; it is a method of regulating the nervous system. By gently stimulating specific points, we signal the body to shift from a state of stress into deep restoration. This physiological reset supports healthy circulation and a return to your natural state of whole-body harmony and lasting vitality.</p>
-    <p>Sessions: <a href="/service-page/acupuncture-initial-treatment">initial treatment</a> (60 minutes) and <a href="/service-page/acupuncture-repeat-treatment">repeat treatment</a> (45 minutes). Fees are on each session page.</p>
+<section class="sand" id="visits" aria-labelledby="visits-h"><div class="wrap">
+  <p class="eyebrow">Two ways to be seen</p>
+  <h2 id="visits-h">In person or online</h2>
+  <div class="paths four visits">
+    <div class="path"><h3>In person, in Burbank</h3>
+      <p>Acupuncture with herbal medicine as needed, plus cupping, moxibustion or massage when they help. First visit 60 minutes, follow-ups 45.</p>
+      <ul class="way-links"><li><a href="/service-page/acupuncture-initial-treatment">First visit</a></li><li><a href="/service-page/acupuncture-repeat-treatment">Follow-up visit</a></li></ul>
+      <p class="vbtn">{book_btn("Book in person")}</p></div>
+    <div class="path"><h3>Online, by video</h3>
+      <p>A Chinese herbal medicine consultation from home, for people farther away or who want to start with herbs. First consultation 60 minutes, follow-ups 45.</p>
+      <ul class="way-links"><li><a href="{ONLINE_CONSULT}">First consultation</a></li><li><a href="/service-page/repeat-consultation-online">Follow-up consultation</a></li></ul>
+      <p class="vbtn"><a class="btn" href="{ONLINE_CONSULT}">Book an online consultation</a></p></div>
   </div>
+  <p class="fine" style="margin-top:1.2rem">Fees are on each session page.</p>
 </div></section>
 
-<section><div class="wrap">
-  <p class="eyebrow">Your first visit</p>
-  <h2>What to expect</h2>
+<section aria-labelledby="first-h"><div class="wrap">
+  <p class="eyebrow m">Acupuncture</p>
+  <h2 id="first-h">Your first acupuncture visit</h2>
   <ol class="steps">
-    <li><h3>Consultation</h3><p>We begin with a deep dive into your health history, lifestyle, and goals to create a personalized treatment mapping.</p></li>
+    <li><h3>Consultation</h3><p>We begin with your health history, lifestyle, and goals, and map out a treatment plan.</p></li>
     <li><h3>Gentle placement</h3><p>Ultra-fine, sterile needles are gently placed. Most patients feel only a slight sensation or nothing at all.</p></li>
-    <li><h3>Restorative rest</h3><p>You will rest for 20 to 30 minutes in a calm environment, allowing the needles to stimulate your body's healing response.</p></li>
-    <li><h3>Post-care ritual</h3><p>We conclude with herbal recommendations and a moment in our tea ceremony space for deep integration.</p></li>
+    <li><h3>Restorative rest</h3><p>You rest for 20 to 30 minutes in a calm room while the treatment works.</p></li>
+    <li><h3>Afterward</h3><p>We finish with herbal recommendations if they suit you, and often a moment in the tea space.</p></li>
   </ol>
 </div></section>
 
-<section class="wash-g"><div class="wrap">
-  <h2>Patient journeys</h2>
-  {quotes([TESTIMONIALS_HOME[0], TESTIMONIALS_HOME[3], TESTIMONIALS_HOME[4]])}
+<section class="tint" id="herbal-medicine" aria-labelledby="herbs-h"><div class="wrap split">
+  <div><p class="eyebrow m">Chinese herbal medicine</p><h2 id="herbs-h">How herbal medicine works here</h2></div>
+  <div>
+    <p>Most medicine asks what the symptom is. Chinese medicine asks why the system is out of balance. Your formula is written for your pattern, not for the name of a condition, and it changes as you do.</p>
+    <ol class="steps">
+      <li><h3>A full intake</h3><p>In person or by video, we go through your history, digestion, sleep, energy and what makes things better or worse. Please complete the <a href="/new-patients">new patient intake form</a> first.</p></li>
+      <li><h3>A formula for your pattern</h3><p>You receive an herbal formula matched to you, with practical food guidance where it helps.</p></li>
+      <li><h3>Follow up and refine</h3><p>We adjust your herbs as your body responds, aiming for steady change that lasts.</p></li>
+    </ol>
+  </div>
 </div></section>
-""" + cta("Begin your journey to vitality", "Reserve your personalized treatment in Burbank and discover the benefits of whole-system harmony.", "Book online now", tone="l")
-    OUT["acupuncture.html"] = page("/acupuncture", "Acupuncture in Burbank, CA | Full Lotus Health",
-        "Acupuncture in Burbank, CA with Roozbeh Ghobadpour, L.Ac.: pain, digestion, stress, sleep, and recovery, with herbal recommendations and tea.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Acupuncture", "/acupuncture")])], current="/acupuncture")
+
+<section class="wash-g" aria-labelledby="journeys-h"><div class="wrap">
+  <p class="eyebrow">Reviews</p>
+  <h2 id="journeys-h">What patients say</h2>
+  {quotes([TESTIMONIALS_HOME[0], TESTIMONIALS_HOME[1], TESTIMONIALS_HOME[4]])}
+</div></section>
+
+{signup_band("acupuncture")}
+
+""" + cta("Ready to start?", "Book in person in Burbank, or an online consultation from home.", "Book in person", tone="l")
+    OUT["acupuncture.html"] = page("/acupuncture", "Acupuncture and Herbal Medicine in Burbank, CA | Full Lotus Health",
+        "Acupuncture and Chinese herbal medicine in Burbank, CA, or by video: pain, stress, sleep, digestion, fatigue, hormones and fertility, with Roozbeh Ghobadpour, L.Ac.",
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Acupuncture and herbal medicine", "/acupuncture")])], current="/acupuncture")
 
 
 def consult():
-    main = hero("Your health has a story. Let's read it together.",
-        "Roozbeh brings over 15 years of Chinese medicine training to every consultation, reading your body as a whole system, not a list of isolated symptoms.", tone="l") + f"""
-<section><div class="wrap">
-  <p>{book_btn("Book your online consultation")}</p>
-</div></section>
-<section class="tint"><div class="wrap split">
-  <div><p class="eyebrow m">Chinese herbal medicine</p><h2>We treat the whole system</h2></div>
-  <div>
-    <p>Most medicine asks: what is the symptom? Chinese medicine asks: why is the system out of balance? Roozbeh's approach combines classical diagnosis with modern clinical insight, drawing on long-form published writing in a tea magazine.</p>
-    <h3>Who this is for</h3>
-    <p>This work is a good fit if you're navigating:</p>
-    <ul class="checks">
-      <li>Chronic gut issues and IBS</li><li>Hormonal imbalance</li><li>Chronic fatigue and low energy</li>
-      <li>Stress and nervous system dysregulation</li>
-      <li><a href="/skin-conditions-burbank">Skin conditions</a> such as acne, eczema, and psoriasis</li>
-      <li>Conventional medicine that hasn't brought lasting results</li>
-    </ul>
-  </div>
-</div></section>
-<section><div class="wrap">
-  <h2>What's offered</h2>
-  <ul class="rates">
-    <li><span class="name"><a href="/service-page/initial-consultation-online">Online consultation</a><span class="meta">60 min</span></span><p class="desc">Remote Chinese medicine consultation with herbal and dietary recommendations.</p></li>
-    <li><span class="name">Chinese herbal medicine for gut health</span><p class="desc">Custom herbal formulas targeting the root cause of digestive imbalance.</p></li>
-    <li><span class="name">Dietary guidance</span><p class="desc">Food as medicine. Practical recommendations rooted in Chinese medicine.</p></li>
-  </ul>
-  <p class="fine" style="margin-top:1rem">Follow-up sessions: <a href="/service-page/repeat-consultation-online">repeat online consultation</a> (45 minutes).</p>
-</div></section>
-<section class="wash-g"><div class="wrap">
-  <h2>How it works</h2>
-  <ol class="steps">
-    <li><h3>Book a consultation</h3><p>Choose a time that works for you. Then complete the <a href="/new-patients">new patient intake form</a> with a brief health history.</p></li>
-    <li><h3>Receive your assessment and herbal protocol</h3><p>We'll meet online to map your system, then you'll receive a tailored plan.</p></li>
-    <li><h3>Follow up and refine</h3><p>We adjust your herbs and diet as your system responds, aiming for steady, sustainable change.</p></li>
-  </ol>
-</div></section>
-""" + cta("Ready to begin?", "Your first consultation is the first step toward a plan built around you.", "Book your online consultation", tone="m")
-    OUT["consult-heal.html"] = page("/consult-heal", "Chinese Herbal Medicine Consultation | Burbank or Remote",
-        "Chinese herbal medicine consultations in Burbank or online with Roozbeh Ghobadpour, L.Ac.: gut health, hormones, fatigue, stress, and dietary guidance.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Consult & heal", "/consult-heal")])], current="/consult-heal")
+    """The old Consult & heal page now lives on the Acupuncture and Herbal Medicine page. Keep the address working."""
+    dest = "/acupuncture#herbal-medicine"
+    OUT["consult-heal.html"] = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Acupuncture and Herbal Medicine | Full Lotus Health</title>
+<meta name="robots" content="noindex, follow"><link rel="canonical" href="{SITE}/acupuncture">
+<meta http-equiv="refresh" content="0; url={dest}"></head>
+<body><p>This page has moved to <a href="{dest}">Acupuncture and Herbal Medicine</a>.</p></body></html>
+"""
 
 
 def tea():
@@ -1074,7 +1114,8 @@ def service_pages():
 
 
 def landing_pages():
-    """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages)."""
+    """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages).
+    The Five Element Rejuvenation series (pg["extra"]) sits at the top, right under the page title."""
     mi, na, li = BY_SLUG["medical-microneedling-session"], BY_SLUG["facial-nano-needling"], BY_SLUG["full-lotus-lift"]
     def link(slug, label=None):
         return f'<a href="/service-page/{slug}">{e(label or BY_SLUG[slug]["name"])}</a>'
@@ -1160,7 +1201,7 @@ def landing_pages():
     for pg in pages:
         svc = pg["svc"]
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
-        main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + f"""
+        main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + pg.get('extra', '') + f"""
 <section><div class="wrap split">
   <div>
     <p>{book_btn("Book a treatment")}</p>
@@ -1169,7 +1210,7 @@ def landing_pages():
     <ul class="checks">{more}<li><a href="/treatments">All natural beauty treatments</a></li></ul>
   </div>
   <div>{pg['body']}</div>
-</div></section>{pg.get('extra', '')}""" + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
+</div></section>""" + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
         OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
             ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
                 breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
@@ -1209,7 +1250,36 @@ def condition_pages():
   ("Is this the same as microneedling?", "No. <a href=\"/microneedling-burbank\">Microneedling</a> and <a href=\"/nanoneedling-burbank\">nanoneedling</a> are cosmetic treatments for lines, scars, and texture. Needling isn't done on skin that is actively inflamed, so conditions like eczema or active breakouts are treated from the inside first."),
   ("Where is the clinic?", where),
 ])}
-""", more=[("/consult-heal", "Chinese herbal medicine consultations"), ("/microneedling-burbank", "Microneedling in Burbank"), ("/treatments", "All natural beauty treatments")]),
+""", more=[("/acupuncture#herbal-medicine", "Chinese herbal medicine"), ("/microneedling-burbank", "Microneedling in Burbank"), ("/treatments", "All natural beauty treatments")]),
+      dict(path="/fertility-acupuncture-burbank", file="fertility-acupuncture-burbank.html", tone="m",
+           name="Fertility acupuncture",
+           crumbs=[("Home", "/"), ("Acupuncture", "/acupuncture")],
+           title="Fertility Acupuncture in Burbank, CA | Full Lotus Health",
+           meta="Fertility acupuncture and Chinese herbal medicine in Burbank, alongside your doctor, IVF, or IUI: support for your cycle, stress, and sleep while you try to conceive.",
+           h1="Fertility acupuncture in Burbank, CA",
+           lede="Acupuncture and Chinese herbal medicine to support you while you try to conceive, naturally or alongside IVF and IUI.",
+           start=f'Start with an <a href="/service-page/{acu}">acupuncture initial treatment</a>. The fee is on that page.',
+           body=f"""
+<h2>Support, alongside your doctor</h2>
+<p>Fertility care at Full Lotus Health is support, not a replacement for your doctor or fertility clinic. Many people use acupuncture and Chinese medicine while trying naturally, or alongside IVF or IUI, to support their cycle, sleep, and stress through what can be a demanding time.</p>
+<h2>What we can help with</h2>
+<ul class="checks"><li>Preparing your body in the months before trying, or before an IVF cycle</li><li>Irregular or painful cycles</li><li>Stress, sleep, and the emotional weight of trying to conceive</li><li>Support around IVF and IUI, timed to your cycle</li><li>Partners too: fertility is a two-person picture</li></ul>
+<h2>How it works</h2>
+<ol class="steps">
+  <li><h3>A detailed intake</h3><p>We go through your health history, your cycle, and any testing and treatment so far. Bring recent test results to your first visit if you have them.</p></li>
+  <li><h3>A plan for your timeline</h3><p>Usually regular acupuncture, often weekly, with herbal medicine where it fits. If you're doing IVF, sessions are planned around your clinic's dates.</p></li>
+  <li><h3>Steady support</h3><p>Visits are unhurried and often end with tea. It is a calm place to come back to while you go through the process.</p></li>
+</ol>
+<h2>What we won't promise</h2>
+<p>No one can honestly promise a pregnancy, and we won't. What we offer is careful, consistent support that works with your medical care, not against it.</p>
+<p class="fine">Individual results vary.</p>
+{faq_block([
+  ("Can I have acupuncture during IVF?", "Yes, many people do. Sessions are planned around your clinic's schedule. Please let your fertility clinic know you're having acupuncture."),
+  ("Can I take Chinese herbs during IVF?", "Only with your fertility clinic's agreement. Many clinics ask patients to pause herbs during a cycle, and we follow their guidance."),
+  ("How often will I come in?", "Often weekly, with extra sessions timed to your cycle or IVF dates. Your plan is set at your first visit."),
+  ("Where is the clinic?", where),
+])}
+""", more=[("/acupuncture", "Acupuncture in Burbank"), ("/acupuncture#herbal-medicine", "Chinese herbal medicine")]),
     ]
     for pg in pages:
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
@@ -1237,7 +1307,7 @@ def notfound():
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/consult-heal", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank", "/fertility-acupuncture-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
