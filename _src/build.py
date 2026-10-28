@@ -1035,6 +1035,48 @@ def g_compare(current):
             + '</div>')
 
 
+CMP_SOURCES = ('<p class="fine g-table-note">General information, not medical advice. Other treatments are usually done by physicians or dermatologists, '
+               'and the right choice depends on your skin, health and goals. Individual results vary. Sources: '
+               '<a href="https://my.clevelandclinic.org/health/treatments/23113-microneedling" rel="noopener">Cleveland Clinic on microneedling</a>; '
+               '<a href="https://practicaldermatology.com/news/meta-analysis-vcomparable-overall-outcomes-with-lasers-and-chemical-peels-for-skin-rejuvenation/2487992/" rel="noopener">meta-analysis of lasers and chemical peels</a>.</p>')
+
+PEELS = ("Chemical peels", "An acid solution removes the top layers of skin",
+    "Can improve texture, tone, sun damage and some acne. Strengths range from light to deep.",
+    "Stinging, redness, peeling and sun sensitivity. Skin can darken afterward, especially in deeper skin tones. Deeper peels need longer recovery and carry a higher risk of scarring.")
+LASER = ("Laser resurfacing", "Focused light and heat remove or heat layers of skin",
+    "Used for wrinkles, scarring, sun damage and melasma. A review found overall results comparable to chemical peels, with about two fewer sessions on average.",
+    "More redness and discomfort than peels in that review. Heat can cause discoloration, especially in deeper skin tones, and stronger lasers can cause burns, infection or scarring. Stronger treatments need real recovery time and strict sun avoidance.")
+INJECT = ("Botox and fillers", "Injections relax muscles or add volume",
+    "Quick visits and little downtime. Botox softens expression lines; fillers restore volume.",
+    "Results are temporary and need repeating. Bruising, swelling and unevenness are common. Rarely, filler can block a blood vessel, which can damage skin or affect vision. They do not change skin texture.")
+
+
+def g_table(title, lead, us, others):
+    """Side-by-side table: first column is ours. Each entry is (name, how, benefits, risks)."""
+    cols = [us] + list(others)
+    head = "".join(
+        f'<th scope="col"{" class=\"is-us\"" if i == 0 else ""}>{e(c[0])}'
+        f'{"<span class=\"g-here\">Ours</span>" if i == 0 else ""}<span class="g-t-sub">{e(c[1])}</span></th>'
+        for i, c in enumerate(cols))
+    def row(label, idx):
+        tds = "".join(f'<td data-label="{e(c[0])}"{" class=\"is-us\"" if i == 0 else ""}>{e(c[idx])}</td>' for i, c in enumerate(cols))
+        return f'<tr><th scope="row">{label}</th>{tds}</tr>'
+    return (f'{g_head("Side by side", title, lead)}'
+            f'<div class="g-table-wrap"><table class="g-table"><caption class="sr-only">{e(title)}</caption>'
+            f'<thead><tr><td></td>{head}</tr></thead><tbody>{row("Benefits", 2)}{row("Risks and trade-offs", 3)}</tbody></table></div>'
+            + CMP_SOURCES)
+
+
+MICRO_TABLE = ("Microneedling",
+    "Fine needles create tiny channels, and the skin repairs itself",
+    "Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair. Includes custom herbal serums and red light.",
+    "Redness and swelling, usually a day or two and sometimes longer. Bruising, and rarely infection or scarring. Results build over several sessions. Not suitable for everyone, for example active acne, blood thinners, or a tendency to raised scars, so we review your health first.")
+NANO_TABLE = ("Nanoneedling",
+    "Ultra-fine tips work at the very surface of the skin",
+    "The gentlest option here, with no downtime. Suits dull, dehydrated or sensitive skin, and gives a glow before an event. Includes custom herbal serums and red light.",
+    "Works at the surface, so it is not the choice for deeper scars or lines. Results are subtle and build with repeat visits. Some people notice brief mild pinkness or sensitivity.")
+
+
 def g_why(deep, points, treat_photo=""):
     pts = "".join(f'<li>{art.icon(ic, 40)}<div><h3>{e(t)}</h3><p>{tx}</p></div></li>' for ic, t, tx in points)
     return f"""<section class="{deep}"><div class="wrap g-why">
@@ -1080,7 +1122,8 @@ def micro_page(where):
     why = g_why("deep-m", [("bottle", "Custom herbal serums", "Chosen for your skin, and absorbed through the open channels during treatment."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
-    compare = f'<section><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
+    table = f'<section><div class="wrap">{g_table("Microneedling and other options", "Every option has trade-offs. Here are the main benefits and risks, in plain terms.", MICRO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
+    compare = f'<section class="sand"><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
     session = g_session("wash-c", g_head("Your visit", "A session, start to finish", "Sessions are 90 minutes, and your first visit includes an intake and a treatment plan."),
         [("intake", "Intake and plan", "Your first visit starts with an intake and a treatment plan."),
          ("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
@@ -1098,7 +1141,7 @@ def micro_page(where):
   ("Microneedling or nanoneedling?", "Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
   ("Where is the clinic?", where),
 ])}</div></section>"""
-    return (hero_html + how + help_ + why + compare + session + say + faq,
+    return (hero_html + how + help_ + why + table + compare + session + say + faq,
             g_related(mi, [("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
@@ -1122,7 +1165,8 @@ def nano_page(where):
     why = g_why("deep-l", [("bottle", "Custom herbal serums", "Chosen for your skin."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
-    compare = f'<section><div class="wrap">{g_head("Which treatment", "Nanoneedling or microneedling?")}{g_compare("nano")}</div></section>'
+    table = f'<section><div class="wrap">{g_table("Nanoneedling and other options", "Every option has trade-offs. Here are the main benefits and risks, in plain terms.", NANO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
+    compare = f'<section class="wash-l"><div class="wrap">{g_head("Which treatment", "Nanoneedling or microneedling?")}{g_compare("nano")}</div></section>'
     session = g_session("sand", g_head("Your visit", "What happens at Full Lotus Health", "Sessions are 60 minutes."),
         [("bottle", "Serums chosen", "Roozbeh chooses the herbal serums for your skin."),
          ("needle", "Nano-tips", "A gentle treatment at the surface of the skin."),
@@ -1139,7 +1183,7 @@ def nano_page(where):
   ("Can I do nanoneedling as a series?", "Yes. It works well on its own or as a regular series."),
   ("Where is the clinic?", where),
 ])}</div></section>"""
-    return (hero_html + how + help_ + why + compare + session + say + faq,
+    return (hero_html + how + help_ + why + table + compare + session + say + faq,
             g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 

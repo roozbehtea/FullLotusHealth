@@ -529,3 +529,26 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
   .g-why-photo .photo img { aspect-ratio: 4 / 3; }
 }
 @media (max-width: 34rem) { .g-cards, .g-time { grid-template-columns: 1fr; } }
+
+/* Side-by-side comparison table */
+.g-table-wrap { overflow-x: auto; }
+.g-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 0.95rem; line-height: 1.55; }
+.g-table thead td { width: 7rem; }
+.g-table th, .g-table td { padding: 1rem; vertical-align: top; text-align: left; border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+.g-table thead th { font-family: var(--font-display, inherit); font-size: 1.15rem; font-weight: 600; border-bottom: 3px solid var(--lapis); }
+.g-table thead th.is-us { border-bottom-color: var(--cinnabar); }
+.g-table tbody th { font-weight: 600; color: var(--ink); }
+.g-table .is-us { background: var(--surface-200); }
+.g-table thead th .g-here { display: inline-block; margin-left: 0.5rem; }
+.g-t-sub { display: block; margin-top: 0.3rem; font-family: var(--font-body, inherit); font-size: 0.82rem; font-weight: 400; line-height: 1.4; color: color-mix(in srgb, var(--ink) 75%, transparent); }
+.g-table-note { margin-top: var(--space-3); max-width: 60rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 56rem) {
+  .g-table, .g-table tbody, .g-table tr, .g-table th, .g-table td { display: block; width: auto; }
+  .g-table thead { display: none; }
+  .g-table tbody tr { margin-bottom: var(--space-3); }
+  .g-table tbody th { font-size: 1.2rem; border-bottom: 3px solid var(--cinnabar); padding-left: 0; }
+  .g-table td { padding: 0.9rem 0.2rem; }
+  .g-table td.is-us { padding: 0.9rem 1rem; border-radius: 8px; }
+  .g-table td::before { content: attr(data-label); display: block; margin-bottom: 0.25rem; font-weight: 600; color: var(--cinnabar); }
+}
