@@ -65,7 +65,6 @@ SERVICES = [
             ("h2", "What patients say"),
             ("q", "The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing! … The numbing cream is great and the whole procedure was completely painless.", "Stephany"),
             ("q", "I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.", "Rosa"),
-            ("small", "Individual results vary."),
             ("h2", "Microneedling or nanoneedling?"),
             ("p", "Microneedling works deeper, for scarring, lines, and thinning hair. Nanoneedling is a gentler surface treatment for glow and hydration, with no downtime. Not sure which fits you? Book a session and we'll decide together, or text or email a question."),
          ], related=["facial-nano-needling", "full-lotus-lift"]),
@@ -86,7 +85,6 @@ SERVICES = [
             ("p", "Sessions are 60 minutes. There's no downtime, so you can go straight back to your day. Skin often looks brighter right away and keeps improving over the following days. It works well on its own or as a regular series."),
             ("h2", "What patients say"),
             ("q", "When Roozbeh mentioned he added microneedling and nano needling services, I was interested but a little hesitant, not sure whether it would hurt or be effective. I took the plunge and am glad I did. … My skin feels smoother and firmer. (And neither hurt.)", "Rosa"),
-            ("small", "Individual results vary."),
             ("h2", "Nanoneedling or microneedling?"),
             ("p", "Nanoneedling is a surface-level treatment for glow and hydration, with no downtime. Microneedling works deeper, for scarring, lines, and thinning hair. Not sure which fits you? Book a session and we'll decide together, or text or email a question."),
          ], related=["medical-microneedling-session", "full-lotus-lift"]),
@@ -363,7 +361,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
         </ul>
       </div>
     </div>
-    <p class="legal">&copy; {datetime.date.today().year} {NAME}. Individual results vary. Information on this site is educational and is not a substitute for medical advice.</p>
+    <p class="legal">&copy; {datetime.date.today().year} {NAME}.</p>
   </div>
 </footer>
 </body>
@@ -557,7 +555,7 @@ def home():
   <p class="eyebrow">Reviews</p>
   <h2 id="reviews-h">What patients say</h2>
   <div class="quotes three">{quotes_html}</div>
-  <p class="fine">Individual results vary.</p>
+  
 </div></section>
 
 <section class="deep-l" aria-labelledby="meet-h"><div class="wrap split">
@@ -601,7 +599,7 @@ def treatments():
   <p class="eyebrow">Reviews</p>
   <h2>What patients say</h2>
   {quotes(TESTIMONIALS_BEAUTY)}
-  <p class="fine">Individual results vary.</p>
+  
   <p>{book_btn("Book a treatment")}</p>
 </div></section>
 
@@ -838,7 +836,7 @@ def blog_posts():
 <section><div class="wrap"><article class="prose">
 {p["body"]}
 <hr>
-<p class="fine">This article is educational and is not a substitute for medical advice. Individual results vary.</p>
+
 <p>{book_btn("Book a visit")}</p>
 {more}
 </article></div></section>"""
@@ -1020,7 +1018,7 @@ def g_quotes(slug, extra_quote_slugs=()):
     for s in (slug,) + tuple(extra_quote_slugs):
         qs += [(it[1], it[2]) for it in BY_SLUG[s]["body"] if it[0] == "q"]
     rating = f'<p class="pb-rating g-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>'
-    return quotes(qs) + rating + '<p class="fine">Individual results vary.</p>'
+    return quotes(qs) + rating + ''
 
 
 def g_compare(current):
@@ -1034,11 +1032,6 @@ def g_compare(current):
             + card("micro", "Microneedling", "Works deeper, for scarring, lines, and thinning hair. Sessions are 90 minutes, with redness that usually settles in a day or two.", "/microneedling-burbank", "Microneedling in Burbank")
             + '</div>')
 
-
-CMP_SOURCES = ('<p class="fine g-table-note">General information, not medical advice. Other treatments are usually done by physicians or dermatologists, '
-               'and the right choice depends on your skin, health and goals. Individual results vary. Sources: '
-               '<a href="https://my.clevelandclinic.org/health/treatments/23113-microneedling" rel="noopener">Cleveland Clinic on microneedling</a>; '
-               '<a href="https://practicaldermatology.com/news/meta-analysis-vcomparable-overall-outcomes-with-lasers-and-chemical-peels-for-skin-rejuvenation/2487992/" rel="noopener">meta-analysis of lasers and chemical peels</a>.</p>')
 
 PEELS = ("Chemical peels", "An acid solution removes the top layers of skin",
     "Can improve texture, tone, sun damage and some acne. Strengths range from light to deep.",
@@ -1113,7 +1106,7 @@ def micro_page(where):
 {g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
           ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
           ("leaf", "Nourished with herbs", "Custom Chinese herbal serums, chosen for your skin, absorb through the fresh channels and help increase collagen. Red light therapy is part of every session.")])}
-<p class="g-cta-row">{book_btn("Book a treatment")}</p><p class="fine">Individual results vary.</p>
+<p class="g-cta-row">{book_btn("Book a treatment")}</p>
 </div></section>"""
     how = f"""<section><div class="wrap">
 {g_head("How it works", "Wake up your skin's own renewal")}
@@ -1143,7 +1136,7 @@ def micro_page(where):
   ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
   ("How long does redness last?", "Expect some redness afterward, similar to a mild sunburn. It usually settles within a day or two."),
   ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
-  ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered. Individual results vary."),
+  ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered."),
   ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
   ("Microneedling or nanoneedling?", "Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
   ("Where is the clinic?", where),
@@ -1284,9 +1277,9 @@ def condition_pages():
 </ol>
 <h2>Alongside your dermatologist</h2>
 <p>Chinese medicine can work alongside the care you already have. Please don't stop any prescribed medicine without talking to the doctor who prescribed it, and bring a list of everything you use, including creams, to your first visit.</p>
-<p class="fine">Individual results vary.</p>
+
 {faq_block([
-  ("How long until I see a change?", "Skin conditions change gradually. Many people need a few months of treatment, with regular follow-ups to adjust the formula. Individual results vary."),
+  ("How long until I see a change?", "Skin conditions change gradually. Many people need a few months of treatment, with regular follow-ups to adjust the formula."),
   ("Can I do this online?", f"Yes. Herbal treatment works well by <a href=\"/service-page/{onl}\">online consultation</a>, though seeing your skin in person at the first visit helps."),
   ("Is this the same as microneedling?", "No. <a href=\"/microneedling-burbank\">Microneedling</a> and <a href=\"/nanoneedling-burbank\">nanoneedling</a> are cosmetic treatments for lines, scars, and texture. Needling isn't done on skin that is actively inflamed, so conditions like eczema or active breakouts are treated from the inside first."),
   ("Where is the clinic?", where),
