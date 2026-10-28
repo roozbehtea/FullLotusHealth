@@ -465,40 +465,6 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .night::after { bottom: 1rem; transform: scaleY(-1); }
 @media print { .night::before, .night::after { display: none; } }
 
-/* ---- Gold embroidery: lotus-and-scroll topper over coloured sections ----
-   Art from _src/make_ornaments.py. Stitched side rules run out to the page edge. */
-section.sand, section.wash-g, section.wash-c, section.wash-l, section.wash-m,
-section[class*="deep-"], section.cta:not(.g) {
-  --w: min(480px, 90vw);
-  --orn: var(--gold);
-  --orn-img: url("orn-topper-gold.svg");
-  position: relative;
-  padding-top: calc(var(--section) + 1.6rem);
-}
-section[class*="deep-"], section.cta:not(.g) {
-  --orn: var(--gold-light);
-  --orn-img: url("orn-topper-light.svg");
-}
-section.sand::before, section.wash-g::before, section.wash-c::before, section.wash-l::before, section.wash-m::before,
-section[class*="deep-"]::before, section.cta:not(.g)::before {
-  --y: calc(var(--w) * 0.0775);
-  --rl: calc((100% - var(--w)) / 2 + var(--w) * 0.185);
-  content: "";
-  position: absolute; left: 0; right: 0; top: 1rem;
-  height: calc(var(--w) * 0.11);
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
-  background:
-    var(--orn-img) center top / var(--w) auto no-repeat,
-    repeating-linear-gradient(90deg, var(--orn) 0 7px, transparent 7px 11px) left var(--y) / var(--rl) 2px no-repeat,
-    repeating-linear-gradient(90deg, var(--orn) 0 7px, transparent 7px 11px) right var(--y) / var(--rl) 2px no-repeat,
-    linear-gradient(var(--orn), var(--orn)) left calc(var(--y) + 6px) / var(--rl) 1px no-repeat,
-    linear-gradient(var(--orn), var(--orn)) right calc(var(--y) + 6px) / var(--rl) 1px no-repeat;
-}
-@media print { section::before { display: none; } }
-/* The black tea section (.night) keeps the gold clouds instead of the topper. */
-
 /* ---- Five Element quiz (microneedling and nanoneedling pages) ---- */
 .feq { position: relative; overflow: hidden; max-width: 46rem; margin: var(--space-4) 0 var(--space-5); padding: clamp(1.4rem, 4vw, 2.2rem); background: var(--surface-100); border-radius: var(--radius-md); }
 /* the five elements in generating-cycle order: Wood, Fire, Earth, Metal, Water */
