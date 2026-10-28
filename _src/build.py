@@ -1123,6 +1123,11 @@ def g_offer(name, line):
 </dialog><script src="/assets/offer-pop.js" defer></script><script src="/assets/signup.js" defer></script>"""
 
 
+def g_band(items):
+    figs = "".join(photo(n, alt) for n, alt in items)
+    return f'<div class="g-band">{figs}</div>' if figs else ""
+
+
 def micro_page(where):
     mi = BY_SLUG["medical-microneedling-session"]
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
@@ -1133,6 +1138,7 @@ def micro_page(where):
 {g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
           ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
           ("leaf", "Nourished with herbs", "Herbal serums that deeply nourish the skin and support collagen growth naturally, chosen for your skin. Red light therapy is part of every session.")])}
+{g_band([("skin-texture", "Close-up of smooth, even skin in soft light"), ("serums", "Amber bottles of herbal serum with shiitake and white tremella mushrooms on a stone slab")])}
 <p class="g-cta-row">{book_btn("Book a treatment")}</p>
 </div></section>"""
     how = f"""<section><div class="wrap">
@@ -1157,7 +1163,7 @@ def micro_page(where):
          ("needle", "Treatment", "Microneedling with custom Chinese herbal serums chosen for your skin."),
          ("light", "Red light therapy", "Included with every session.")],
         "<h3>Afterward</h3><p>Some redness, similar to a mild sunburn, usually settles within a day or two.</p><p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>",
-        "microneedling", "A microneedling treatment at Full Lotus Health in Burbank")
+        "herbs", "Chinese herbs in a wooden bowl: goji berries, red dates, chrysanthemum and astragalus")
     say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("medical-microneedling-session")}</div></section>'
     faq = f"""<section class="sand"><div class="wrap g-faq">{faq_block([
   ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
@@ -1183,6 +1189,7 @@ def nano_page(where):
 {g_steps([("needle", "Surface channels", "Ultra-fine nano-tips open microscopic channels in the very surface of the skin, without going deeper."),
           ("drop", "Better absorption", "The channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb better, where your skin needs them. The herbs help increase collagen."),
           ("glow", "A brighter look", "Skin often looks brighter right away and keeps improving over the following days.")])}
+{g_band([("serum-lotus", "A dropper bottle of golden herbal serum beside a pink lotus petal"), ("tea", "Two cups of tea, a clay teapot and a white lotus on a sunlit wooden table")])}
 </div></section>"""
     help_ = f"""<section class="wash-l"><div class="wrap">{g_head("Who it suits", "Nanoneedling is a good fit for")}
 {g_cards([("drop", "Dull, dehydrated, or tired-looking skin", None), ("lines", "Fine lines and uneven texture", None),
@@ -1201,7 +1208,7 @@ def nano_page(where):
          ("light", "Red light therapy", "Included with every session."),
          ("tea", "Back to your day", "There is no downtime, so you can go straight back to your day.")],
         "<h3>It works on its own or as a series</h3><p>Nanoneedling suits a one-off glow and also works as a regular series. Your first visit starts the conversation about what fits your skin.</p>",
-        "nanoneedling", "A nanoneedling facial at Full Lotus Health in Burbank")
+        "gua-sha", "A jade gua sha stone, a jar of serum and a folded linen towel on a wooden tray")
     say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("facial-nano-needling")}</div></section>'
     faq = f"""<section class="wash-l"><div class="wrap g-faq">{faq_block([
   ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
