@@ -1033,15 +1033,15 @@ def g_compare(current):
             + '</div>')
 
 
-PEELS = ("Chemical peels", "An acid solution removes the top layers of skin",
-    "Can improve texture, tone, sun damage and some acne. Strengths range from light to deep.",
-    "Stinging, redness, peeling and sun sensitivity. Skin can darken afterward, especially in deeper skin tones. Deeper peels need longer recovery and carry a higher risk of scarring.")
-LASER = ("Laser resurfacing", "Focused light and heat remove or heat layers of skin",
-    "Used for wrinkles, scarring, sun damage and melasma. A review found overall results comparable to chemical peels, with about two fewer sessions on average.",
-    "More redness and discomfort than peels in that review. Heat can cause discoloration, especially in deeper skin tones, and stronger lasers can cause burns, infection or scarring. Stronger treatments need real recovery time and strict sun avoidance.")
-INJECT = ("Botox and fillers", "Injections relax muscles or add volume",
-    "Quick visits and little downtime. Botox softens expression lines; fillers restore volume.",
-    "Results are temporary and need repeating. Bruising, swelling and unevenness are common. Rarely, filler can block a blood vessel, which can damage skin or affect vision. They do not change skin texture.")
+PEELS = ("Chemical peels", "",
+    "A fresher-looking surface.",
+    "Burning, peeling and sun sensitivity. Can darken skin.")
+LASER = ("Laser resurfacing", "",
+    "Resurfaces skin with heat.",
+    "Heat damage, real downtime, and a risk of burns and discoloration.")
+INJECT = ("Botox and fillers", "",
+    "Smooths lines for a few months.",
+    "Wears off, needs repeating, and does nothing for the skin itself.")
 
 
 def g_table(title, lead, us, others):
@@ -1049,25 +1049,23 @@ def g_table(title, lead, us, others):
     cols = [us] + list(others)
     head = "".join(
         f'<th scope="col"{" class=\"is-us\"" if i == 0 else ""}>{e(c[0])}'
-        f'{"<span class=\"g-here\">Ours</span>" if i == 0 else ""}<span class="g-t-sub">{e(c[1])}</span></th>'
+        f'{"<span class=\"g-here\">Ours</span>" if i == 0 else ""}{"<span class=\"g-t-sub\">" + e(c[1]) + "</span>" if c[1] else ""}</th>'
         for i, c in enumerate(cols))
     def row(label, idx):
         tds = "".join(f'<td data-label="{e(c[0])}"{" class=\"is-us\"" if i == 0 else ""}>{e(c[idx])}</td>' for i, c in enumerate(cols))
         return f'<tr><th scope="row">{label}</th>{tds}</tr>'
     return (f'{g_head("Side by side", title, lead)}'
             f'<div class="g-table-wrap"><table class="g-table"><caption class="sr-only">{e(title)}</caption>'
-            f'<thead><tr><td></td>{head}</tr></thead><tbody>{row("Benefits", 2)}{row("Risks and trade-offs", 3)}</tbody></table></div>'
+            f'<thead><tr><td></td>{head}</tr></thead><tbody>{row("What you get", 2)}{row("The catch", 3)}</tbody></table></div>'
             )
 
 
-MICRO_TABLE = ("Microneedling",
-    "Fine needles create tiny channels, and the skin repairs itself",
-    "Deep rejuvenation that builds your own collagen and elastin, for firmer, smoother, more youthful-looking skin. Custom herbal serums, absorbed through the fresh channels, add to the collagen boost, and red light is included. Works with your skin's own repair process, with no heat or light. Cleveland Clinic notes it does not carry the risk of discoloration that heat- and light-based treatments do. Used for fine lines, acne scarring, texture, pores and thinning hair.",
-    "Redness and swelling, usually a day or two and sometimes longer. Bruising, and rarely infection or scarring. Results build over several sessions. Not suitable for everyone, for example active acne, blood thinners, or a tendency to raised scars, so we review your health first.")
-NANO_TABLE = ("Nanoneedling",
-    "Ultra-fine tips carry nourishment into the surface of the skin",
-    "Deeply nourishing, with no downtime. Ultra-fine tips open microscopic channels for better absorption, so hyaluronic acid, vitamins and custom Chinese herbal serums go to work where your skin needs them. The herbs support collagen, and skin looks brighter, more hydrated and radiant, often right away and improving over the following days. Gentle enough for sensitive skin, and ideal for a glow before an event. Red light therapy is included, and you go straight back to your day.",
-    "Works at the surface, so deeper scars and lines call for microneedling. Results are gentler and build with regular visits. Some people notice brief mild pinkness.")
+MICRO_TABLE = ("Microneedling", "",
+    "Builds your own collagen. Deep, natural rejuvenation, nourished with herbs.",
+    "A day or two of redness.")
+NANO_TABLE = ("Nanoneedling", "",
+    "Herbal nourishment that absorbs better. A natural glow, with no downtime.",
+    "Nothing to recover from. Gentle results that build with visits.")
 
 
 def g_why(deep, points, treat_photo=""):
@@ -1122,7 +1120,7 @@ def micro_page(where):
     why = g_why("deep-m", [("bottle", "Custom herbal serums", "Chosen for your skin, and absorbed through the open channels during treatment."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
-    table = f'<section><div class="wrap">{g_table("Microneedling and other options", "Every option has trade-offs. Here are the main benefits and risks, in plain terms.", MICRO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
+    table = f'<section><div class="wrap">{g_table("A natural path to younger-looking skin", "Rebuild your skin from within, instead of stripping, heating or injecting it.", MICRO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
     compare = f'<section class="sand"><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
     session = g_session("wash-c", g_head("Your visit", "A session, start to finish", "Sessions are 90 minutes, and your first visit includes an intake and a treatment plan."),
         [("intake", "Intake and plan", "Your first visit starts with an intake and a treatment plan."),
@@ -1165,7 +1163,7 @@ def nano_page(where):
     why = g_why("deep-l", [("bottle", "Custom herbal serums", "Chosen for your skin."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
-    table = f'<section><div class="wrap">{g_table("Nanoneedling and other options", "Every option has trade-offs. Here are the main benefits and risks, in plain terms.", NANO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
+    table = f'<section><div class="wrap">{g_table("A natural path to glowing skin", "Nourish your skin from the surface in, instead of stripping, heating or injecting it.", NANO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
     compare = f'<section class="wash-l"><div class="wrap">{g_head("Which treatment", "Nanoneedling or microneedling?")}{g_compare("nano")}</div></section>'
     session = g_session("sand", g_head("Your visit", "What happens at Full Lotus Health", "Sessions are 60 minutes."),
         [("bottle", "Serums chosen", "Roozbeh chooses the herbal serums for your skin."),
