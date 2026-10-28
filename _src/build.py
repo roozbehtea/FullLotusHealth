@@ -250,7 +250,7 @@ def business_ld():
         "hasMap": MAPS,
         "areaServed": [{"@type": "City", "name": c} for c in ("Burbank", "Glendale", "Toluca Lake", "North Hollywood", "Studio City")],
         "founder": {"@type": "Person", "name": "Roozbeh Ghobadpour", "jobTitle": "Licensed Acupuncturist (L.Ac.)"},
-        "knowsAbout": ["Cosmetic acupuncture", "Microneedling", "Nanoneedling", "Acupuncture", "Chinese herbal medicine", "Chinese medicine for skin conditions", "Fertility acupuncture", "Cupping", "Moxibustion", "Chinese tea ceremony"],
+        "knowsAbout": ["Cosmetic acupuncture", "Microneedling", "Nanoneedling", "Acupuncture", "Chinese herbal medicine", "Chinese medicine for skin conditions", "Cupping", "Moxibustion", "Chinese tea ceremony"],
         "makesOffer": offers,
     }
 
@@ -340,6 +340,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
     </a>
     <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
+    <a class="btn small call-mobile" href="tel:{PHONE_TEL}" aria-label="Call {PHONE_DISPLAY}">Call</a>
     <label for="menu-check" class="menu-toggle">Menu</label>
     <nav class="nav" aria-label="Main">
       <ul>
@@ -669,8 +670,8 @@ def home():
     <div class="hh-panel">
       <div class="band" aria-hidden="true"></div>
       <p class="eyebrow">Chinese medicine clinic &middot; Burbank</p>
-      <h1 id="home-h1">The calmest hour of your week.</h1>
-      <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
+      <h1 id="home-h1">Acupuncture and skin treatments in Burbank.</h1>
+      <p class="lede">The calmest hour of your week: acupuncture, herbal medicine, microneedling and facials from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
     </div>
   </div>
@@ -779,9 +780,6 @@ ACU_CONDITIONS = [
     ("hormones", "Hormones and women's health", "Painful or irregular cycles, PMS, perimenopause and menopause",
      ["Chinese medicine pays close attention to the menstrual cycle, which shows a lot about your overall health. Treatment follows your cycle, usually combining acupuncture with an herbal formula adjusted month to month.",
       "For perimenopause and menopause, treatment focuses on hot flashes, sleep and mood, built around your pattern rather than a fixed protocol."], None),
-    ("fertility", "Fertility", "Trying naturally, or alongside IVF and IUI",
-     ["Acupuncture and herbal medicine to support you while you try to conceive, working alongside your doctor or fertility clinic, not replacing them. Sessions can be timed around IVF or IUI dates."],
-     ("Fertility acupuncture in Burbank", "/fertility-acupuncture-burbank")),
     ("skin", "Skin conditions", "Acne, eczema, psoriasis, rosacea",
      ["Skin often shows what is happening inside. Herbal medicine taken internally is usually the main treatment, matched to the pattern underneath the rash."],
      ("Chinese medicine dermatology", "/skin-conditions-burbank")),
@@ -862,7 +860,7 @@ def acupuncture():
 
 """ + cta("Ready to start?", "Book in person in Burbank, or an online consultation from home.", "Book in person", tone="l")
     OUT["acupuncture.html"] = page("/acupuncture", "Acupuncture and Herbal Medicine in Burbank, CA | Full Lotus Health",
-        "Acupuncture and Chinese herbal medicine in Burbank, CA, or by video: pain, stress, sleep, digestion, fatigue, hormones and fertility, with Roozbeh Ghobadpour, L.Ac.",
+        "Acupuncture and Chinese herbal medicine in Burbank, CA, or by video: pain, stress, sleep, digestion, fatigue, and hormones, with Roozbeh Ghobadpour, L.Ac.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Acupuncture and herbal medicine", "/acupuncture")])], current="/acupuncture")
 
 
@@ -1251,35 +1249,6 @@ def condition_pages():
   ("Where is the clinic?", where),
 ])}
 """, more=[("/acupuncture#herbal-medicine", "Chinese herbal medicine"), ("/microneedling-burbank", "Microneedling in Burbank"), ("/treatments", "All natural beauty treatments")]),
-      dict(path="/fertility-acupuncture-burbank", file="fertility-acupuncture-burbank.html", tone="m",
-           name="Fertility acupuncture",
-           crumbs=[("Home", "/"), ("Acupuncture", "/acupuncture")],
-           title="Fertility Acupuncture in Burbank, CA | Full Lotus Health",
-           meta="Fertility acupuncture and Chinese herbal medicine in Burbank, alongside your doctor, IVF, or IUI: support for your cycle, stress, and sleep while you try to conceive.",
-           h1="Fertility acupuncture in Burbank, CA",
-           lede="Acupuncture and Chinese herbal medicine to support you while you try to conceive, naturally or alongside IVF and IUI.",
-           start=f'Start with an <a href="/service-page/{acu}">acupuncture initial treatment</a>. The fee is on that page.',
-           body=f"""
-<h2>Support, alongside your doctor</h2>
-<p>Fertility care at Full Lotus Health is support, not a replacement for your doctor or fertility clinic. Many people use acupuncture and Chinese medicine while trying naturally, or alongside IVF or IUI, to support their cycle, sleep, and stress through what can be a demanding time.</p>
-<h2>What we can help with</h2>
-<ul class="checks"><li>Preparing your body in the months before trying, or before an IVF cycle</li><li>Irregular or painful cycles</li><li>Stress, sleep, and the emotional weight of trying to conceive</li><li>Support around IVF and IUI, timed to your cycle</li><li>Partners too: fertility is a two-person picture</li></ul>
-<h2>How it works</h2>
-<ol class="steps">
-  <li><h3>A detailed intake</h3><p>We go through your health history, your cycle, and any testing and treatment so far. Bring recent test results to your first visit if you have them.</p></li>
-  <li><h3>A plan for your timeline</h3><p>Usually regular acupuncture, often weekly, with herbal medicine where it fits. If you're doing IVF, sessions are planned around your clinic's dates.</p></li>
-  <li><h3>Steady support</h3><p>Visits are unhurried and often end with tea. It is a calm place to come back to while you go through the process.</p></li>
-</ol>
-<h2>What we won't promise</h2>
-<p>No one can honestly promise a pregnancy, and we won't. What we offer is careful, consistent support that works with your medical care, not against it.</p>
-<p class="fine">Individual results vary.</p>
-{faq_block([
-  ("Can I have acupuncture during IVF?", "Yes, many people do. Sessions are planned around your clinic's schedule. Please let your fertility clinic know you're having acupuncture."),
-  ("Can I take Chinese herbs during IVF?", "Only with your fertility clinic's agreement. Many clinics ask patients to pause herbs during a cycle, and we follow their guidance."),
-  ("How often will I come in?", "Often weekly, with extra sessions timed to your cycle or IVF dates. Your plan is set at your first visit."),
-  ("Where is the clinic?", where),
-])}
-""", more=[("/acupuncture", "Acupuncture in Burbank"), ("/acupuncture#herbal-medicine", "Chinese herbal medicine")]),
     ]
     for pg in pages:
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
@@ -1307,7 +1276,7 @@ def notfound():
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank", "/fertility-acupuncture-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
