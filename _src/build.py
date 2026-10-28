@@ -361,7 +361,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
         </ul>
       </div>
     </div>
-    <p class="legal">&copy; {datetime.date.today().year} {NAME}.</p>
+    <p class="legal">{NAME}</p>
   </div>
 </footer>
 </body>
