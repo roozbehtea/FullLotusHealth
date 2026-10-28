@@ -1094,6 +1094,23 @@ def g_related(svc, links):
 <div><h2 class="h3">Also see</h2><ul class="checks">{lis}<li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
 
 
+def offer_email():
+    """Optional email box in the offer pop-up. Same email-only signup as the homepage, tagged "offer"."""
+    if LAUNCH and not SIGNUP:
+        return ""
+    demo = "" if SIGNUP else " data-demo"
+    action = e(SIGNUP) if SIGNUP else "#"
+    return f"""<form class="signup g-offer-mail" method="post" action="{action}"{demo} data-thanks="Thank you. The offer is on its way to your inbox.">
+<p class="g-offer-mail-lead">Not ready yet? Get the offer by email.</p>
+<div class="grow"><label for="offer-email" class="sr">Email address</label>
+<input id="offer-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+<button class="btn ghost" type="submit">Send</button></div>
+<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<input type="hidden" name="source" value="offer">
+<p class="gmsg" role="status" aria-live="polite"></p>
+</form>"""
+
+
 def g_offer(name, line):
     """First-visit offer, shown as a pop-up by /assets/offer-pop.js (no data collected)."""
     return f"""<dialog class="g-offer-pop" id="offer-pop" aria-labelledby="offer-pop-title">
@@ -1101,8 +1118,9 @@ def g_offer(name, line):
 <div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
 <p class="eyebrow">New patients</p><h2 class="h3" id="offer-pop-title" tabindex="-1" autofocus>20% off your first {e(name)}</h2><p>{line}</p>
 <div class="g-offer-cta">{book_btn("Book your first visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
+{offer_email()}
 <p class="g-offer-later"><button type="button" data-close>Maybe later</button></p>
-</dialog><script src="/assets/offer-pop.js" defer></script>"""
+</dialog><script src="/assets/offer-pop.js" defer></script><script src="/assets/signup.js" defer></script>"""
 
 
 def micro_page(where):
