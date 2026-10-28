@@ -340,6 +340,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
     </a>
     <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
+    <a class="btn small call-mobile" href="tel:{PHONE_TEL}" aria-label="Call {PHONE_DISPLAY}">Call</a>
     <label for="menu-check" class="menu-toggle">Menu</label>
     <nav class="nav" aria-label="Main">
       <ul>
@@ -636,8 +637,8 @@ def home():
 <section class="hero"><div class="wrap grid">
   <div>
     <div class="band short" aria-hidden="true"></div>
-    <h1>When you're out of balance, it shows everywhere.</h1>
-    <p class="lede">Full Lotus Health is an acupuncture and Chinese herbal medicine clinic in Burbank, CA. Facial and skin treatments (microneedling, nanoneedling, and cosmetic acupuncture) sit alongside acupuncture, herbal medicine, and tea ceremony.</p>
+    <h1>Skin treatments and acupuncture in Burbank.</h1>
+    <p class="lede">When you're out of balance, it shows everywhere, including your skin. Full Lotus Health offers microneedling, nanoneedling, and cosmetic acupuncture alongside acupuncture, Chinese herbal medicine, and tea ceremony.</p>
     <p class="lede">Come find your center, and express it in greater vitality and a radiant glow.</p>
     <div class="actions">{book_btn("Book your visit")}<a class="btn ghost" href="/new-patients">New patients start here</a></div>
   </div>
