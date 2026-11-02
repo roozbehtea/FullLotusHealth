@@ -552,3 +552,37 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
   .g-table td.is-us { padding: 0.9rem 1rem; border-radius: 8px; }
   .g-table td::before { content: attr(data-label); display: block; margin-bottom: 0.25rem; font-weight: 600; color: var(--cinnabar); }
 }
+
+/* ---- Tea sits (reservation list, assets/teasits.js) ---- */
+.ts-status { margin-bottom: var(--space-3); }
+.ts-status.err { background: var(--cinnabar-wash); }
+.ts-list { list-style: none; margin: 0; padding: 0; max-width: 56rem; }
+.ts-sit { display: grid; grid-template-columns: 1fr auto auto auto; gap: 1.2rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--surface-300); }
+.ts-sit:first-child { border-top: 1px solid var(--surface-300); }
+.ts-when { display: flex; flex-direction: column; gap: 0.15rem; }
+.ts-date { font-family: var(--display); font-size: 1.3rem; font-weight: 500; color: var(--ink); }
+.ts-title { font-size: 0.9375rem; color: var(--ink-muted); }
+.ts-seats { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+.ts-dots { display: flex; gap: 4px; }
+.ts-dots span { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--malachite); }
+.ts-dots .open { background: var(--malachite); }
+.ts-dots .taken { background: transparent; border-color: var(--surface-300); }
+.ts-left { font-size: 0.9375rem; color: var(--ink-muted); white-space: nowrap; }
+.ts-price { font-family: var(--display); font-size: 1.3rem; font-weight: 500; color: var(--cinnabar); }
+.ts-sit .btn { cursor: pointer; }
+.ts-sit.full .ts-date, .ts-sit.full .ts-price { color: var(--ink-muted); }
+.ts-sit.full .btn { opacity: 0.55; cursor: default; }
+.ts-form { padding: 1.2rem 1.3rem 0.6rem; margin: 0 0 1rem; background: var(--surface-200); border-radius: 0 0 var(--radius-md) var(--radius-md); }
+.ts-for { margin-top: 0; }
+.ts-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem 1rem; align-items: end; }
+.ts-fields label { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 500; font-size: 0.9375rem; }
+.ts-fields input, .ts-fields select { font: inherit; font-weight: 400; padding: 0.75rem 0.9rem; color: var(--ink); background: #fffaf1; border: 2px solid var(--surface-300); border-radius: var(--radius-sm); min-width: 0; }
+.ts-fields input:focus, .ts-fields select:focus { outline: 2px solid var(--lapis); outline-offset: 1px; border-color: var(--lapis); }
+.ts-actions { margin: 1.1rem 0 0.4rem; }
+.ts-form .btn { cursor: pointer; }
+.ts-form .btn[disabled] { opacity: 0.6; cursor: wait; }
+@media (max-width: 40rem) {
+  .ts-sit { grid-template-columns: 1fr auto; row-gap: 0.7rem; }
+  .ts-sit .ts-seats { grid-row: 2; }
+  .ts-sit .btn { grid-column: 2; grid-row: 2; justify-self: end; }
+}

@@ -30,6 +30,7 @@ MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blv
 BOOK = CFG.get("booking_url", "").strip()
 INTAKE = CFG.get("intake_url", "").strip()
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
+TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
 missing = [k for k, v in (("booking_url", BOOK), ("intake_url", INTAKE)) if not v]
 if missing:
     msg = "Missing in _src/config.json: " + ", ".join(missing)
@@ -788,13 +789,44 @@ def tea():
   </div>
 </div></section>
 <section><div class="wrap">
-  <h2>Join the circle</h2>
+  <h2>Weekly tea sits</h2>
+  <p>Once a week we sit together in the tea space and drink tea, mostly in silence. Six seats per sit. <a href="/tea-sits">See dates and seats left</a>.</p>
+  <h2 style="margin-top:2.4rem">Join the circle</h2>
   <p>To hear about special community tea sits, events, and unique tea offerings, email <a href="mailto:{EMAIL}?subject=Tea%20circle">{EMAIL}</a> and ask to be added.</p>
 </div></section>
 """ + cta("Reserve your seat", "Pour a cup and slow down.", "Book a seat", tone="g")
     OUT["tea-ceremonies.html"] = page("/tea-ceremonies", "Chinese Tea Ceremony in Burbank | Full Lotus Health",
         "Gong Fu and bowl tea ceremony in Burbank in the tradition of Wu De: aged, old growth, organic tea for stress relief and inner balance.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies")])], current="/tea-ceremonies")
+
+
+def tea_sits():
+    if TEASITS:
+        body = f"""<div id="teasits" data-endpoint="{e(TEASITS)}">
+  <p class="ts-status" role="status" aria-live="polite" hidden></p>
+  <ul class="ts-list"><li class="fine" style="padding:1rem 0">Loading dates&hellip;</li></ul>
+  <noscript><p class="notice">To reserve a seat, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
+</div>
+<script src="/assets/teasits.js" defer></script>"""
+    else:
+        body = f'<div class="notice"><p><strong>Online reservations open soon.</strong> To save a seat now, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
+    main = hero("Weekly tea sits.",
+        "An hour of tea in the clinic's tea space, in the tradition of Wu De. We drink together, mostly in silence, and let the mind settle. Six seats per sit, so reserve ahead.", tone="n") + f"""
+<section><div class="wrap">
+  {body}
+</div></section>
+<section class="sand"><div class="wrap">
+{faq_block([
+    ("What happens at a tea sit?", "We sit on cushions around the tea table and drink several bowls or cups of tea together, mostly in silence. No experience is needed. It's a simple way to slow down and meditate with tea."),
+    ("What should I wear?", "Comfortable clothes you can sit on the floor in. A cushion or low stool is provided."),
+    ("Where is it?", f"In the tea space at Full Lotus Health, {ADDR_LINE}. Please arrive a few minutes early."),
+    ("Can I bring friends?", "Yes. You can reserve up to three seats at once. For a group of your own, book a <a href=\"/service-page/private-gong-fu-tea-ceremony\">private ceremony</a>."),
+    ("What if I can't make it?", f"Reply to your confirmation email or text {PHONE_DISPLAY} so your seat can go to someone else."),
+], "Before you come")}
+</div></section>""" + cta("Prefer a private ceremony?", "Gong fu and bowl tea ceremonies for you and up to five guests.", "Book a ceremony", tone="g")
+    OUT["tea-sits.html"] = page("/tea-sits", "Weekly Tea Sits in Burbank | Full Lotus Health",
+        "Weekly tea sits in Burbank: an hour of tea, mostly in silence, in the tradition of Wu De. Six seats per sit. See dates, seats left, and reserve online.",
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-ceremonies")
 
 
 def book_online():
@@ -1392,7 +1424,7 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
@@ -1406,7 +1438,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, book_online, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
