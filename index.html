@@ -45,7 +45,7 @@
     <label for="menu-check" class="menu-toggle">Menu</label>
     <nav class="nav" aria-label="Main">
       <ul>
-        <li><a href="/" aria-current="page">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture &amp; herbs</a></li><li><a href="/tea-ceremonies">Tea ceremonies</a></li><li><a href="/new-patients">New patients</a></li><li><a class="tel" href="tel:+18182539307">(818) 253-9307</a></li><li><a class="btn small" href="/book-online">Book</a></li>
+        <li><a href="/" aria-current="page">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture &amp; herbs</a></li><li><a href="/tea-ceremonies">Tea ceremonies</a></li><li><a href="https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform" rel="noopener">New patient form</a></li><li><a class="tel" href="tel:+18182539307">(818) 253-9307</a></li><li><a class="btn small" href="/book-online">Book</a></li>
       </ul>
     </nav>
   </div>
@@ -61,6 +61,7 @@
       <h1 id="home-h1">The calmest hour of your week.</h1>
       <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
       <div class="actions"><a class="btn" href="/book-online">Book a visit</a><a class="btn ghost" href="sms:+18182539307">Text (818) 253-9307</a></div>
+      <p class="fine" style="margin-top:1rem"><strong>First visit?</strong> <a href="https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform" rel="noopener">Start with the new patient form</a></p>
     </div>
   </div>
 </section>
@@ -94,7 +95,21 @@
   </div>
 </div></section>
 
-
+<section class="signup-band" aria-labelledby="signup-h"><div class="wrap signup-row">
+  <div>
+    <h2 id="signup-h">Newsletter</h2>
+    <p>Keep up to date with the latest at Full Lotus Health, including tea sits, health advice, community events, and special offers. Unsubscribe anytime.</p>
+  </div>
+  <form class="signup" id="signup" method="post" action="#" data-demo>
+    <div class="grow"><label for="signup-email" class="sr">Email address</label>
+      <input id="signup-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required maxlength="254">
+      <button class="btn" type="submit">Sign up</button></div>
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <input type="hidden" name="source" value="home">
+    <p class="gmsg" role="status" aria-live="polite"></p>
+  </form>
+</div>
+<script src="/assets/signup.js" defer></script></section>
 
 <section class="cta "><div class="wrap">
 <h2>Ready to feel like yourself again?</h2><p>Book online, or text us a question. New patients, please fill out the intake form before your first visit.</p>

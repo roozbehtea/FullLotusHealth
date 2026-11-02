@@ -310,6 +310,9 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     nav_items = []
     for href, label in NAV:
         cur = ' aria-current="page"' if (current == href) else ""
+        if href == "/new-patients" and INTAKE:   # first-time patients go straight to the form
+            nav_items.append(f'<li><a href="{e(INTAKE)}" rel="noopener">New patient form</a></li>')
+            continue
         nav_items.append(f'<li><a href="{href}"{cur}>{e(label)}</a></li>')
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
     nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
@@ -573,6 +576,7 @@ def home():
       <h1 id="home-h1">The calmest hour of your week.</h1>
       <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
+      {('<p class="fine" style="margin-top:1rem"><strong>First visit?</strong> <a href="' + e(INTAKE) + '" rel="noopener">Start with the new patient form</a></p>') if INTAKE else ""}
     </div>
   </div>
 </section>
@@ -1023,6 +1027,7 @@ def service_pages():
   <div>
     <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{series_fact}{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
     <p>{book_btn("Book", slug=s["slug"])}</p>
+    {('<p><a class="btn ghost" href="' + e(INTAKE) + '" rel="noopener">New patient form</a></p><p class="fine">First visit? Please fill this out before you come.</p>') if (INTAKE and "initial" in s["slug"]) else ""}
     <p class="fine">Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
     <h2 class="h3" style="margin-top:2rem">Also see</h2>
     <ul class="checks">{rel}{guide}</ul>
