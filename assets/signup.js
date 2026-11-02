@@ -1,4 +1,4 @@
-/* Email signups (homepage newsletter, Five Element quiz). Sends the email address and a
+/* Email signups (homepage newsletter, first-visit offer pop-up). Sends the email address and a
    source tag to the Apps Script web app in _src/config.json. Nothing else is collected. */
 (function () {
   var forms = document.querySelectorAll("form.signup");
@@ -8,7 +8,7 @@
     var thanks = function () {
       form.querySelector(".grow").hidden = true;
       msg.className = "gmsg";
-      msg.textContent = "Thank you. You are on the list.";
+      msg.textContent = form.getAttribute("data-thanks") || "Thank you. You are on the list.";
     };
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
