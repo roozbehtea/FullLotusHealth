@@ -586,3 +586,39 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
   .ts-sit .ts-seats { grid-row: 2; }
   .ts-sit .btn { grid-column: 2; grid-row: 2; justify-self: end; }
 }
+
+/* ---- Polish pass (Nov 2026): small finishing details, no layout or colour changes ---- */
+/* crisper type on Mac, fewer one-word last lines */
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+p, li, dd, blockquote { text-wrap: pretty; }
+
+/* prices line up in lists */
+.rates .price, .facts .price, .svc-list .p, .ts-price { font-variant-numeric: lining-nums tabular-nums; }
+
+/* buttons: smooth colour change plus a light press */
+.btn { transition-property: background-color, border-color, color, transform; transition-duration: 0.16s; transition-timing-function: cubic-bezier(0.2, 0, 0, 1); -webkit-tap-highlight-color: transparent; }
+.btn:active { transform: scale(0.97); }
+.menu-toggle { transition: background-color 0.16s, transform 0.16s; -webkit-tap-highlight-color: transparent; }
+.menu-toggle:active { transform: scale(0.97); }
+
+/* nav underline eases in instead of snapping */
+.nav a { transition: color 0.16s, border-color 0.16s; }
+
+/* photos: a faint edge so light images don't melt into the rice paper */
+.photo img, .hh-photo img, .prose img, .post-card img { outline: 1px solid rgba(30, 27, 24, 0.08); outline-offset: -1px; }
+
+/* small text links get a full-size tap area */
+.way-links a, .crumbs a, .site-footer ul a, .contact-lines a { display: inline-block; padding-block: 0.4rem; }
+.way-links { gap: 0 1.1rem; }
+
+/* nested corners: inner art box follows its card's curve */
+.g-cmp-art { border-radius: max(4px, calc(var(--radius-md) - 0.7rem)); }
+
+/* open/close condition list: the + rotates into the − */
+.cond summary::after { transition: background-color 0.16s, color 0.16s, transform 0.2s cubic-bezier(0.2, 0, 0, 1); }
+.cond[open] summary::after { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .menu-toggle, .nav a, .cond summary::after { transition: none; }
+  .btn:active, .menu-toggle:active { transform: none; }
+}
