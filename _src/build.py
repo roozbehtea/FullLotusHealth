@@ -439,7 +439,7 @@ def quotes(items):
 
 
 import os as _os
-def photo(name, alt):
+def photo(name, alt, lazy=True):
     """Returns a figure only when assets/photos/<name>.jpg exists, so the site is clean with or without photos."""
     root = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "assets", "photos")
     for ext in ("jpg", "jpeg", "webp", "png"):
@@ -452,7 +452,7 @@ def photo(name, alt):
                 dims = f' width="{w}" height="{h}"'
             except Exception:
                 dims = ""
-            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}"{dims} loading="lazy"></figure>'
+            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}"{dims}{' loading="lazy"' if lazy else ''}></figure>'
     return ""
 
 
@@ -1197,7 +1197,7 @@ def g_offer(name, line):
 
 
 def g_band(items):
-    figs = "".join(photo(n, alt) for n, alt in items)
+    figs = "".join(photo(n, alt, lazy=False) for n, alt in items)
     return f'<div class="g-band">{figs}</div>' if figs else ""
 
 

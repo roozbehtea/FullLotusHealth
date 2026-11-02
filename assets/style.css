@@ -657,3 +657,14 @@ p, li, dd, blockquote { text-wrap: pretty; }
   .btn, .menu-toggle, .nav a, .cond summary::after { transition: none; }
   .btn:active, .menu-toggle:active { transform: none; }
 }
+
+/* Header on narrow phones: logo, Call and Menu stay on one row */
+@media (max-width: 24rem) {
+  .site-header .bar { gap: 0.4rem; }
+  .brand img { height: 44px; }
+  .menu-toggle, .call-mobile.btn.small { padding: 0.5rem 0.8rem; }
+}
+@media (max-width: 21rem) {
+  .brand img { height: 36px; }
+  .menu-toggle, .call-mobile.btn.small { padding: 0.45rem 0.65rem; }
+}
