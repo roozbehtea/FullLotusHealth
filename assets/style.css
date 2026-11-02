@@ -640,7 +640,7 @@ p, li, dd, blockquote { text-wrap: pretty; }
 .nav a { transition: color 0.16s, border-color 0.16s; }
 
 /* photos: a faint edge so light images don't melt into the rice paper */
-.photo img, .hh-photo img, .prose img, .post-card img { outline: 1px solid rgba(30, 27, 24, 0.08); outline-offset: -1px; }
+.photo img, .hh-photo img, .prose img, .post-card img, .g-band img { outline: 1px solid rgba(30, 27, 24, 0.08); outline-offset: -1px; }
 
 /* small text links get a full-size tap area */
 .way-links a, .crumbs a, .site-footer ul a, .contact-lines a { display: inline-block; padding-block: 0.4rem; }
