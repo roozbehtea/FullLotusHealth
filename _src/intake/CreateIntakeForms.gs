@@ -20,6 +20,8 @@ var CLINIC = 'Full Lotus Health';
 var ADDRESS = '2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504';
 var PHONE = '(818) 253-9307';
 var PRACTITIONER = 'Roozbeh Ghobadpour, L.Ac.';
+var CANCEL_POLICY = 'I agree to give at least 24 hours\' notice to cancel or reschedule. Appointments cancelled or missed with less than ' +
+                    '24 hours\' notice are charged a $95 fee. Payment is due at the time of service.';
 
 function createIntakeForms() {
   var a = newPatientIntake_();
@@ -124,7 +126,7 @@ function newPatientIntake_() {
   agree_(f, 'Not a substitute for your doctor',
     'I understand acupuncture and herbal medicine are not a substitute for care from my physician, and I will keep my physician informed.');
   agree_(f, 'Cancellation and payment',
-    'I agree to give at least 24 hours\' notice to cancel or reschedule, and understand payment is due at the time of service.');
+    CANCEL_POLICY);
   agree_(f, 'Privacy',
     'I acknowledge I have been offered the Notice of Privacy Practices, which explains how my health information is used and protected.');
   checks_(f, 'Communication (optional)', ['You may email me appointment information',
@@ -196,4 +198,15 @@ function skinIntake_() {
 
   signature_(f);
   return f;
+}
+
+
+/** Updates the cancellation policy in the New Patient Intake form that already exists. */
+function updateCancellationPolicy() {
+  var form = FormApp.openById('1EgL_0Fzhfgd5luDSSLapqKCGrrEWAoUjFR1rJnZFZhQ');
+  var done = 0;
+  form.getItems(FormApp.ItemType.CHECKBOX).forEach(function (it) {
+    if (it.getTitle() === 'Cancellation and payment') { it.asCheckboxItem().setChoiceValues([CANCEL_POLICY]); done++; }
+  });
+  console.log(done ? 'Updated: ' + CANCEL_POLICY : 'Cancellation question not found');
 }

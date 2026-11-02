@@ -849,7 +849,7 @@ def book_online():
   {fallback}
   <p><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient intake form</a></p>
   {''.join(blocks)}
-  <p class="fine" style="margin-top:2rem">Prices are per session, except the {SERIES} series, which covers five sessions. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p>
+  <p class="fine" style="margin-top:2rem">Prices are per session, except the {SERIES} series, which covers five sessions. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95.</p>
   {faq_block([
     ("Where are visits?", f"In person at {ADDR_LINE}, except the online consultations, which are by video."),
     ("I'm new. What should I do first?", "Complete the <a href=\"/new-patients\">new patient intake form</a> before your first visit. It is reviewed before you arrive."),
@@ -948,7 +948,7 @@ def new_patients():
 <section class="sand"><div class="wrap">{faq_block([
     ("Do I need to fill out the form before I come?", "Yes. Complete it before your first visit so your appointment can begin with what matters most."),
     ("Where do I go for my visit?", f"{ADDR_LINE}. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."),
-    ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>."),
+    ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95."),
     ("What treatments can I book?", "Acupuncture, microneedling, nanoneedling, cosmetic acupuncture, online consultations, and tea ceremonies. See <a href=\"/book-online\">all services</a>."),
   ], "New patient questions")}</div></section>"""
     OUT["new-patients.html"] = page("/new-patients", "New Patients | Full Lotus Health, Burbank",
@@ -980,7 +980,7 @@ def service_faq(s):
     if s["minutes"]:
         items.append((f"How long is a {s['name'].split(':')[-1].strip().lower()} visit?", f"Plan on {s['minutes']} minutes. Visits are unhurried."))
     items.append(("How do I book?", f"Use the Book button on this page to pick a time on the calendar. New patients, please complete the <a href=\"/new-patients\">intake form</a> before your first visit."))
-    items.append(("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>."))
+    items.append(("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95."))
     return faq_block(items)
 
 
