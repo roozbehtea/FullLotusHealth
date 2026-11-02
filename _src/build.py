@@ -205,6 +205,33 @@ def money(n):
     return f"{n:.2f}"
 
 
+def person_ld():
+    """The practitioner: license, board certification and education, so search engines and AI tools can verify him."""
+    return {
+        "@type": "Person",
+        "@id": f"{SITE}/#roozbeh",
+        "name": "Roozbeh Ghobadpour",
+        "honorificSuffix": "L.Ac.",
+        "jobTitle": "Licensed Acupuncturist (L.Ac.)",
+        "description": "Licensed acupuncturist in Burbank, CA with over 10 years of clinical experience in Chinese medicine, focused on skin and cosmetic treatments. Head Chinese Medicine Writer for Global Tea Hut magazine.",
+        "worksFor": {"@id": f"{SITE}/#business"},
+        "alumniOf": [{"@type": "CollegeOrUniversity", "name": "Yo San University"},
+                     {"@type": "CollegeOrUniversity", "name": "University of California, Los Angeles"}],
+        "hasCredential": [
+            {"@type": "EducationalOccupationalCredential", "credentialCategory": "license",
+             "name": "Licensed Acupuncturist, California Acupuncture Board, license #17220",
+             "recognizedBy": {"@type": "Organization", "name": "California Acupuncture Board"}},
+            {"@type": "EducationalOccupationalCredential", "credentialCategory": "certification",
+             "name": "NCCAOM Board-Certified Diplomate, ID #848037",
+             "recognizedBy": {"@type": "Organization", "name": "NCCAOM"}},
+            {"@type": "EducationalOccupationalCredential", "credentialCategory": "degree",
+             "name": "M.A., Traditional Chinese Medicine, Yo San University (2015)"},
+        ],
+        "knowsAbout": ["Acupuncture", "Chinese herbal medicine", "Chinese medicine dermatology", "Microneedling",
+                       "Nanoneedling", "Cosmetic acupuncture", "Chinese tea"],
+    }
+
+
 def business_ld():
     offers = []
     for s in SERVICES:
@@ -214,11 +241,14 @@ def business_ld():
         })
     return {
         "@context": "https://schema.org",
-        "@type": ["HealthAndBeautyBusiness", "LocalBusiness"],
+        "@type": ["MedicalClinic", "HealthAndBeautyBusiness", "LocalBusiness"],
         "@id": f"{SITE}/#business",
         "name": NAME,
         "url": SITE + "/",
-        "description": "Acupuncture and Chinese herbal medicine clinic in Burbank, CA offering microneedling, nanoneedling, cosmetic acupuncture, cupping, moxibustion, and tea ceremony.",
+        "slogan": "The calmest hour of your week.",
+        "foundingDate": "2016-10",
+        "description": "Acupuncture and Chinese herbal medicine clinic in Burbank, CA, run by one licensed acupuncturist and focused on skin: microneedling, nanoneedling, and cosmetic acupuncture. Also offers acupuncture, herbal medicine, cupping, moxibustion, and tea ceremony.",
+        "sameAs": [GOOGLE_REVIEWS],
         "telephone": PHONE_TEL,
         "email": EMAIL,
         "image": f"{SITE}/assets/logo-seal.png",
@@ -229,7 +259,8 @@ def business_ld():
         "geo": {"@type": "GeoCoordinates", "latitude": 34.1929, "longitude": -118.3247},
         "hasMap": MAPS,
         "areaServed": [{"@type": "City", "name": c} for c in ("Burbank", "Glendale", "Toluca Lake", "North Hollywood", "Studio City")],
-        "founder": {"@type": "Person", "name": "Roozbeh Ghobadpour", "jobTitle": "Licensed Acupuncturist (L.Ac.)"},
+        "founder": person_ld(),
+        "employee": {"@id": f"{SITE}/#roozbeh"},
         "knowsAbout": ["Cosmetic acupuncture", "Microneedling", "Nanoneedling", "Acupuncture", "Chinese herbal medicine", "Chinese medicine for skin conditions", "Cupping", "Moxibustion", "Chinese tea ceremony"],
         "makesOffer": offers,
     }
@@ -1309,6 +1340,57 @@ def notfound():
     OUT["404.html"] = page("/404", "Page not found | Full Lotus Health", "That page was not found. Visit the Full Lotus Health home page or book acupuncture, microneedling, or a tea ceremony in Burbank, CA.", main, noindex=True)
 
 
+def llms_txt():
+    """Plain-language summary for AI assistants, served at /llms.txt. Prices come from SERVICES so they never drift."""
+    def svc_lines(group):
+        out = []
+        for s in SERVICES:
+            if s["group"] != group:
+                continue
+            mins = f", {s['minutes']} min" if s.get("minutes") else ""
+            out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {s['short']}")
+        return "\n".join(out)
+    return f"""# {NAME}
+
+> Acupuncture and Chinese medicine clinic in Burbank, CA, run by one licensed acupuncturist and focused on skin: microneedling, nanoneedling, and cosmetic acupuncture. Practitioner: Roozbeh Ghobadpour, L.Ac. (California acupuncture license #17220, NCCAOM Board-Certified Diplomate), in practice since 2016. "The calmest hour of your week."
+
+## Quick facts
+- Address: {ADDR_LINE}
+- Phone or text: {PHONE_DISPLAY} · Email: {EMAIL}
+- Serves Burbank, Glendale, Toluca Lake, North Hollywood, and Studio City
+- Self-pay clinic. Book online: {SITE}/book-online
+- Google reviews: {GOOGLE_REVIEWS}
+- In California, microneedling may be performed by physicians and licensed acupuncturists.
+
+## Skin and beauty treatments
+{svc_lines("beauty")}
+
+## Acupuncture and herbal medicine
+{svc_lines("acu")}
+- Also offered: Chinese herbal medicine (including for skin conditions), cupping, moxibustion, therapeutic massage.
+
+## Online consultations
+{svc_lines("consult")}
+
+## Tea ceremonies
+{svc_lines("tea")}
+
+## About the practitioner
+Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo San University (2015) and a B.A. from UCLA. He has over 10 years of clinical experience, is continuing advanced study in Chinese medicine dermatology, and is the Head Chinese Medicine Writer for Global Tea Hut magazine.
+
+## Key pages
+- [Skin and beauty treatments]({SITE}/treatments)
+- [Microneedling in Burbank]({SITE}/microneedling-burbank)
+- [Nanoneedling in Burbank]({SITE}/nanoneedling-burbank)
+- [Cosmetic acupuncture in Burbank]({SITE}/cosmetic-acupuncture-burbank)
+- [Skin conditions]({SITE}/skin-conditions-burbank)
+- [Acupuncture and herbs]({SITE}/acupuncture)
+- [Tea ceremonies]({SITE}/tea-ceremonies)
+- [New patients]({SITE}/new-patients)
+- [Book online]({SITE}/book-online)
+"""
+
+
 def seo_files():
     urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -1319,6 +1401,7 @@ def seo_files():
     sm.append("</urlset>")
     OUT["sitemap.xml"] = "\n".join(sm) + "\n"
     OUT["robots.txt"] = f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n"
+    OUT["llms.txt"] = llms_txt()
     OUT["CNAME"] = "www.fulllotushealth.com\n"
     OUT[".nojekyll"] = ""
 
