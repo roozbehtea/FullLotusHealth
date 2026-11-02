@@ -188,6 +188,7 @@ function reserve_(b) {
       'line_items[0][price_data][unit_amount]': String(Math.round(sit.price * 100)),
       'line_items[0][price_data][product_data][name]': 'Tea sit, ' + sit.label,
       'line_items[0][price_data][product_data][description]': 'Full Lotus Health, ' + c.address,
+      'allow_promotion_codes': 'true',
       'metadata[sit_id]': sit.id,
       'metadata[name]': name,
       'expires_at': String(Math.floor(Date.now() / 1000) + 31 * 60),
@@ -212,7 +213,7 @@ function confirm_(session) {
     if (!found) return { error: 'not_found' };
     if (found.row[COL.status - 1] !== 'paid') {
       var s = stripe_('get', '/v1/checkout/sessions/' + session);
-      if (s.payment_status !== 'paid') return { ok: false, status: s.status };
+      if (!paidOk_(s)) return { ok: false, status: s.status };
       setCells_(found.index, { status: 'paid', amount: (s.amount_total || 0) / 100, paidAt: new Date() });
     }
     sendEmails_(session);                       // inside the lock so two confirms can't both send
@@ -231,7 +232,7 @@ function release_(session) {
     var found = findRow_(session);
     if (!found || found.row[COL.status - 1] !== 'pending') return { ok: true };
     var s = stripe_('get', '/v1/checkout/sessions/' + session);
-    if (s.payment_status === 'paid') return { ok: true };
+    if (paidOk_(s)) return { ok: true };
     if (s.status === 'open') stripe_('post', '/v1/checkout/sessions/' + session + '/expire', {});
     setCells_(found.index, { status: 'cancelled' });
     return { ok: true };
@@ -253,7 +254,7 @@ function reconcile() {
     var session = r[COL.session - 1];
     try {
       var s = stripe_('get', '/v1/checkout/sessions/' + session);
-      if (s.payment_status === 'paid') confirm_(session);
+      if (paidOk_(s)) confirm_(session);
       else if (s.status === 'expired' || new Date(r[COL.created - 1]).getTime() < cutoff) setCells_(i + 2, { status: 'expired' });
     } catch (err) {
       console.error('reconcile ' + session + ': ' + err);
@@ -317,4 +318,9 @@ function setup() {
   });
   ScriptApp.newTrigger('reconcile').timeBased().everyMinutes(10).create();
   console.log('Upcoming sits: ' + JSON.stringify(listSits_(), null, 1));
+}
+
+// A 100%-off promo code finishes checkout with no payment due; that still counts as a completed reservation.
+function paidOk_(s) {
+  return s.payment_status === 'paid' || (s.payment_status === 'no_payment_required' && s.status === 'complete');
 }
