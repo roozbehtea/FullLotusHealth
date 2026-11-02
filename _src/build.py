@@ -28,10 +28,11 @@ GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:ChIJJVOw4haVwoAR
 MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504"
 
 BOOK = CFG.get("booking_url", "").strip()
+BOOKS = {k: v.strip() for k, v in CFG.get("booking_urls", {}).items() if v.strip()}   # per-service Google Calendar booking pages, by service slug
 INTAKE = CFG.get("intake_url", "").strip()
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
-missing = [k for k, v in (("booking_url", BOOK), ("intake_url", INTAKE)) if not v]
+missing = [k for k, v in (("booking_url or booking_urls", BOOK or BOOKS), ("intake_url", INTAKE)) if not v]
 if missing:
     msg = "Missing in _src/config.json: " + ", ".join(missing)
     if LAUNCH:
@@ -276,11 +277,11 @@ def service_ld(s, url=None, desc=None, priced=True):
         "areaServed": {"@type": "City", "name": "Burbank"},
     }
     if priced:
-        d["offers"] = {"@type": "Offer", "price": money(s["price"]), "priceCurrency": "USD", "url": BOOK or f"{SITE}/book-online"}
+        d["offers"] = {"@type": "Offer", "price": money(s["price"]), "priceCurrency": "USD", "url": BOOKS.get(s.get("slug")) or BOOK or f"{SITE}/book-online"}
         pk = PACKAGES.get(s.get("slug"))
         if pk:
             d["offers"] = [d["offers"], {"@type": "Offer", "name": pk["name"] + " (5 sessions)", "price": money(pk["price"]),
-                                         "priceCurrency": "USD", "url": BOOK or f"{SITE}/book-online"}]
+                                         "priceCurrency": "USD", "url": BOOKS.get(s.get("slug")) or BOOK or f"{SITE}/book-online"}]
     return d
 
 
@@ -290,8 +291,12 @@ def breadcrumb_ld(trail):
 
 
 # ------------------------------------------------------------------ layout
-def book_btn(label="Book", cls="", small=False):
+def book_btn(label="Book", cls="", small=False, slug=None):
     c = "btn " + ("small " if small else "") + cls
+    if slug and slug in BOOKS:
+        return f'<a class="{c.strip()}" href="{e(BOOKS[slug])}" rel="noopener">{e(label)}</a>'
+    if slug and BOOKS and slug not in BOOKS:   # no online calendar for this one: text to book
+        return f'<a class="{c.strip()}" href="sms:{PHONE_TEL}">Text to book</a>'
     rel = ' rel="noopener"' if BOOK_EXTERNAL else ""
     return f'<a class="{c.strip()}" href="{e(BOOK_HREF)}"{rel}>{e(label)}</a>'
 
@@ -836,13 +841,13 @@ def book_online():
         rows = []
         for s in [x for x in SERVICES if x["group"] == g]:
             meta = f' <span class="fine">{s["minutes"]} min</span>' if s["minutes"] else ""
-            rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}">{e(s["name"])}</a>{meta}</span><span class="p">${s["price"]}</span>{book_btn("Book", small=True)}</li>')
+            rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}">{e(s["name"])}</a>{meta}</span><span class="p">${s["price"]}</span>{book_btn("Book", small=True, slug=s["slug"])}</li>')
             pk = PACKAGES.get(s["slug"])
             if pk:
-                rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}#series">{e(pk["name"])}</a> <span class="fine">5 sessions</span></span><span class="p">${pk["price"]:,}</span>{book_btn("Book", small=True)}</li>')
+                rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}#series">{e(pk["name"])}</a> <span class="fine">5 sessions</span></span><span class="p">${pk["price"]:,}</span>{book_btn("Book", small=True, slug="__series__")}</li>')
         blocks.append(f"<h2 style='margin-top:2.4rem'>{label}</h2><ul class='svc-list'>{''.join(rows)}</ul>")
     fallback = ""
-    if not BOOK:
+    if not BOOK and not BOOKS:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
     main = hero("Book online.", "Pick a service, then choose a time on the calendar. New patients, please complete the intake form before your first visit.", tone="l") + f"""
 <section><div class="wrap">
@@ -1017,7 +1022,7 @@ def service_pages():
 <section><div class="wrap split">
   <div>
     <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{series_fact}{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
-    <p>{book_btn("Book")}</p>
+    <p>{book_btn("Book", slug=s["slug"])}</p>
     <p class="fine">Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
     <h2 class="h3" style="margin-top:2rem">Also see</h2>
     <ul class="checks">{rel}{guide}</ul>

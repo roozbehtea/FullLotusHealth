@@ -2,5 +2,14 @@
   "booking_url": "",
   "intake_url": "https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform",
   "signup_url": "",
-  "teasits_url": "https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec"
+  "teasits_url": "https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec",
+  "booking_urls": {
+    "acupuncture-initial-treatment": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ2HARSUqWoSfp_SoY70_HAIdr7ErWBGx1mn0u-47RACp0bYs1TYFxar1K6Ee340uO87BSEbyzPK",
+    "acupuncture-repeat-treatment": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ24kA-TzanqvAeNNQLJbCrsw33psKQvK2NcdeY3ofsBxakCftXiXb19tDKCQVlby0RpDmE3bkaP",
+    "full-lotus-lift": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3wDRtApME2wHvHIjzlcq2iULob1M7XQ8Msl9JxpzfBkBd1zsbxQNXbZyuRnnXsZuGVXG3RaOi9",
+    "initial-consultation-online": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ11VBDh8ibIzaE40VsELpsUk8iLAbW6-zmP_9tl2IVbwRY-AaQKbsN5AhGRkIugh9iYmBoF65sk",
+    "medical-microneedling-session": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3_v3LeQPyvzetimNjZUNnSpgUP2VIf1O02weYckhhCvM8sEVFT7UeNn6CVs-WBUFwPQoNhW_Hg",
+    "facial-nano-needling": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3iq8VcSK4yDadJ7OqSKFHL4MbsHGt8XKdmPF0sgqeicGGCgpdgvHXvAv52VgYFW2OrWswRdO9u",
+    "repeat-consultation-online": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ27eGf4Fm4VpAZRQfekoeYIqFLGQuI_RD_nPM9OlpX6Fn8b0oQ-LV93bhWy1Dm7c5zhlHbNm4zj"
+  }
 }
