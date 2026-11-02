@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "higgsfield": {
+      "type": "http",
+      "url": "https://mcp.higgsfield.ai/mcp"
+    },
+    "youtube-transcript": {
+      "command": "npx",
+      "args": ["-y", "@fabriqa.ai/youtube-transcript-mcp@latest"]
+    }
+  }
+}
