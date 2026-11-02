@@ -4,7 +4,7 @@ The page at /tea-sits lists upcoming tea sits with seats left. Guests reserve, p
 
 ## How the schedule works
 - Any event in the info@fulllotushealth.com Google Calendar with **"Tea sit"** in its title shows up on the page (up to 8 weeks ahead).
-- Default: 6 seats, $35 a seat. To change one sit, put these lines in the event's description:
+- Default: 6 seats, $25 a seat. To change one sit, put these lines in the event's description:
   ```
   Seats: 4
   Price: 45
@@ -18,7 +18,7 @@ The page at /tea-sits lists upcoming tea sits with seats left. Guests reserve, p
 2. **Sheet:** Signed in as info@fulllotushealth.com, create a Google Sheet named "Full Lotus Tea Sits".
 3. **Script:** In the sheet: Extensions > Apps Script. Replace the code with `Code.gs` from this folder. Save.
 4. **Settings:** Project Settings (gear) > Script properties > add `STRIPE_SECRET_KEY` = the key from step 1.
-   Optional: `DEFAULT_PRICE` (35), `DEFAULT_SEATS` (6), `CUTOFF_MINUTES` (60), `NOTIFY_EMAIL` (info@fulllotushealth.com).
+   Optional: `DEFAULT_PRICE` (25), `DEFAULT_SEATS` (6), `CUTOFF_MINUTES` (60), `NOTIFY_EMAIL` (info@fulllotushealth.com).
 5. **Run setup:** In the editor, choose the `setup` function and click Run. Approve the permissions (calendar, sheet, email, outside requests to Stripe). It creates the Reservations tab and a 10-minute check that catches anyone who paid but closed the window early.
 6. **Deploy:** Deploy > New deployment > type "Web app". Execute as: Me. Who has access: Anyone. Copy the Web app URL (ends in /exec).
 7. Put that URL in `_src/config.json` as `teasits_url`, run `python3 _src/build.py`, commit and push.

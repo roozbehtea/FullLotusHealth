@@ -32,7 +32,7 @@ function cfg_() {
     site: prop_('SITE_URL', 'https://www.fulllotushealth.com'),
     match: prop_('TITLE_MATCH', 'tea sit').toLowerCase(),
     seats: parseInt(prop_('DEFAULT_SEATS', '6'), 10),
-    price: parseFloat(prop_('DEFAULT_PRICE', '35')),
+    price: parseFloat(prop_('DEFAULT_PRICE', '25')),
     cutoffMinutes: parseInt(prop_('CUTOFF_MINUTES', '60'), 10),   // online booking closes this long before start
     notify: prop_('NOTIFY_EMAIL', 'info@fulllotushealth.com'),
     address: prop_('ADDRESS', '2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504'),
