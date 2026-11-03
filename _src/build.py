@@ -1057,7 +1057,7 @@ def g_hero(tone, eyebrow, h1, lede, chips, art_svg):
     cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in [("Home", "/"), ("Natural beauty", "/treatments")]) + "</p>"
     ch = "".join(f"<li>{e(c)}</li>" for c in chips)
     return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid">
-<div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
+<div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><p class="eyebrow">{e(eyebrow)}</p><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
 <p class="g-actions">{book_btn("Book a treatment")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>
 <ul class="chips">{ch}</ul></div>
 <div class="g-hero-art">{art_svg}</div></div></div>"""
