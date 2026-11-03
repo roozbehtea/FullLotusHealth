@@ -469,6 +469,8 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .art { display: block; width: 100%; height: auto; max-width: 100%; }
 .g-hero-art .art { aspect-ratio: 520 / 420; }
 .g-cmp-art .art { aspect-ratio: 320 / 200; }
+/* The diagram scales down with the screen; on phones its labels would shrink below 8px, so they are set larger there. */
+@media (max-width: 34rem) { .art text { font-size: 15px; } }
 .ico { display: block; flex: none; }
 .g-head { max-width: 42rem; margin-bottom: 1.8rem; }
 .g-head h2 { margin-bottom: 0.3em; }
