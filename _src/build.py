@@ -977,6 +977,12 @@ GUIDES = {
     "full-lotus-lift": ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank: a guide"),
 }
 
+# Diagram and photo shown at the top of a service page: the same art and photo (and alt text) the guide page uses.
+SERVICE_ART = {
+    "medical-microneedling-session": (art.skin_layers, "skin-texture", "Close-up of smooth, even skin in soft light"),
+    "facial-nano-needling": (art.nano_layers, "serum-lotus", "A dropper bottle of golden herbal serum beside a pink lotus petal"),
+}
+
 
 def service_faq(s):
     online = "Online" in s["name"]
@@ -1011,7 +1017,9 @@ def service_pages():
         rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a> <span class="fine">${BY_SLUG[r]["price"]}</span></li>' for r in s["related"])
         g = GUIDES.get(s["slug"])
         guide = f'<li><a href="{g[0]}">{e(g[1])}</a></li>' if g else ""
-        dur = f'<dt>Time</dt><dd>{s["minutes"]} minutes</dd>' if s["minutes"] else ""
+        sa = SERVICE_ART.get(s["slug"])
+        fig = (f'<div class="g-cmp-art">{sa[0]()}</div><div class="g-after-photos">{photo(sa[1], sa[2])}</div>') if sa else ""
+        dur =f'<dt>Time</dt><dd>{s["minutes"]} minutes</dd>' if s["minutes"] else ""
         loc = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         pk = PACKAGES.get(s["slug"])
         series_fact = series_block = ""
@@ -1032,7 +1040,7 @@ def service_pages():
     <h2 class="h3" style="margin-top:2rem">Also see</h2>
     <ul class="checks">{rel}{guide}</ul>
   </div>
-  <div>{''.join(parts)}{series_block}
+  <div>{fig}{''.join(parts)}{series_block}
     {service_faq(s)}
     <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
   </div>
