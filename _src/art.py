@@ -77,7 +77,7 @@ def skin_layers():
     labels = (f'<g font-family="Instrument Sans, Helvetica Neue, Arial, sans-serif" font-size="12" font-weight="600" letter-spacing="1.6" fill="{INK}">'
               f'<text x="38" y="208">EPIDERMIS</text><text x="38" y="{epi_bot + 24}">DERMIS</text>'
               f'<text x="38" y="{derm_bot - 10}" fill="{CIN}">NEW COLLAGEN BUILDS HERE</text></g>')
-    return (f'<svg class="art" viewBox="0 0 520 420" role="img" aria-label="Cross-section of skin: a microneedling pen sends fine needles through the epidermis into the dermis, where collagen fibres lie." focusable="false">'
+    return (f'<svg class="art" viewBox="0 0 520 420" width="520" height="420" role="img" aria-label="Cross-section of skin: a microneedling pen sends fine needles through the epidermis into the dermis, where collagen fibres lie." focusable="false">'
             f'{skin}{glow}{needles}{pen}{labels}</svg>')
 
 
@@ -96,7 +96,7 @@ def nano_layers():
     labels = (f'<g font-family="Instrument Sans, Helvetica Neue, Arial, sans-serif" font-size="12" font-weight="600" letter-spacing="1.6" fill="{INK}">'
               f'<text x="38" y="208">EPIDERMIS</text><text x="38" y="{epi_bot + 24}">DERMIS</text>'
               f'<text x="38" y="{derm_bot - 10}" fill="{LAP}">SURFACE ONLY: NO DEEPER</text></g>')
-    return (f'<svg class="art" viewBox="0 0 520 420" role="img" aria-label="Cross-section of skin: nano-tips open microscopic channels in the surface of the epidermis only, letting serum absorb without going deeper." focusable="false">'
+    return (f'<svg class="art" viewBox="0 0 520 420" width="520" height="420" role="img" aria-label="Cross-section of skin: nano-tips open microscopic channels in the surface of the epidermis only, letting serum absorb without going deeper." focusable="false">'
             f'{skin}{pen}{tips}{drops}{labels}</svg>')
 
 
@@ -109,5 +109,5 @@ def depth(kind):
     col = LAP if kind == "nano" else CIN
     needles = "".join(f'<path d="M{x} 16V{tip_y}" stroke="{INK}" stroke-width="2.6" stroke-linecap="round"/>'
                       f'<circle cx="{x}" cy="{tip_y}" r="3.6" fill="{col}"/>' for x in xs)
-    return (f'<svg class="art" viewBox="0 0 320 200" role="img" aria-label="{"Nanoneedling tips stop in the surface layer of the skin" if kind == "nano" else "Microneedling needles reach into the dermis below the surface layer"}." focusable="false">'
+    return (f'<svg class="art" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="{"Nanoneedling tips stop in the surface layer of the skin" if kind == "nano" else "Microneedling needles reach into the dermis below the surface layer"}." focusable="false">'
             f'{skin}{needles}</svg>')
