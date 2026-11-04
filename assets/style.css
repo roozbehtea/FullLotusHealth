@@ -675,3 +675,7 @@ p, li, dd, blockquote { text-wrap: pretty; }
 
 /* Skip link keeps readable text on hover */
 .skip:hover { color: var(--surface-100); }
+
+/* Phone tap targets: at least 44px tall (Apple's guideline) */
+@media (max-width: 70rem) { .call-mobile.btn.small, .menu-toggle { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; } }
+.pb-rating a { display: inline-flex; align-items: center; min-height: 44px; }

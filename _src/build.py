@@ -999,6 +999,63 @@ def service_faq(s):
     return faq_block(items)
 
 
+def render_body(items):
+    out = []
+    for item in items:
+        k = item[0]
+        if k == "p":
+            out.append(f"<p>{e(item[1])}</p>")
+        elif k == "h2":
+            out.append(f"<h2 style='margin-top:2rem'>{e(item[1])}</h2>")
+        elif k == "ul":
+            out.append("<ul class='checks'>" + "".join(f"<li>{e(i)}</li>" for i in item[1]) + "</ul>")
+        elif k == "small":
+            out.append(f'<p class="fine">{e(item[1])}</p>')
+    return "".join(out)
+
+
+def beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide):
+    """Beauty treatments sell before they show the fee: what it does and what patients say come first,
+    then fees and booking. People who only want the price can jump straight to it."""
+    body = s["body"]
+    qi = next((i for i, it in enumerate(body) if it[0] == "q"), None)
+    if qi is not None:
+        head_end = qi - 1 if qi and body[qi - 1][0] == "h2" else qi   # drop the "What patients say" heading
+        last_q = max(i for i, it in enumerate(body) if it[0] == "q")
+        intro, rest = body[:head_end], body[last_q + 1:]
+    else:
+        intro, rest = body, []
+    if not fig:
+        fig = f'<div class="g-after-photos">{photo("gua-sha", "A jade gua sha stone, a jar of serum and a folded linen towel on a wooden tray")}</div>'
+    rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a></li>' for r in s["related"])
+    ask = f'Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.'
+    reviews = (f'<section class="wash-g"><div class="wrap"><p class="eyebrow">Reviews</p><h2>What patients say</h2>'
+               f'{g_quotes(s["slug"])}<p>{book_btn("Book", slug=s["slug"])}</p></div></section>') if qi is not None else ""
+    return hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone="c") + f"""
+<section><div class="wrap split">
+  <div>{fig}</div>
+  <div>{render_body(intro)}
+    <p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.6rem">{book_btn("Book", slug=s["slug"])} <a class="btn ghost" href="#fees">Fees and booking</a></p>
+  </div>
+</div></section>
+{reviews}
+<section class="sand" id="fees"><div class="wrap split">
+  <div>
+    <h2>Fees and booking</h2>
+    <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{series_fact}{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
+    <p>{book_btn("Book", slug=s["slug"])}</p>
+    <p class="fine">First visit? Please fill out the <a href="{INTAKE_HREF}">new patient form</a> before you come. {ask}</p>
+  </div>
+  <div>{series_block}{render_body(rest)}</div>
+</div></section>
+<section><div class="wrap split">
+  <div><h2 class="h3">Also see</h2><ul class="checks">{rel}{guide}<li><a href="/treatments">All natural beauty treatments</a></li></ul></div>
+  <div>{service_faq(s)}
+    <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
+  </div>
+</div></section>"""
+
+
 def service_pages():
     for s in SERVICES:
         parts = []
@@ -1030,7 +1087,10 @@ def service_pages():
                             f'Each session has its own focus and its own signature serum.</p>'
                             f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which works out to ${pk["per"]} a session instead of ${s["price"]}.</p>'
                             f'<p><a href="{pk["guide"]}#five-element">How the five sessions work</a></p>')
-        main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone={"beauty":"c","acu":"m","consult":"l","tea":"n"}[s["group"]]) + f"""
+        if s["group"] == "beauty":
+            main = beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide)
+        else:
+            main = hero(e(s["name"]), e(s["tagline"]), crumbs=[("Home", "/"), ("Book online", "/book-online")], tone={"beauty":"c","acu":"m","consult":"l","tea":"n"}[s["group"]]) + f"""
 <section><div class="wrap split">
   <div>
     <dl class="facts"><dt>Fee</dt><dd class="price">${s["price"]}</dd>{series_fact}{dur}<dt>Where</dt><dd>{e(loc)}</dd></dl>
