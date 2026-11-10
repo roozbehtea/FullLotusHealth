@@ -291,8 +291,13 @@ def breadcrumb_ld(trail):
 
 
 # ------------------------------------------------------------------ layout
-def book_btn(label="Book", cls="", small=False, slug=None):
+BOOK_HERE = None   # set while a treatment guide page is built, so its Book buttons open that treatment's fees and booking
+
+
+def book_btn(label="Book", cls="", small=False, slug=None, site_wide=False):
     c = "btn " + ("small " if small else "") + cls
+    if slug is None and BOOK_HERE and not site_wide:
+        return f'<a class="{c.strip()}" href="{e(BOOK_HERE)}">{e(label)}</a>'
     if slug and slug in BOOKS:
         return f'<a class="{c.strip()}" href="{e(BOOKS[slug])}" rel="noopener">{e(label)}</a>'
     if slug and BOOKS and slug not in BOOKS:   # no online calendar for this one: text to book
@@ -315,7 +320,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
             continue
         nav_items.append(f'<li><a href="{href}"{cur}>{e(label)}</a></li>')
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
-    nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
+    nav_items.append(f'<li>{book_btn("Book", small=True, site_wide=True)}</li>')
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
     feed_link = f'<link rel="alternate" type="application/rss+xml" title="{NAME} blog" href="/feed.xml">\n' if POSTS else ""
     robots = ('<meta name="robots" content="noindex, follow">\n' if noindex
@@ -376,7 +381,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
   <div class="wrap">
     <div class="cols">
       <div>
-        <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal.png" width="84" height="84" alt=""></a>
+        <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal-168.png" width="84" height="84" alt="" loading="lazy"></a>
         <p>Roozbeh Ghobadpour, L.Ac.<br>{ADDR["street"]}<br>{ADDR["city"]}, {ADDR["region"]} {ADDR["zip"]}</p>
         <p><a href="{MAPS}" rel="noopener">Get directions</a></p>
       </div>
@@ -452,8 +457,22 @@ def photo(name, alt, lazy=True):
                 dims = f' width="{w}" height="{h}"'
             except Exception:
                 dims = ""
-            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}"{dims}{' loading="lazy"' if lazy else ''}></figure>'
+            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}"{srcset(name)} alt="{e(alt)}"{dims}{' loading="lazy"' if lazy else ''}></figure>'
     return ""
+
+
+def srcset(name, sizes="(min-width: 52rem) 45vw, 100vw"):
+    """Smaller WebP copies made by _src/make_images.py, so phones don't download the full-size JPG."""
+    root = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "assets", "photos")
+    found = []
+    for fn in _os.listdir(root):
+        stem, ext = _os.path.splitext(fn)
+        if ext == ".webp" and stem.startswith(name + "-") and stem[len(name) + 1:].isdigit():
+            found.append(int(stem[len(name) + 1:]))
+    if not found:
+        return ""
+    return ' srcset="' + ", ".join(f"/assets/photos/{name}-{w}.webp {w}w" for w in sorted(found)) + f'" sizes="{sizes}"'
+
 
 
 
@@ -569,7 +588,7 @@ def home():
     main = f"""
 <section class="home-hero" aria-labelledby="home-h1">
   <div class="hh-grid">
-    <figure class="hh-photo"><img src="/assets/photos/hero.jpg" width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
+    <figure class="hh-photo"><img src="/assets/photos/hero.jpg"{srcset("hero", "(min-width: 56rem) 58vw, 100vw")} width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
     <div class="hh-panel">
       <div class="band" aria-hidden="true"></div>
       <p class="eyebrow">Acupuncture &amp; skin treatments &middot; Burbank</p>
@@ -614,8 +633,8 @@ def home():
 
 {cta("Ready to feel like yourself again?", "Book online, or text us a question. New patients, please fill out the intake form before your first visit.", "Book now")}
 """
-    OUT["index.html"] = page("/", "Microneedling & Acupuncture in Burbank | Full Lotus Health",
-        "Acupuncture, Chinese herbal medicine, and cosmetic microneedling in Burbank, CA. Licensed acupuncturist treating body, mind, and skin from the same diagnosis.",
+    OUT["index.html"] = page("/", "Microneedling & Cosmetic Acupuncture in Burbank | Full Lotus Health",
+        "Natural skin treatments in Burbank, CA: microneedling, nanoneedling and cosmetic acupuncture from a licensed acupuncturist, plus Chinese herbal medicine and tea.",
         main, ld=[business_ld()], current="/")
 
 
@@ -1376,12 +1395,12 @@ def landing_pages():
       dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
            title="Microneedling Burbank: What to Expect | Full Lotus Health",
            meta="Microneedling in Burbank for fine lines, acne scars, texture, and thinning hair. What a 90-minute session involves, and how a series works.",
-           h1="Microneedling in Burbank, CA", rich=micro_page(where),
+           h1="Microneedling in Burbank, CA", rich=lambda: micro_page(where),
            more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
            title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
            meta="Nanoneedling facial in Burbank: a gentle, no-downtime surface treatment with herbal serums and red light therapy for glowing, hydrated skin.",
-           h1="Nanoneedling in Burbank, CA", rich=nano_page(where),
+           h1="Nanoneedling in Burbank, CA", rich=lambda: nano_page(where),
            more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/cosmetic-acupuncture-burbank", file="cosmetic-acupuncture-burbank.html", svc=li, tone="n",
            title="Cosmetic Acupuncture Burbank: Facial Lift | Full Lotus Health",
@@ -1403,10 +1422,13 @@ def landing_pages():
 ])}
 """, more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/nanoneedling-burbank", "Nanoneedling in Burbank")]),
     ]
+    global BOOK_HERE
     for pg in pages:
         svc = pg["svc"]
+        BOOK_HERE = f"/service-page/{svc['slug']}#fees"
         if "rich" in pg:
-            main = pg["rich"][0] + pg["rich"][1] + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
+            rich = pg["rich"]()
+            main = rich[0] + rich[1] + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
             OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
                 ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
                     breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
@@ -1425,6 +1447,7 @@ def landing_pages():
         OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
             ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
                 breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
+    BOOK_HERE = None
 
 
 def condition_pages():
