@@ -170,11 +170,11 @@ BY_SLUG = {s["slug"]: s for s in SERVICES}
 
 # ------------------------------------------------------------------ Five Element Rejuvenation series
 # First-pass copy. Roozbeh will rewrite the element text in his own words.
-# Series price follows the acupuncture pattern ($120 single, five at $100): about 17% off five single sessions.
+# Series price follows the acupuncture pattern ($120 single, five at $100): 20% off five single sessions, so the fifth session is free.
 SERIES = "Five Element Rejuvenation™"
 PACKAGES = {
-    "medical-microneedling-session": dict(price=2100, guide="/microneedling-burbank"),
-    "facial-nano-needling": dict(price=1450, guide="/nanoneedling-burbank"),
+    "medical-microneedling-session": dict(price=2000, guide="/microneedling-burbank"),
+    "facial-nano-needling": dict(price=1400, guide="/nanoneedling-burbank"),
 }
 for _slug, _p in PACKAGES.items():
     _p["per"] = _p["price"] // 5
@@ -896,7 +896,7 @@ def confirm_pages():
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
         opt2 = ""
         if pk:
-            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, ${pk["per"]} each</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p></div>'''
+            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off)</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p></div>'''
         main = f'''<section class="cf"><div class="wrap cf-wrap">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>
@@ -1158,7 +1158,7 @@ def service_pages():
             series_block = (f'<h2 id="series" style="margin-top:2rem">{e(SERIES)} series</h2>'
                             f'<p>Five sessions, one for each element of Chinese medicine: Wood, Fire, Earth, Metal, and Water. '
                             f'Each session has its own focus and its own signature serum.</p>'
-                            f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which works out to ${pk["per"]} a session instead of ${s["price"]}.</p>'
+                            f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per"]} a session instead of ${s["price"]}.</p>'
                             f'<p><a href="{pk["guide"]}#five-element">How the five sessions work</a></p>')
         if s["group"] == "beauty":
             main = beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide)
