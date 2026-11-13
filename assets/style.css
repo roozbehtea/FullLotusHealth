@@ -679,3 +679,19 @@ p, li, dd, blockquote { text-wrap: pretty; }
 /* Phone tap targets: at least 44px tall (Apple's guideline) */
 @media (max-width: 70rem) { .call-mobile.btn.small, .menu-toggle { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; } }
 .pb-rating a { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* booking page without prices */
+.bk-h { margin-top: 2.4rem; }
+.bk-new { display: flex; gap: 1.2rem; align-items: center; justify-content: space-between; flex-wrap: wrap; max-width: 52rem; padding: 1.2rem 1.4rem; background: var(--sand, #efe5d3); border-radius: var(--radius-md); }
+.bk-new p { margin: .2rem 0 0; }
+.svc-list.np li { grid-template-columns: 1fr auto; }
+.svc-list .d { display: block; font-size: 0.95rem; color: var(--ink-soft, #5b524a); margin-top: .15rem; }
+@media (max-width: 40rem) { .svc-list.np li .btn { grid-column: auto; } }
+/* ten-year landing page */
+.ty-grid { display: grid; gap: var(--space-4, 2rem); grid-template-columns: 1.3fr 1fr; align-items: center; }
+.ty-photo { margin: 0; } .ty-photo img { width: 100%; height: auto; border-radius: var(--radius-md); display: block; }
+.ty-note { max-width: 40rem; font-size: 1.15rem; line-height: 1.7; }
+.ty-offer { max-width: 40rem; margin: 0 auto 2rem; padding: 1.6rem; text-align: center; border: 1px solid var(--surface-300); border-radius: var(--radius-md); }
+.ty-offer-t { font-family: var(--display); font-size: 1.6rem; }
+.ty-paths { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 52rem) { .ty-grid, .ty-paths { grid-template-columns: 1fr; } }

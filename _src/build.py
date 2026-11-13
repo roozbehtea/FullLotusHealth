@@ -305,7 +305,7 @@ OG_IMAGE = f"{SITE}/assets/og-share.jpg"
 OG_ALT = "A quiet tea table at Full Lotus Health, an acupuncture and skin clinic in Burbank, CA"
 
 
-def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None):
+def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False):
     canon = SITE + (path if path != "/" else "/")
     nav_items = []
     for href, label in NAV:
@@ -314,6 +314,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
             nav_items.append(f'<li><a href="{e(INTAKE)}" rel="noopener">New patient form</a></li>')
             continue
         nav_items.append(f'<li><a href="{href}"{cur}>{e(label)}</a></li>')
+    if focus:   # email landing page: no menu to wander off into
+        nav_items = []
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
     nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
@@ -839,36 +841,80 @@ def tea_sits():
 
 
 def book_online():
-    groups = [("Facial and skin", "beauty"), ("Acupuncture", "acu"), ("Consultations (online)", "consult"), ("Tea ceremony", "tea")]
+    """Booking page without a price list: pick what you need, then the calendar. Fees are on each service page and at checkout."""
+    plan = [
+        ("Skin and facial", "beauty", {
+            "medical-microneedling-session": "Deeper renewal for lines, scars and texture.",
+            "facial-nano-needling": "A gentle glow facial with no downtime.",
+            "full-lotus-lift": "Facial acupuncture for a lifted, rested look."}),
+        ("Acupuncture", "acu", {
+            "acupuncture-initial-treatment": "Your first acupuncture visit, with a full intake.",
+            "acupuncture-repeat-treatment": "For returning patients."}),
+        ("Online consultation", "consult", {
+            "initial-consultation-online": "A first video visit about your health and herbs.",
+            "repeat-consultation-online": "A follow-up video visit."}),
+    ]
     blocks = []
-    for label, g in groups:
+    for label, g, descs in plan:
         rows = []
         for s in [x for x in SERVICES if x["group"] == g]:
             meta = f' <span class="fine">{s["minutes"]} min</span>' if s["minutes"] else ""
-            rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}">{e(s["name"])}</a>{meta}</span><span class="p">${s["price"]}</span>{book_btn("Book", small=True, slug=s["slug"])}</li>')
-            pk = PACKAGES.get(s["slug"])
-            if pk:
-                rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}#series">{e(pk["name"])}</a> <span class="fine">5 sessions</span></span><span class="p">${pk["price"]:,}</span>{book_btn("Book", small=True, slug="__series__")}</li>')
-        blocks.append(f"<h2 style='margin-top:2.4rem'>{label}</h2><ul class='svc-list'>{''.join(rows)}</ul>")
+            rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}">{e(s["name"])}</a>{meta}<span class="d">{e(descs.get(s["slug"], s["short"]))}</span></span>{book_btn("Book", small=True, slug=s["slug"])}</li>')
+        blocks.append(f'<h2 class="bk-h">{label}</h2><ul class="svc-list np">{"".join(rows)}</ul>')
+    blocks.append(f'<h2 class="bk-h">Tea</h2><ul class="svc-list np"><li><span class="n"><a href="/tea-ceremonies">Tea ceremony</a><span class="d">Private or group tea ceremonies in the clinic tea room.</span></span><a class="btn small" href="/tea-ceremonies">See options</a></li></ul>')
     fallback = ""
     if not BOOK and not BOOKS:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book online.", "Pick a service, then choose a time on the calendar. New patients, please complete the intake form before your first visit.", tone="l") + f"""
+    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l") + f"""
 <section><div class="wrap">
   {fallback}
-  <p><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient intake form</a></p>
+  <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
   {''.join(blocks)}
-  <p class="fine" style="margin-top:2rem">Prices are per session, except the {SERIES} series, which covers five sessions. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95.</p>
+  <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95.</p>
   {faq_block([
     ("Where are visits?", f"In person at {ADDR_LINE}, except the online consultations, which are by video."),
-    ("I'm new. What should I do first?", "Complete the <a href=\"/new-patients\">new patient intake form</a> before your first visit. It is reviewed before you arrive."),
-    ("Which treatment should I choose?", "Not sure? Book the session closest to what you need and we'll decide together, or text a question. Skin treatments are described on the <a href=\"/treatments\">natural beauty page</a> and acupuncture on the <a href=\"/acupuncture\">acupuncture page</a>."),
-    ("How long are visits?", "Times are listed beside each service above. Visits are unhurried and often end with tea."),
+    ("Which treatment should I choose?", "Book the one closest to what you need and we will decide together, or text a question. Skin treatments are described on the <a href=\"/treatments\">natural beauty page</a> and acupuncture on the <a href=\"/acupuncture\">acupuncture page</a>."),
+    ("How long are visits?", "The length is shown beside each service. Visits are unhurried and often end with tea."),
   ], "Before you book")}
 </div></section>"""
     OUT["book-online.html"] = page("/book-online", "Book Online | Full Lotus Health",
         "Book acupuncture, microneedling, nanoneedling, cosmetic acupuncture, consultations, or tea ceremony at Full Lotus Health in Burbank, CA.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online")])])
+
+
+def ten_years():
+    """Landing page for the 10-year anniversary email to past patients. Not in the menu, sitemap or search results."""
+    offer = CFG.get("anniversary_offer", "").strip()
+    offer_html = f'<div class="ty-offer"><p class="eyebrow">For past patients</p><p class="ty-offer-t">{e(offer)}</p><p>{book_btn("Book your visit")}</p></div>' if offer else ""
+    main = f"""<div class="hero-band tone-c ty-hero"><div class="wrap ty-grid">
+<div><div class="band short" aria-hidden="true"></div><p class="eyebrow">Ten years at Full Lotus Health</p>
+<h1>Thank you for ten years.</h1>
+<p class="lede">It has been a privilege to care for this community since 2016. Whether you last visited last month or years ago, you are welcome back.</p>
+<p class="g-actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p></div>
+<figure class="photo ty-photo"><img src="/assets/photos/roozbeh.jpg" width="1100" height="973" alt="Roozbeh Ghobadpour, L.Ac., licensed acupuncturist at Full Lotus Health in Burbank" fetchpriority="high"></figure>
+</div></div>
+<section><div class="wrap ty-note">
+<p>Hello, this is Roozbeh. Ten years ago I opened the doors in Burbank with a table, a few needles and a lot of hope. Thank you to everyone who trusted me with their health along the way.</p>
+<p>The clinic has grown since then. There is now a tea room, and I treat skin as well as pain, stress and sleep. If something has been on your mind, I would be glad to see you.</p>
+<p class="g-sign">Roozbeh Ghobadpour, L.Ac.</p>
+</div></section>
+{offer_html}
+<section class="sand"><div class="wrap">
+<header class="g-head"><p class="eyebrow">Come back for</p><h2>Pick what fits</h2></header>
+<ul class="g-cards ty-paths">
+<li class="g-card"><h3>Acupuncture</h3><p>Pain, stress, sleep, digestion and more.</p><p><a class="btn small" href="{e(BOOKS.get('acupuncture-repeat-treatment') or BOOK_HREF)}">Book acupuncture</a></p></li>
+<li class="g-card"><h3>Skin and facial</h3><p>Microneedling, nanoneedling and facial acupuncture with custom herbal serums.</p><p><a class="btn small" href="/treatments">See skin treatments</a></p></li>
+<li class="g-card"><h3>Tea</h3><p>Sit down for tea in the clinic tea room.</p><p><a class="btn small" href="/tea-sits">See tea sits</a></p></li>
+</ul>
+<p class="fine" style="margin-top:1.2rem">Not sure? Text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we will point you the right way.</p>
+</div></section>
+<section><div class="wrap">
+<p class="pb-rating g-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>
+<p style="text-align:center">{book_btn("Book a visit")}</p>
+<p class="fine" style="text-align:center">{ADDR_LINE}. Cancellations need 24 hours' notice.</p>
+</div></section>"""
+    OUT["ten-years.html"] = page("/ten-years", "Ten years of Full Lotus Health | Thank you",
+        "Thank you for ten years. Past patients are welcome back at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
 
 
 def blog():
@@ -1279,7 +1325,6 @@ def micro_page(where):
 {g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
           ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
           ("leaf", "Nourished with herbs", "Herbal serums that deeply nourish the skin and support collagen growth naturally, chosen for your skin. Red light therapy is part of every session.")])}
-{g_band([("skin-texture", "Close-up of smooth, even skin in soft light"), ("serums", "Amber bottles of herbal serum with shiitake and white tremella mushrooms on a stone slab")])}
 <p class="g-cta-row">{book_btn("Book a treatment")}</p>
 </div></section>"""
     how = f"""<section><div class="wrap">
@@ -1304,7 +1349,7 @@ def micro_page(where):
          ("needle", "Treatment", "Microneedling with custom Chinese herbal serums chosen for your skin."),
          ("light", "Red light therapy", "Included with every session.")],
         "<h3>Afterward</h3><p>Some redness, similar to a mild sunburn, usually settles within a day or two.</p><p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>",
-        "herbs", "Chinese herbs in a wooden bowl: goji berries, red dates, chrysanthemum and astragalus")
+        "treatment-microneedling", "Microneedling treatment at Full Lotus Health in Burbank")
     say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("medical-microneedling-session")}</div></section>'
     faq = f"""<section class="sand"><div class="wrap g-faq">{faq_block([
   ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
@@ -1330,7 +1375,6 @@ def nano_page(where):
 {g_steps([("needle", "Surface channels", "Ultra-fine nano-tips open microscopic channels in the very surface of the skin, without going deeper."),
           ("drop", "Better absorption", "The channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb better, where your skin needs them. The herbs help increase collagen."),
           ("glow", "A brighter look", "Skin often looks brighter right away and keeps improving over the following days.")])}
-{g_band([("serum-lotus", "A dropper bottle of golden herbal serum beside a pink lotus petal"), ("tea", "Two cups of tea, a clay teapot and a white lotus on a sunlit wooden table")])}
 </div></section>"""
     help_ = f"""<section class="wash-l"><div class="wrap">{g_head("Who it suits", "Nanoneedling is a good fit for")}
 {g_cards([("drop", "Dull, dehydrated, or tired-looking skin", None), ("lines", "Fine lines and uneven texture", None),
@@ -1349,7 +1393,7 @@ def nano_page(where):
          ("light", "Red light therapy", "Included with every session."),
          ("tea", "Back to your day", "There is no downtime, so you can go straight back to your day.")],
         "<h3>It works on its own or as a series</h3><p>Nanoneedling suits a one-off glow and also works as a regular series. Your first visit starts the conversation about what fits your skin.</p>",
-        "gua-sha", "A jade gua sha stone, a jar of serum and a folded linen towel on a wooden tray")
+        "treatment-nanoneedling", "Nanoneedling treatment at Full Lotus Health in Burbank")
     say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("facial-nano-needling")}</div></section>'
     faq = f"""<section class="wash-l"><div class="wrap g-faq">{faq_block([
   ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
@@ -1554,7 +1598,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
