@@ -896,7 +896,7 @@ def confirm_pages():
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
         opt2 = ""
         if pk:
-            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off)</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p></div>'''
+            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off)</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
         main = f'''<section class="cf"><div class="wrap cf-wrap">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>
@@ -907,6 +907,39 @@ def confirm_pages():
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section>'''
         OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
+
+
+def five_element():
+    """What the Five Element Rejuvenation series is. First-pass copy: Roozbeh rewrites the element text in his own words."""
+    els = [("lines", "Wood", "Tension and fine lines", "A session for the tension and lines that gather around the brow and eyes."),
+           ("glow", "Fire", "Redness and glow", "A session to calm redness and bring back warmth and radiance."),
+           ("jar", "Earth", "Puffiness and sagging", "A session for puffiness and for skin that has lost its lift."),
+           ("pores", "Metal", "Texture and pores", "A session to refine texture and the look of pores."),
+           ("drop", "Water", "Dark circles and ageing", "A session for dark circles and for the deeper signs of ageing.")]
+    cards = g_cards([(ic, f"{n}: {c}", t + " Its own signature serum.") for ic, n, c, t in els])
+    hero_html = g_hero("c", "Full Lotus Skin", SERIES, "Five sessions, one for each element of Chinese medicine, each with its own focus and its own signature serum. Book all five and the fifth session is free.",
+        ["5 sessions", "One for each element", "Signature serums", "Red light therapy included"], art.skin_layers())
+    steps = g_steps([("intake", "Intake and plan", "Your first visit starts with an intake, so the series is shaped around your skin."),
+                     ("needle", "Five sessions, five focuses", "Each session works on one element's concern with its own serum, and the five together cover the whole face."),
+                     ("spark", "Results build", "Sessions are spaced several weeks apart, so your skin has time to renew between visits.")])
+    choose = f"""<section class="sand"><div class="wrap">{g_head("Choose your series", "Microneedling or nanoneedling")}
+<ul class="g-cards ty-paths" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<li class="g-card"><h3>Microneedling series</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions.</p><p>{book_btn("See fees and book", slug="medical-microneedling-session")} <a href="/microneedling-burbank">About microneedling</a></p></li>
+<li class="g-card"><h3>Nanoneedling series</h3><p>A gentle glow with no downtime. Five 60-minute sessions.</p><p>{book_btn("See fees and book", slug="facial-nano-needling")} <a href="/nanoneedling-burbank">About nanoneedling</a></p></li>
+</ul>
+<p class="fine" style="margin-top:1rem">Not sure which? Text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we will help you choose.</p></div></section>"""
+    faq = f"""<section><div class="wrap g-faq">{faq_block([
+  ("Do I have to do all five?", "The series is designed as five sessions, one for each element, so the whole face is covered."),
+  ("How far apart are the sessions?", "Usually several weeks apart. Your plan is set at your first visit."),
+  ("What does the fifth session free mean?", "Book the five-session series and you pay for four. That is 20% off."),
+  ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
+  ("Where is the clinic?", f"At {ADDR_LINE}."),
+])}</div></section>"""
+    main = (hero_html + f'<section><div class="wrap">{g_head("The five elements", "A session for each element", "Chinese medicine describes the face through five elements. Each session in the series follows one.")}{cards}</div></section>'
+            + f'<section class="wash-c"><div class="wrap">{g_head("How it works", "Five sessions, one plan")}{steps}</div></section>' + choose + faq)
+    OUT["five-element-rejuvenation.html"] = page("/five-element-rejuvenation", f"{SERIES} | Full Lotus Health",
+        "Five Element Rejuvenation: a five-session microneedling or nanoneedling series in Burbank, one session for each element, with the fifth session free.",
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (SERIES, "/five-element-rejuvenation")])])
 
 
 def ten_years():
@@ -1159,7 +1192,7 @@ def service_pages():
                             f'<p>Five sessions, one for each element of Chinese medicine: Wood, Fire, Earth, Metal, and Water. '
                             f'Each session has its own focus and its own signature serum.</p>'
                             f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per"]} a session instead of ${s["price"]}.</p>'
-                            f'<p><a href="{pk["guide"]}#five-element">How the five sessions work</a></p>')
+                            f'<p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>')
         if s["group"] == "beauty":
             main = beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide)
         else:
@@ -1342,6 +1375,14 @@ def g_band(items):
     return f'<div class="g-band">{figs}</div>' if figs else ""
 
 
+def g_series_promo(tone="sand"):
+    return f"""<section class="{tone}"><div class="wrap ty-note" style="text-align:center">
+<p class="eyebrow">The series</p><h2>{e(SERIES)}</h2>
+<p>Five sessions, one for each element, each with its own focus and its own signature serum. Book all five and the fifth session is free.</p>
+<p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>
+</div></section>"""
+
+
 def micro_page(where):
     mi = BY_SLUG["medical-microneedling-session"]
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
@@ -1388,7 +1429,7 @@ def micro_page(where):
   ("Where is the clinic?", where),
 ])}</div></section>"""
     offer = g_offer("microneedling session", "Deep rejuvenation, nourishing herbal serums and red light therapy, at a welcome price for your first visit.")
-    return (hero_html + pillars + how + help_ + why + table + compare + session + say + faq + offer,
+    return (hero_html + pillars + how + help_ + g_series_promo() + why + table + compare + session + say + faq + offer,
             g_related(mi, [("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
@@ -1431,7 +1472,7 @@ def nano_page(where):
   ("Where is the clinic?", where),
 ])}</div></section>"""
     offer = g_offer("nanoneedling facial", "Nourishing herbal serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
-    return (hero_html + how + help_ + why + table + compare + session + say + faq + offer,
+    return (hero_html + how + help_ + g_series_promo("wash-l") + why + table + compare + session + say + faq + offer,
             g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
@@ -1611,7 +1652,7 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
@@ -1625,7 +1666,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
