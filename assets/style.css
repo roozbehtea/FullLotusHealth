@@ -695,3 +695,16 @@ p, li, dd, blockquote { text-wrap: pretty; }
 .ty-offer-t { font-family: var(--display); font-size: 1.6rem; }
 .ty-paths { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 52rem) { .ty-grid, .ty-paths { grid-template-columns: 1fr; } }
+
+/* confirm step before the calendar */
+.cf-wrap { max-width: 44rem; }
+.cf h1 { margin-bottom: .4rem; }
+.cf-opts { display: grid; gap: 1rem; margin: 1.6rem 0; }
+.cf-opts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cf-opt { padding: 1.4rem; border: 1px solid var(--surface-300); border-radius: var(--radius-md); background: rgba(255,255,255,.4); text-align: center; }
+.cf-name { margin: 0; font-weight: 600; }
+.cf-price { margin: .2rem 0; font-family: var(--display); font-size: 3rem; line-height: 1.1; color: var(--cinnabar); font-variant-numeric: lining-nums tabular-nums; }
+.cf-sub { margin: 0 0 1rem; color: var(--ink-soft, #5b524a); }
+.cf-facts { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .4rem; }
+.cf-new { padding: .9rem 1.1rem; background: var(--sand, #efe5d3); border-radius: var(--radius-md); }
+@media (max-width: 40rem) { .cf-opts.two { grid-template-columns: 1fr; } }

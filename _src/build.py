@@ -291,8 +291,10 @@ def breadcrumb_ld(trail):
 
 
 # ------------------------------------------------------------------ layout
-def book_btn(label="Book", cls="", small=False, slug=None):
+def book_btn(label="Book", cls="", small=False, slug=None, direct=False):
     c = "btn " + ("small " if small else "") + cls
+    if slug and slug in BOOKS and not direct:   # first the confirm step, where the fee is easy to read
+        return f'<a class="{c.strip()}" href="/book/{slug}">{e(label)}</a>'
     if slug and slug in BOOKS:
         return f'<a class="{c.strip()}" href="{e(BOOKS[slug])}" rel="noopener">{e(label)}</a>'
     if slug and BOOKS and slug not in BOOKS:   # no online calendar for this one: text to book
@@ -880,6 +882,31 @@ def book_online():
     OUT["book-online.html"] = page("/book-online", "Book Online | Full Lotus Health",
         "Book acupuncture, microneedling, nanoneedling, cosmetic acupuncture, consultations, or tea ceremony at Full Lotus Health in Burbank, CA.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online")])])
+
+
+def confirm_pages():
+    """One step between "Book" and the Google calendar: shows the fee large, what is included, and the policy."""
+    for s in SERVICES:
+        if s["slug"] not in BOOKS:
+            continue
+        pk = PACKAGES.get(s["slug"])
+        mins = f'{s["minutes"]} minutes' if s["minutes"] else ""
+        where = "Online, by video" if "Online" in s["name"] else ADDR_LINE
+        new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
+        opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
+        opt2 = ""
+        if pk:
+            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, ${pk["per"]} each</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p></div>'''
+        main = f'''<section class="cf"><div class="wrap cf-wrap">
+<p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
+<h1>{e(s["name"])}</h1>
+<p class="lede">{e(s["tagline"])}</p>
+<div class="cf-opts{" two" if opt2 else ""}">{opt1}{opt2}</div>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged $95.</li></ul>
+{new}
+<p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
+</div></section>'''
+        OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
 
 
 def ten_years():
@@ -1598,7 +1625,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
