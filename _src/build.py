@@ -53,15 +53,15 @@ SERVICES = [
          price=500, minutes=90, group="beauty",
          tagline="Revitalize your skin with collagen induction therapy for skin or hair.",
          title="Microneedling in Burbank, CA | Full Lotus Health",
-         meta="Medical microneedling in Burbank with custom Chinese herbal serums and red light therapy. For fine lines, acne scars, texture, and thinning hair.",
-         short="Collagen induction therapy with custom Chinese herbal serums and red light therapy. For fine lines, acne scars, uneven texture, and thinning hair.",
+         meta="Medical microneedling in Burbank with custom serums and red light therapy. For fine lines, acne scars, texture, and thinning hair.",
+         short="Collagen induction therapy with custom serums and red light therapy. For fine lines, acne scars, uneven texture, and thinning hair.",
          body=[
             ("p", "Medical microneedling in Burbank, performed by Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
             ("p", "Microneedling, also called collagen induction therapy, uses fine, sterile, medical-grade needles to create tiny controlled channels in the skin. This prompts your skin's natural repair process, which builds new collagen over the following weeks."),
             ("h2", "What it can help with"),
             ("ul", ["Fine lines and wrinkles, including crow's feet", "Acne scarring", "Uneven texture and tone", "Enlarged pores", "Thinning hair along the hairline (scalp microneedling)"]),
             ("h2", "What makes it different here"),
-            ("p", "Every session uses custom Chinese herbal serums chosen for your skin, which absorb through the open channels during treatment. Red light therapy is included. Because your practitioner is trained in Chinese medicine, your skin is looked at as part of your whole health, not in isolation."),
+            ("p", "Every session uses custom serums chosen for your skin, which absorb through the open channels during treatment. Red light therapy is included. Because your practitioner is trained in Chinese medicine, your skin is looked at as part of your whole health, not in isolation."),
             ("h2", "What to expect"),
             ("p", "Sessions are 90 minutes, and your first visit includes an intake and a treatment plan. A numbing cream is applied first, and most people find the treatment comfortable. Expect some redness afterward, similar to a mild sunburn, that usually settles within a day or two. Results build over time, and most people do a series of sessions spaced several weeks apart."),
             ("h2", "What patients say"),
@@ -74,15 +74,15 @@ SERVICES = [
          price=350, minutes=60, group="beauty",
          tagline="Unveil your skin's natural glow with advanced nano-infusion technology.",
          title="Nanoneedling Facial in Burbank, CA | Full Lotus Health",
-         meta="Nanoneedling facial in Burbank with custom Chinese herbal serums and red light therapy. A gentle, no-downtime treatment for glowing, hydrated skin.",
-         short="A gentle surface treatment with custom herbal serums and red light therapy. No downtime. For glow, hydration, and sensitive skin.",
+         meta="Nanoneedling facial in Burbank with custom serums and red light therapy. A gentle, no-downtime treatment for glowing, hydrated skin.",
+         short="A gentle surface treatment with custom serums and red light therapy. No downtime. For glow, hydration, and sensitive skin.",
          body=[
             ("p", "Nanoneedling facial in Burbank, performed by Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
-            ("p", "Nanoneedling is a gentle alternative to microneedling. It uses ultra-fine nano-tips that open microscopic channels in the very surface of the skin, without going deeper. Those channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb where your skin needs them."),
+            ("p", "Nanoneedling is a gentle alternative to microneedling. It uses ultra-fine nano-tips that open microscopic channels in the very surface of the skin, without going deeper. Those channels let hyaluronic acid, vitamins, and custom serums absorb where your skin needs them."),
             ("h2", "What it can help with"),
             ("ul", ["Dull, dehydrated, or tired-looking skin", "Fine lines and uneven texture", "Sensitive skin that doesn't do well with stronger treatments", "A glow before an event", "Maintenance between microneedling sessions"]),
             ("h2", "What makes it different here"),
-            ("p", "Every treatment uses custom Chinese herbal serums chosen for your skin, and red light therapy is included. Because your practitioner is trained in Chinese medicine, your skin is looked at as part of your whole health, not in isolation."),
+            ("p", "Every treatment uses custom serums chosen for your skin, and red light therapy is included. Because your practitioner is trained in Chinese medicine, your skin is looked at as part of your whole health, not in isolation."),
             ("h2", "What to expect"),
             ("p", "Sessions are 60 minutes. There's no downtime, so you can go straight back to your day. Skin often looks brighter right away and keeps improving over the following days. It works well on its own or as a regular series."),
             ("h2", "What patients say"),
@@ -321,6 +321,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
         nav_items = []
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
     nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
+    sticky = "" if (focus or path in ("/book-online", "/new-patients") or path.startswith("/book/")) else \
+        f'<div class="sticky-cta">{book_btn("Book", small=True)}<a class="btn ghost small" href="sms:{PHONE_TEL}">Text us</a></div>'
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
     feed_link = f'<link rel="alternate" type="application/rss+xml" title="{NAME} blog" href="/feed.xml">\n' if POSTS else ""
     robots = ('<meta name="robots" content="noindex, follow">\n' if noindex
@@ -365,7 +367,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
     </a>
     <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
-    <a class="btn small call-mobile" href="tel:{PHONE_TEL}" aria-label="Call {PHONE_DISPLAY}">Call</a>
+    {book_btn("Book", cls="call-mobile", small=True)}
     <label for="menu-check" class="menu-toggle">Menu</label>
     <nav class="nav" aria-label="Main">
       <ul>
@@ -409,16 +411,21 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     <p class="legal">{NAME}</p>
   </div>
 </footer>
+{sticky}
 </body>
 </html>
 """
 
 
-def hero(title, lede, crumbs=None, tone="c"):
+def hero(title, lede, crumbs=None, tone="c", cta_html=""):
     cr = ""
     if crumbs:
         cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in crumbs) + "</p>"
-    return f'<div class="hero-band tone-{tone}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p></div></div>'
+    return f'<div class="hero-band tone-{tone}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div></div>'
+
+
+def rating_strip():
+    return f'<section class="rating-strip" aria-label="Google reviews"><div class="wrap"><p class="pb-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p></div></section>'
 
 
 def contact_block():
@@ -526,7 +533,7 @@ HOME_QUOTES = [
 # (heading, hub page, one line, [(link text, href)])
 HOME_WAYS = [
     ("Facial and Hair Rejuvenation", "/treatments",
-     "Microneedling, nanoneedling and cosmetic acupuncture, with custom herbal serums and red light therapy. Scalp microneedling for thinning hair.",
+     "Microneedling, nanoneedling and cosmetic acupuncture, with custom serums and red light therapy. Scalp microneedling for thinning hair.",
      [("Microneedling", "/microneedling-burbank"), ("Nanoneedling", "/nanoneedling-burbank"),
       ("Cosmetic acupuncture", "/cosmetic-acupuncture-burbank")]),
     ("Chinese Medicine Dermatology", "/skin-conditions-burbank",
@@ -577,9 +584,9 @@ def home():
     <figure class="hh-photo"><img src="/assets/photos/hero.jpg" width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
     <div class="hh-panel">
       <div class="band" aria-hidden="true"></div>
-      <p class="eyebrow">Acupuncture &amp; skin treatments &middot; Burbank</p>
-      <h1 id="home-h1">The calmest hour of your week.</h1>
-      <p class="lede">Acupuncture, herbal medicine and skin treatments from one licensed acupuncturist. Visits are unhurried and often end with tea.</p>
+      <p class="eyebrow">Full Lotus Health &middot; Burbank</p>
+      <h1 id="home-h1">Acupuncture and skin treatments in Burbank.</h1>
+      <p class="lede">The calmest hour of your week: unhurried visits with one licensed acupuncturist, often ending with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
       {('<p class="fine" style="margin-top:1rem"><strong>First visit?</strong> <a href="' + e(INTAKE) + '" rel="noopener">Start with the new patient form</a></p>') if INTAKE else ""}
     </div>
@@ -589,6 +596,13 @@ def home():
 <section class="proof-bar" aria-label="What patients say about Full Lotus Health"><div class="wrap">
   <p class="pb-line">Trusted by 300+ patients since 2016</p>
   <p class="pb-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>
+</div></section>
+
+<section class="series-feature" aria-labelledby="sf-h"><div class="wrap sf-grid">
+  <div><p class="eyebrow">New: Full Lotus Skin</p><h2 id="sf-h">{e(SERIES)}</h2>
+  <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. Book all five and the fifth is free.</p>
+  <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="sms:{PHONE_TEL}">Text a question</a></p></div>
+  <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg" alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
 </div></section>
 
 <section class="sand" aria-labelledby="ways-h"><div class="wrap">
@@ -626,13 +640,14 @@ def home():
 
 def treatments():
     main = hero("Turn back the clock, naturally.",
-        "Advanced, chemical-free facial rejuvenation that restores your skin and hair from the inside out. Holistic beauty that heals the mind while elevating your natural radiance.", tone="c") + f"""
+        "Microneedling, nanoneedling and cosmetic acupuncture from a licensed acupuncturist in Burbank. Natural skin renewal, paced to your skin, one calm session at a time.", tone="c",
+        cta_html=book_btn("Book a treatment") + f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>') + rating_strip() + f"""
 <section><div class="wrap">
   <p class="eyebrow">Skin treatments</p>
   <h2>Facial and skin treatments in Burbank</h2>
   <ul class="rates">
-    {rate_item("medical-microneedling-session", "Collagen induction therapy using medical-grade microneedles to trigger your skin's natural repair response. Targets fine lines, acne scarring, uneven texture, and hair loss, stimulating deep renewal that builds over time. Custom Chinese herbal serums are applied during treatment and absorbed far more efficiently than topical application alone. Red light therapy is included. Also offered as the five-session " + SERIES + " series.")}
-    {rate_item("facial-nano-needling", "Nanoneedling combines ultra-fine nanotips with pure botanical serums for instant radiance with zero downtime. The tips open micro-channels in the skin's surface, infusing hyaluronic acid, vitamins, and custom herbal serums exactly where they're needed. Ideal for sensitive skin, a pre-event glow, or between microneedling sessions. Includes red light therapy. Also offered as the five-session " + SERIES + " series.")}
+    {rate_item("medical-microneedling-session", "Collagen induction therapy using medical-grade microneedles to trigger your skin's natural repair response. Targets fine lines, acne scarring, uneven texture, and hair loss, stimulating deep renewal that builds over time. Custom serums are applied during treatment and absorbed far more efficiently than topical application alone. Red light therapy is included. Also offered as the five-session " + SERIES + " series.")}
+    {rate_item("facial-nano-needling", "Nanoneedling combines ultra-fine nanotips with pure botanical serums for instant radiance with zero downtime. The tips open micro-channels in the skin's surface, infusing hyaluronic acid, vitamins, and custom serums exactly where they're needed. Ideal for sensitive skin, a pre-event glow, or between microneedling sessions. Includes red light therapy. Also offered as the five-session " + SERIES + " series.")}
     {rate_item("full-lotus-lift", "Cosmetic acupuncture (the Full Lotus Lift). In Chinese medicine the mind is represented by the heart, and it opens to the face. We calm the mind, balance the body, and focus on specific tension-releasing and lifting points on the face. Includes red light therapy.")}
     <li><span class="name"><a href="/skin-conditions-burbank">Skin conditions</a></span><p class="desc">Chinese herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea, and other skin conditions, treating the pattern underneath, not just the surface.</p></li>
   </ul>
@@ -665,7 +680,7 @@ def treatments():
 </div></section>
 """ + cta("Ready for your natural glow?", "Choose a time that works for you.", "Book a treatment", tone="l")
     OUT["treatments.html"] = page("/treatments", "Cosmetic Acupuncture and Microneedling in Burbank, CA",
-        "Microneedling, nanoneedling, and cosmetic acupuncture in Burbank with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
+        "Microneedling, nanoneedling, and cosmetic acupuncture in Burbank with custom serums and red light therapy, from a licensed acupuncturist.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments")])], current="/treatments")
 
 
@@ -702,7 +717,7 @@ def acupuncture():
         more_html = f'<a class="cmore" href="{more[1]}">{e(more[0])}</a>' if more else ""
         conds.append(
             f'<details class="cond" id="{cid}"><summary><span class="ct">{e(title)}</span><span class="cx">{e(ex)}</span></summary>'
-            f'<div class="cbody">{body}<p class="cacts">{book_btn("Book in person", small=True)}'
+            f'<div class="cbody">{body}<p class="cacts">'
             f'<a class="btn ghost small" href="{ONLINE_CONSULT}">Online consultation</a>{more_html}</p></div></details>')
     main = f"""
 <div class="hero-band tone-m"><div class="wrap page-hero">
@@ -768,7 +783,7 @@ def acupuncture():
 {signup_band("acupuncture")}
 
 """ + cta("Ready to start?", "Book in person in Burbank, or an online consultation from home.", "Book in person", tone="l")
-    OUT["acupuncture.html"] = page("/acupuncture", "Acupuncture and Herbal Medicine in Burbank, CA | Full Lotus Health",
+    OUT["acupuncture.html"] = page("/acupuncture", "Acupuncture & Herbal Medicine in Burbank | Full Lotus Health",
         "Acupuncture and Chinese herbal medicine in Burbank, CA, or by video: pain, stress, sleep, digestion, fatigue, and hormones, with Roozbeh Ghobadpour, L.Ac.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Acupuncture and herbal medicine", "/acupuncture")])], current="/acupuncture")
 
@@ -786,7 +801,7 @@ def consult():
 
 def tea():
     main = hero("The sacred art of presence.",
-        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n") + f"""
+        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat")) + f"""
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
@@ -825,7 +840,8 @@ def tea_sits():
     else:
         body = f'<div class="notice"><p><strong>Online reservations open soon.</strong> To save a seat now, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
     main = hero("Weekly tea sits.",
-        "An hour of tea in the clinic's tea space, in the tradition of Wu De. We drink together, mostly in silence, and let the mind settle. Six seats per sit, so reserve ahead.", tone="n") + f"""
+        "An hour of tea in the clinic's tea space, in the tradition of Wu De. We drink together, mostly in silence, and let the mind settle. Six seats per sit, so reserve ahead.", tone="n",
+        cta_html=('<a class="btn" href="#teasits">See dates and reserve</a>' if TEASITS else f'<a class="btn" href="sms:{PHONE_TEL}">Text to reserve a seat</a>')) + f"""
 <section><div class="wrap">
   {body}
 </div></section>
@@ -868,11 +884,11 @@ def book_online():
     fallback = ""
     if not BOOK and not BOOKS:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l") + f"""
+    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l") + rating_strip() + f"""
 <section><div class="wrap">
   {fallback}
-  <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
   {''.join(blocks)}
+  <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
   <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95.</p>
   {faq_block([
     ("Where are visits?", f"In person at {ADDR_LINE}, except the online consultations, which are by video."),
@@ -880,7 +896,7 @@ def book_online():
     ("How long are visits?", "The length is shown beside each service. Visits are unhurried and often end with tea."),
   ], "Before you book")}
 </div></section>"""
-    OUT["book-online.html"] = page("/book-online", "Book Online | Full Lotus Health",
+    OUT["book-online.html"] = page("/book-online", "Book Acupuncture, Skin & Tea in Burbank | Full Lotus Health",
         "Book acupuncture, microneedling, nanoneedling, cosmetic acupuncture, consultations, or tea ceremony at Full Lotus Health in Burbank, CA.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online")])])
 
@@ -1016,7 +1032,7 @@ def ten_years():
 <header class="g-head"><p class="eyebrow">Come back for</p><h2>Pick what fits</h2></header>
 <ul class="g-cards ty-paths">
 <li class="g-card"><h3>Acupuncture</h3><p>Pain, stress, sleep, digestion and more.</p><p><a class="btn small" href="{e(BOOKS.get('acupuncture-repeat-treatment') or BOOK_HREF)}">Book acupuncture</a></p></li>
-<li class="g-card"><h3>Skin and facial</h3><p>Microneedling, nanoneedling and facial acupuncture with custom herbal serums.</p><p><a class="btn small" href="/treatments">See skin treatments</a></p></li>
+<li class="g-card"><h3>Skin and facial</h3><p>Microneedling, nanoneedling and facial acupuncture with custom serums.</p><p><a class="btn small" href="/treatments">See skin treatments</a></p></li>
 <li class="g-card"><h3>Tea</h3><p>Sit down for tea in the clinic tea room.</p><p><a class="btn small" href="/tea-sits">See tea sits</a></p></li>
 </ul>
 <p class="fine" style="margin-top:1.2rem">Not sure? Text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we will point you the right way.</p>
@@ -1361,10 +1377,10 @@ def g_table(title, lead, us, others):
 
 
 MICRO_TABLE = ("Microneedling", "",
-    "Reaches deep to stimulate collagen, softening wrinkles and fine lines. Nourishing herbal serums absorb profoundly. Natural anti-aging, from within.",
+    "Reaches deep to stimulate collagen, softening wrinkles and fine lines. Nourishing serums absorb profoundly. Natural anti-aging, from within.",
     "A day or two of redness.")
 NANO_TABLE = ("Nanoneedling", "",
-    "Nourishing herbal serums that absorb beautifully and support collagen. A natural glow, with no downtime.",
+    "Nourishing serums that absorb beautifully and support collagen. A natural glow, with no downtime.",
     "Nothing to recover from. Results build gently with each visit.")
 
 
@@ -1439,8 +1455,8 @@ def g_series_promo(tone="sand"):
 def micro_page(where):
     mi = BY_SLUG["medical-microneedling-session"]
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
-        "Deep rejuvenation for your face. Medical microneedling builds your skin's own collagen, softens the look of lines and scars, and nourishes the skin with custom Chinese herbal serums and red light therapy, from a licensed acupuncturist.",
-        ["Builds collagen", "Natural anti-aging", "Custom herbal serums", "Red light therapy included"], art.skin_layers())
+        "Deep rejuvenation for your face. Medical microneedling builds your skin's own collagen, softens the look of lines and scars, and nourishes the skin with custom serums and red light therapy, from a licensed acupuncturist.",
+        ["Builds collagen", "Natural anti-aging", "Custom serums", "Red light therapy included"], art.skin_layers())
     pillars = f"""<section class="wash-c"><div class="wrap">
 {g_head("Why microneedling", "Natural anti-aging, from deep within the skin", "Instead of adding something to your face, microneedling asks your skin to renew itself.")}
 {g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
@@ -1450,7 +1466,7 @@ def micro_page(where):
 </div></section>"""
     how = f"""<section><div class="wrap">
 {g_head("How it works", "Wake up your skin's own renewal")}
-{g_steps([("needle", "Fine channels, rich nourishment", "Fine, sterile, medical-grade needles create tiny controlled channels in the skin, and custom herbal serums are carried in."),
+{g_steps([("needle", "Fine channels, rich nourishment", "Fine, sterile, medical-grade needles create tiny controlled channels in the skin, and custom serums are carried in."),
           ("heart", "Your skin repairs", "This switches on your skin's natural repair process."),
           ("spark", "Collagen builds", "Over the following weeks your skin builds new collagen and elastin, so it looks firmer, smoother and more youthful. Most people do a series of sessions spaced several weeks apart.")])}
 </div></section>"""
@@ -1459,7 +1475,7 @@ def micro_page(where):
           ("pores", "Enlarged pores", None), ("hair", "Thinning hair", "Along the hairline, with scalp microneedling."),
           ("chat", "Not sure it fits?", f'<a href="sms:{PHONE_TEL}">Text a question</a> or book a session and we will decide together.')])}
 <p class="g-cta-row">{book_btn("Book a treatment")}</p></div></section>"""
-    why = g_why("deep-m", [("bottle", "Custom herbal serums", "Chosen for your skin, and absorbed through the open channels during treatment."),
+    why = g_why("deep-m", [("bottle", "Custom serums", "Chosen for your skin, and absorbed through the open channels during treatment."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
     table = f'<section><div class="wrap">{g_table("A natural path to younger-looking skin", "Rebuild your skin from within, instead of stripping, heating or injecting it.", MICRO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
@@ -1467,7 +1483,7 @@ def micro_page(where):
     session = g_session("wash-c", g_head("Your visit", "A session, start to finish", "Sessions are 90 minutes, and your first visit includes an intake and a treatment plan."),
         [("intake", "Intake and plan", "Your first visit starts with an intake and a treatment plan."),
          ("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
-         ("needle", "Treatment", "Microneedling with custom Chinese herbal serums chosen for your skin."),
+         ("needle", "Treatment", "Microneedling with custom serums chosen for your skin."),
          ("light", "Red light therapy", "Included with every session.")],
         "<h3>Afterward</h3><p>Some redness, similar to a mild sunburn, usually settles within a day or two.</p><p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>",
         "treatment-microneedling", "Microneedling treatment at Full Lotus Health in Burbank")
@@ -1489,12 +1505,12 @@ def micro_page(where):
 def nano_page(where):
     na = BY_SLUG["facial-nano-needling"]
     hero_html = g_hero("l", "Nanoneedling · Burbank", "Nanoneedling in Burbank, CA",
-        "A gentle facial with custom Chinese herbal serums and red light therapy. No downtime.",
-        ["60-minute sessions", "No downtime", "Custom herbal serums", "Red light therapy included"], art.nano_layers())
+        "A gentle facial with custom serums and red light therapy. No downtime.",
+        ["60-minute sessions", "No downtime", "Custom serums", "Red light therapy included"], art.nano_layers())
     how = f"""<section><div class="wrap">
 {g_head("How it works", "Gentle at the surface, absorbed where you need it")}
 {g_steps([("needle", "Surface channels", "Ultra-fine nano-tips open microscopic channels in the very surface of the skin, without going deeper."),
-          ("drop", "Better absorption", "The channels let hyaluronic acid, vitamins, and custom Chinese herbal serums absorb better, where your skin needs them. The herbs help increase collagen."),
+          ("drop", "Better absorption", "The channels let hyaluronic acid, vitamins, and custom serums absorb better, where your skin needs them. The herbs help increase collagen."),
           ("glow", "A brighter look", "Skin often looks brighter right away and keeps improving over the following days.")])}
 </div></section>"""
     help_ = f"""<section class="wash-l"><div class="wrap">{g_head("Who it suits", "Nanoneedling is a good fit for")}
@@ -1503,7 +1519,7 @@ def nano_page(where):
           ("repeat", "Maintenance", "Between microneedling sessions."),
           ("chat", "Not sure it fits?", f'<a href="sms:{PHONE_TEL}">Text a question</a> or book a session and we will decide together.')])}
 <p class="g-cta-row">{book_btn("Book a treatment")}</p></div></section>"""
-    why = g_why("deep-l", [("bottle", "Custom herbal serums", "Chosen for your skin."),
+    why = g_why("deep-l", [("bottle", "Custom serums", "Chosen for your skin."),
                            ("light", "Red light therapy included", "Part of every session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
     table = f'<section><div class="wrap">{g_table("A natural path to glowing skin", "Nourish your skin naturally, instead of stripping, heating or injecting it.", NANO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
@@ -1524,7 +1540,7 @@ def nano_page(where):
   ("Can I do nanoneedling as a series?", "Yes. It works well on its own or as a regular series."),
   ("Where is the clinic?", where),
 ])}</div></section>"""
-    offer = g_offer("nanoneedling facial", "Nourishing herbal serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
+    offer = g_offer("nanoneedling facial", "Nourishing serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
     return (hero_html + how + help_ + g_series_promo("wash-l") + why + table + compare + session + say + faq + offer,
             g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
@@ -1600,7 +1616,7 @@ def condition_pages():
       dict(path="/skin-conditions-burbank", file="skin-conditions-burbank.html", tone="c",
            name="Chinese medicine for skin conditions",
            crumbs=[("Home", "/"), ("Natural beauty", "/treatments")],
-           title="Chinese Medicine for Skin Conditions in Burbank | Full Lotus Health",
+           title="Chinese Medicine for Skin Conditions | Full Lotus Health",
            meta="Chinese herbal medicine and acupuncture in Burbank for acne, eczema, psoriasis, rosacea, and hives, treating the pattern underneath, alongside your doctor.",
            h1="Chinese medicine for skin conditions in Burbank",
            lede="Herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea, and other skin conditions, looking for the pattern underneath, not just the rash.",
