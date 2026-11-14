@@ -708,3 +708,12 @@ p, li, dd, blockquote { text-wrap: pretty; }
 .cf-facts { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .4rem; }
 .cf-new { padding: .9rem 1.1rem; background: var(--sand, #efe5d3); border-radius: var(--radius-md); }
 @media (max-width: 40rem) { .cf-opts.two { grid-template-columns: 1fr; } }
+
+/* five-element journey sections */
+.el-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: center; }
+.el-flip .el-text { order: 2; }
+.el-grid .photo { margin: 0; }
+.el-grid .photo img { width: 100%; height: auto; border-radius: var(--radius-md); display: block; }
+.el-emoji { font-size: 0.9em; }
+.el-leads, .el-feel { color: var(--ink-muted); }
+@media (max-width: 52rem) { .el-grid { grid-template-columns: 1fr; } .el-flip .el-text { order: 0; } }

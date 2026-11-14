@@ -910,35 +910,69 @@ def confirm_pages():
 
 
 def five_element():
-    """What the Five Element Rejuvenation series is. First-pass copy: Roozbeh rewrites the element text in his own words."""
-    els = [("lines", "Wood", "Tension and fine lines", "A session for the tension and lines that gather around the brow and eyes."),
-           ("glow", "Fire", "Redness and glow", "A session to calm redness and bring back warmth and radiance."),
-           ("jar", "Earth", "Puffiness and sagging", "A session for puffiness and for skin that has lost its lift."),
-           ("pores", "Metal", "Texture and pores", "A session to refine texture and the look of pores."),
-           ("drop", "Water", "Dark circles and ageing", "A session for dark circles and for the deeper signs of ageing.")]
-    cards = g_cards([(ic, f"{n}: {c}", t + " Its own signature serum.") for ic, n, c, t in els])
-    hero_html = g_hero("c", "Full Lotus Skin", SERIES, "Five sessions, one for each element of Chinese medicine, each with its own focus and its own signature serum. Book all five and the fifth session is free.",
-        ["5 sessions", "One for each element", "Signature serums", "Red light therapy included"], art.skin_layers())
-    steps = g_steps([("intake", "Intake and plan", "Your first visit starts with an intake, so the series is shaped around your skin."),
-                     ("needle", "Five sessions, five focuses", "Each session works on one element's concern with its own serum, and the five together cover the whole face."),
-                     ("spark", "Results build", "Sessions are spaced several weeks apart, so your skin has time to renew between visits.")])
-    choose = f"""<section class="sand"><div class="wrap">{g_head("Choose your series", "Microneedling or nanoneedling")}
-<ul class="g-cards ty-paths" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-<li class="g-card"><h3>Microneedling series</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions.</p><p>{book_btn("See fees and book", slug="medical-microneedling-session")} <a href="/microneedling-burbank">About microneedling</a></p></li>
-<li class="g-card"><h3>Nanoneedling series</h3><p>A gentle glow with no downtime. Five 60-minute sessions.</p><p>{book_btn("See fees and book", slug="facial-nano-needling")} <a href="/nanoneedling-burbank">About nanoneedling</a></p></li>
-</ul>
-<p class="fine" style="margin-top:1rem">Not sure which? Text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we will help you choose.</p></div></section>"""
-    faq = f"""<section><div class="wrap g-faq">{faq_block([
-  ("Do I have to do all five?", "The series is designed as five sessions, one for each element, so the whole face is covered."),
-  ("How far apart are the sessions?", "Usually several weeks apart. Your plan is set at your first visit."),
-  ("What does the fifth session free mean?", "Book the five-session series and you pay for four. That is 20% off."),
+    """The Five Element Rejuvenation journey page. Elements are a product language for skin states, not a diagnosis (per the serum-system doc).
+    Draft copy: Roozbeh rewrites the element text and the 'why' answer in his own words."""
+    els = [("wood", "🌿", "Wood", "Clarify, even, move", "Malachite green",
+            "Wood is the element of growth and movement. In the skin, it is the session for clearing and evening out.",
+            "Congestion, uneven tone, puffiness",
+            "A fresh, clear look. Skin feels lighter and tone looks more even."),
+           ("fire", "🔥", "Fire", "Calm and cool", "Cinnabar red",
+            "Fire is warmth and radiance. In the skin, it is the session for settling heat and reactivity.",
+            "Redness, heat, reactive skin",
+            "A calmer, cooler look, with a quiet glow."),
+           ("earth", "🌾", "Earth", "Lift and nourish", "Aged gold",
+            "Earth is the center. It grounds the whole journey, so every session begins with Earth's nourishment and is then tuned by one other element.",
+            "Loss of firmness, tired skin",
+            "Skin that looks fed, supported and more lifted."),
+           ("metal", "⚪", "Metal", "Refine and protect", "Pearl white",
+            "Metal is refinement. In the skin, it is the session for smoothing the surface and protecting the barrier.",
+            "Barrier, texture, pores",
+            "A smoother, finer surface that feels comfortable and dewy."),
+           ("water", "💧", "Water", "Restore and deepen", "Lapis and ink",
+            "Water is depth and reserve. In the skin, it is the session for hydration and the finer lines that thirst leaves behind.",
+            "Dehydration, fine lines",
+            "Plumper, more deeply hydrated skin, with softer fine lines.")]
+    sections = []
+    for i, (k, em, n, job, colour, desc, leads, feel) in enumerate(els):
+        wash = "sand" if i % 2 == 0 else ""
+        img = photo(f"elements/{k}", f"Hand-painted {colour.lower()} painting for the {n} element", lazy=(i > 0))
+        sections.append(f"""<section id="{k}" class="{wash}"><div class="wrap el-grid{' el-flip' if i % 2 else ''}">
+<div class="el-text"><p class="eyebrow">Session {i + 1} of 5 &middot; {e(colour)}</p>
+<h2><span class="el-emoji" aria-hidden="true">{em}</span> {e(n)}: {e(job)}</h2>
+<p>{e(desc)}</p>
+<p class="el-leads"><strong>Leads with:</strong> {e(leads)}</p>
+<p class="el-feel"><strong>What you may notice:</strong> {e(feel)}</p></div>
+{img}</div></section>""")
+    hero_html = g_hero("c", "Full Lotus Skin", SERIES,
+        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element, each with its own painted colour and its own signature serum. Book all five and the fifth is free.",
+        ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"], art.skin_layers())
+    apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
+<ul class="g-cards ty-paths">
+<li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p>{book_btn("Book a session", slug="full-lotus-lift")}</p></li>
+<li class="g-card"><h3>Nanoneedling</h3><p>A gentle glow with no downtime. Five 60-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="facial-nano-needling")} <a href="/nanoneedling-burbank">About nanoneedling</a></p></li>
+<li class="g-card"><h3>Microneedling</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="medical-microneedling-session")} <a href="/microneedling-burbank">About microneedling</a></p></li>
+</ul></div></section>"""
+    qa = f"""<section><div class="wrap g-faq">{faq_block([
+  ("What does Five Element mean here?", "Chinese medicine describes nature, and the skin, through five elements: Wood, Fire, Earth, Metal and Water. Here they are a simple language for what your skin is doing right now. They are not a diagnosis."),
+  ("What is a session like?", "Every journey starts with an intake. Each session then leads with one element, with Earth's nourishment as the grounding base. Red light therapy is part of the treatment."),
+  ("Why is this less invasive than ordinary cosmetic microneedling?", "Sessions are paced several weeks apart and matched to what your skin needs that day, rather than run as a one-size-fits-all package. Nanoneedling stays at the surface and has no downtime."),
+  ("What is the serum?", "Each element has its own signature serum, chosen for what that element's session is meant to do for the skin. It is part of the session, and your plan is set at your first visit."),
+  ("Why is it beneficial?", "Skin does best when it is given time to renew between visits, and when each session has one clear job. The journey gives the series a shape, so you are not repeating the same treatment five times."),
+  ("What are the short-term results?", "Most people notice skin that looks fresher and feels more hydrated in the days after a session. Microneedling can leave mild pinkness for a day or so. Nanoneedling has no downtime."),
+  ("What are the long-term results?", "Results build as the sessions add up. Skin tends to look firmer, smoother and more even over the course of the series. Individual results vary."),
+  ("Why did you create it?", "I wanted a way to bring the thinking of Chinese medicine into skin care that feels calm, personal and unhurried, and to give each visit its own purpose."),
+  ("Do I have to do all five?", "The journey is designed as five sessions, one for each element. Book all five and the fifth session is free, which is 20% off."),
   ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
   ("Where is the clinic?", f"At {ADDR_LINE}."),
 ])}</div></section>"""
-    main = (hero_html + f'<section><div class="wrap">{g_head("The five elements", "A session for each element", "Chinese medicine describes the face through five elements. Each session in the series follows one.")}{cards}</div></section>'
-            + f'<section class="wash-c"><div class="wrap">{g_head("How it works", "Five sessions, one plan")}{steps}</div></section>' + choose + faq)
+    ask = f"""<section class="sand"><div class="wrap ty-note" style="text-align:center">
+<p class="eyebrow">Not sure where to start?</p><h2>Ask before you book</h2>
+<p>Tell us about your skin and we will suggest the right way in. Text or email, whichever is easier.</p>
+<p class="g-actions" style="justify-content:center"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="mailto:{EMAIL}?subject=Five%20Element%20Rejuvenation">Email us</a></p>
+</div></section>"""
+    main = hero_html + "".join(sections) + apply_to + qa + ask
     OUT["five-element-rejuvenation.html"] = page("/five-element-rejuvenation", f"{SERIES} | Full Lotus Health",
-        "Five Element Rejuvenation: a five-session microneedling or nanoneedling series in Burbank, one session for each element, with the fifth session free.",
+        "Five Element Rejuvenation: a five-session journey through Wood, Fire, Earth, Metal and Water, with cosmetic acupuncture, nanoneedling or microneedling in Burbank. The fifth session is free.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (SERIES, "/five-element-rejuvenation")])])
 
 
@@ -1378,7 +1412,7 @@ def g_band(items):
 def g_series_promo(tone="sand"):
     return f"""<section class="{tone}"><div class="wrap ty-note" style="text-align:center">
 <p class="eyebrow">The series</p><h2>{e(SERIES)}</h2>
-<p>Five sessions, one for each element, each with its own focus and its own signature serum. Book all five and the fifth session is free.</p>
+<p>A journey through the five elements: five sessions, each led by one element, with a signature serum for each. Book all five and the fifth session is free.</p>
 <p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>
 </div></section>"""
 
