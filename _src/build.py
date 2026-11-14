@@ -946,7 +946,8 @@ def five_element():
 {img}</div></section>""")
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
         "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element, each with its own painted colour and its own signature serum. Book all five and the fifth is free.",
-        ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"], art.skin_layers())
+        ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"],
+        '<div class="el-dots" aria-hidden="true">' + "".join(f'<img src="/assets/photos/elements/{k}.jpg" alt="" width="300" height="300">' for k in ("wood", "fire", "earth", "metal", "water")) + "</div>")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
 <ul class="g-cards ty-paths">
 <li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p>{book_btn("Book a session", slug="full-lotus-lift")}</p></li>
@@ -1265,11 +1266,11 @@ PORTRAIT_ALT = "Roozbeh Ghobadpour, L.Ac., licensed acupuncturist at Full Lotus 
 def g_hero(tone, eyebrow, h1, lede, chips, art_svg):
     cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in [("Home", "/"), ("Natural beauty", "/treatments")]) + "</p>"
     ch = "".join(f"<li>{e(c)}</li>" for c in chips)
-    return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid">
+    return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid{' g-hero-solo' if not art_svg else ''}">
 <div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><p class="eyebrow">{e(eyebrow)}</p><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
 <p class="g-actions">{book_btn("Book a treatment")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>
 <ul class="chips">{ch}</ul></div>
-<div class="g-hero-art">{art_svg}</div></div></div>"""
+{('<div class="g-hero-art">' + art_svg + '</div>') if art_svg else ''}</div></div>"""
 
 
 def g_head(eyebrow, h2, lead=None):
