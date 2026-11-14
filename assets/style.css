@@ -720,5 +720,5 @@ p, li, dd, blockquote { text-wrap: pretty; }
 @media (max-width: 52rem) { .el-grid { grid-template-columns: 1fr; } .el-flip .el-text { order: 0; } }
 
 
-.el-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; max-width: 30rem; margin-inline: auto; }
-.el-dots img { height: auto; width: calc(33.333% - 0.7rem); aspect-ratio: 1 / 1; object-fit: cover; border-radius: 50%; border: 4px solid var(--surface-100); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); }
+
+.g-hero-solo { grid-template-columns: minmax(0, 46rem); }

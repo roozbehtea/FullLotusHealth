@@ -947,7 +947,7 @@ def five_element():
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
         "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element, each with its own painted colour and its own signature serum. Book all five and the fifth is free.",
         ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"],
-        '<div class="el-dots" aria-hidden="true">' + "".join(f'<img src="/assets/photos/elements/{k}.jpg" alt="" width="300" height="300">' for k in ("wood", "fire", "earth", "metal", "water")) + "</div>")
+        "")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
 <ul class="g-cards ty-paths">
 <li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p>{book_btn("Book a session", slug="full-lotus-lift")}</p></li>
