@@ -196,6 +196,7 @@ TESTIMONIALS_BEAUTY = [
 NAV = [
     ("/", "Home"),
     ("/treatments", "Natural beauty"),
+    ("/five-element-rejuvenation", "Five Elements"),
     ("/acupuncture", "Acupuncture & herbs"),
     ("/tea-ceremonies", "Tea ceremonies"),
     ("/new-patients", "New patients"),
