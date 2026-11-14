@@ -897,7 +897,7 @@ def confirm_pages():
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
         opt2 = ""
         if pk:
-            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off)</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
+            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off). Your first session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
         main = f'''<section class="cf"><div class="wrap cf-wrap">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>
@@ -914,36 +914,52 @@ def five_element():
     """The Five Element Rejuvenation journey page. Elements are a product language for skin states, not a diagnosis (per the serum-system doc).
     Draft copy: Roozbeh rewrites the element text and the 'why' answer in his own words."""
     els = [("wood", "🌿", "Wood", "Clarify, even, move", "Malachite green",
-            "Wood is the element of growth and movement. In the skin, it is the session for clearing and evening out.",
+            "Wood is the element of growth and movement. In the skin, it is the session for clearing and evening out: lifting the look of congestion, dullness and puffiness so the face looks fresher and more open.",
             "Congestion, uneven tone, puffiness",
-            "A fresh, clear look. Skin feels lighter and tone looks more even."),
+            "A fresh, clear look. Skin feels lighter and tone looks more even.",
+            "Green Tea Clear", "green tea and niacinamide, for congested, oily skin", "Green tea or young sheng puerh"),
            ("fire", "🔥", "Fire", "Calm and cool", "Cinnabar red",
-            "Fire is warmth and radiance. In the skin, it is the session for settling heat and reactivity.",
+            "Fire is warmth and radiance. In the skin, it is the session for settling heat and reactivity: the flushed, easily irritated skin that needs soothing before it needs anything else.",
             "Redness, heat, reactive skin",
-            "A calmer, cooler look, with a quiet glow."),
+            "A calmer, cooler look, with a quiet glow.",
+            "Lotus Calm", "lotus, centella and ectoin, for redness and sensitivity", "Lotus leaf or chrysanthemum"),
            ("earth", "🌾", "Earth", "Lift and nourish", "Aged gold",
-            "Earth is the center. It grounds the whole journey, so every session begins with Earth's nourishment and is then tuned by one other element.",
+            "Earth is the center. It grounds the whole journey: every session begins with Earth's nourishment and is then tuned by one other element. The Earth session itself gives that centre your full attention, for skin that has lost its bounce.",
             "Loss of firmness, tired skin",
-            "Skin that looks fed, supported and more lifted."),
+            "Skin that looks fed, supported and more lifted.",
+            "Astragalus Lift", "astragalus and signal peptides, for sagging and loss of tone", "Roasted oolong"),
            ("metal", "⚪", "Metal", "Refine and protect", "Pearl white",
-            "Metal is refinement. In the skin, it is the session for smoothing the surface and protecting the barrier.",
+            "Metal is refinement. In the skin, it is the session for smoothing the surface and protecting the barrier, so skin that feels tight, rough or easily irritated can settle.",
             "Barrier, texture, pores",
-            "A smoother, finer surface that feels comfortable and dewy."),
+            "A smoother, finer surface that feels comfortable and dewy.",
+            "Snow Mushroom Dew", "snow mushroom (tremella) and panthenol, for dewy hydration", "White tea"),
            ("water", "💧", "Water", "Restore and deepen", "Lapis and ink",
-            "Water is depth and reserve. In the skin, it is the session for hydration and the finer lines that thirst leaves behind.",
+            "Water is depth and reserve. In the skin, it is the session for hydration and the finer lines that thirst leaves behind, with extra support for mature, slow-recovering skin.",
             "Dehydration, fine lines",
-            "Plumper, more deeply hydrated skin, with softer fine lines.")]
+            "Plumper, more deeply hydrated skin, with softer fine lines.",
+            "Apple Stem Cell Restore", "apple stem cell and low-weight hyaluronic acid, for mature skin and fine lines", "Shou puerh")]
     sections = []
-    for i, (k, em, n, job, colour, desc, leads, feel) in enumerate(els):
+    for i, (k, em, n, job, colour, desc, leads, feel, serum, serum_note, tea) in enumerate(els):
         wash = "sand" if i % 2 == 0 else ""
         img = photo(f"elements/{k}", f"Hand-painted {colour.lower()} painting for the {n} element", lazy=(i > 0))
         sections.append(f"""<section id="{k}" class="{wash}"><div class="wrap el-grid{' el-flip' if i % 2 else ''}">
 <div class="el-text"><p class="eyebrow">Session {i + 1} of 5 &middot; {e(colour)}</p>
 <h2><span class="el-emoji" aria-hidden="true">{em}</span> {e(n)}: {e(job)}</h2>
 <p>{e(desc)}</p>
-<p class="el-leads"><strong>Leads with:</strong> {e(leads)}</p>
-<p class="el-feel"><strong>What you may notice:</strong> {e(feel)}</p></div>
+<dl class="el-facts">
+<dt>Leads with</dt><dd>{e(leads)}</dd>
+<dt>Signature serum</dt><dd><strong>{e(serum)}</strong>: {e(serum_note)}</dd>
+<dt>Tea pairing</dt><dd>{e(tea)}</dd>
+<dt>What you may notice</dt><dd>{e(feel)}</dd>
+</dl></div>
 {img}</div></section>""")
+    what = f"""<section><div class="wrap">{g_head("What is it?", "A way to choose, and a way to pace", "Chinese medicine describes nature, and the skin, through five elements. Here they give each session a clear purpose.")}
+<ul class="g-cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<li class="g-card"><h3>A language for skin, not a diagnosis</h3><p>Wood, Fire, Earth, Metal and Water are names for what your skin is doing right now: congested, flushed, tired, tight or thirsty. Your own assessment decides which one leads.</p></li>
+<li class="g-card"><h3>Earth is the center</h3><p>Everyone receives an Earth formula as the base, and one other element is chosen as the modifier. That keeps it simple: two products per session, matched to you.</p></li>
+<li class="g-card"><h3>Five sessions, five focuses</h3><p>The journey walks through all five, one element per session, several weeks apart, so your skin has time to renew in between. Each element has its own colour, its own serum and its own tea.</p></li>
+<li class="g-card"><h3>Two ways to deliver it</h3><p>With microneedling, purified water-soluble boosters go in with the treatment. With nanoneedling, botanical serums work at the surface, with no downtime. Red light therapy is part of both.</p></li>
+</ul></div></section>"""
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
         "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element, each with its own painted colour and its own signature serum. Book all five and the fifth is free.",
         ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"],
@@ -964,6 +980,7 @@ def five_element():
   ("What are the long-term results?", "Results build as the sessions add up. Skin tends to look firmer, smoother and more even over the course of the series. Individual results vary."),
   ("Why did you create it?", "I wanted a way to bring the thinking of Chinese medicine into skin care that feels calm, personal and unhurried, and to give each visit its own purpose."),
   ("Do I have to do all five?", "The journey is designed as five sessions, one for each element. Book all five and the fifth session is free, which is 20% off."),
+  ("Can I try one session first?", "Yes. If you start with a single session and decide to continue, that first session counts toward the series."),
   ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
   ("Where is the clinic?", f"At {ADDR_LINE}."),
 ])}</div></section>"""
@@ -972,7 +989,7 @@ def five_element():
 <p>Tell us about your skin and we will suggest the right way in. Text or email, whichever is easier.</p>
 <p class="g-actions" style="justify-content:center"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="mailto:{EMAIL}?subject=Five%20Element%20Rejuvenation">Email us</a></p>
 </div></section>"""
-    main = hero_html + "".join(sections) + apply_to + qa + ask
+    main = hero_html + what + "".join(sections) + apply_to + qa + ask
     OUT["five-element-rejuvenation.html"] = page("/five-element-rejuvenation", f"{SERIES} | Full Lotus Health",
         "Five Element Rejuvenation: a five-session journey through Wood, Fire, Earth, Metal and Water, with cosmetic acupuncture, nanoneedling or microneedling in Burbank. The fifth session is free.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (SERIES, "/five-element-rejuvenation")])])
@@ -1227,7 +1244,7 @@ def service_pages():
             series_block = (f'<h2 id="series" style="margin-top:2rem">{e(SERIES)} series</h2>'
                             f'<p>Five sessions, one for each element of Chinese medicine: Wood, Fire, Earth, Metal, and Water. '
                             f'Each session has its own focus and its own signature serum.</p>'
-                            f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per"]} a session instead of ${s["price"]}.</p>'
+                            f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per"]} a session instead of ${s["price"]}. If you start with a single session, it counts toward the series.</p>'
                             f'<p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>')
         if s["group"] == "beauty":
             main = beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide)
