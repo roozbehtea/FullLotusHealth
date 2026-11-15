@@ -99,7 +99,7 @@ img, svg { max-width: 100%; }
 .menu-check { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 .menu-toggle { display: none; cursor: pointer; font-weight: 500; padding: 0.6rem 1.2rem; border: 2px solid var(--ink); border-radius: var(--radius-pill); margin-left: auto; }
 .menu-check:focus-visible + .menu-toggle { outline: 2px solid var(--lapis); outline-offset: 2px; }
-@media (max-width: 70rem) {
+@media (max-width: 88rem) {
   .site-header .bar { flex-wrap: wrap; }
   .brand img { height: 62px; }
   .menu-toggle { display: block; margin-left: 0; }
@@ -345,7 +345,7 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .nav a[aria-current="page"] { border-bottom-color: var(--gold); }
 .rates li { border-left: 0; }
 
-@media (min-width: 70.01rem) and (max-width: 90rem) { .nav a.tel { display: none; } }
+@media (min-width: 88.01rem) and (max-width: 104rem) { .nav a.tel { display: none; } }
 
 /* ---- Homepage: trust bar under the hero ---- */
 .proof-bar { background: var(--cinnabar); color: var(--on-cinnabar); padding-block: clamp(1.8rem, 3.5vw, 2.6rem); text-align: center; }
@@ -677,7 +677,7 @@ p, li, dd, blockquote { text-wrap: pretty; }
 .skip:hover { color: var(--surface-100); }
 
 /* Phone tap targets: at least 44px tall (Apple's guideline) */
-@media (max-width: 70rem) { .call-mobile.btn.small, .menu-toggle { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; } }
+@media (max-width: 88rem) { .call-mobile.btn.small, .menu-toggle { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; } }
 .pb-rating a { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* booking page without prices */
@@ -698,16 +698,30 @@ p, li, dd, blockquote { text-wrap: pretty; }
 
 /* confirm step before the calendar */
 .cf-wrap { max-width: 44rem; }
+.cf-wrap.wide { max-width: 68rem; }
 .cf h1 { margin-bottom: .4rem; }
 .cf-opts { display: grid; gap: 1rem; margin: 1.6rem 0; }
 .cf-opts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cf-opts.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cf-opt { padding: 1.4rem; border: 1px solid var(--surface-300); border-radius: var(--radius-md); background: rgba(255,255,255,.4); text-align: center; }
 .cf-name { margin: 0; font-weight: 600; }
 .cf-price { margin: .2rem 0; font-family: var(--display); font-size: 3rem; line-height: 1.1; color: var(--cinnabar); font-variant-numeric: lining-nums tabular-nums; }
 .cf-sub { margin: 0 0 1rem; color: var(--ink-soft, #5b524a); }
 .cf-facts { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .4rem; }
 .cf-new { padding: .9rem 1.1rem; background: var(--sand, #efe5d3); border-radius: var(--radius-md); }
-@media (max-width: 40rem) { .cf-opts.two { grid-template-columns: 1fr; } }
+@media (max-width: 52rem) { .cf-opts.three { grid-template-columns: 1fr; } }
+@media (max-width: 40rem) { .cf-opts.two, .cf-opts.three { grid-template-columns: 1fr; } }
+.cf-opts.three .cf-price { font-size: clamp(2rem, 4vw, 2.6rem); }
+
+/* Full Lotus Skin founding page */
+.skin-landing .page-hero h1 { max-width: 28ch; }
+.hero-band[class*="tone-"] .eyebrow { color: var(--gold-light); }
+.hero-band.tone-g .eyebrow { color: var(--cinnabar); }
+.skin-fees { list-style: none; margin: 1rem 0 1.2rem; padding: 0; display: grid; gap: 0.35rem; text-align: left; }
+.skin-fees li { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; border-top: 1px solid var(--surface-300); padding-top: 0.4rem; }
+.skin-fees strong { font-family: var(--display); font-weight: 500; color: var(--cinnabar); font-variant-numeric: lining-nums tabular-nums; }
+.offer-until { font-size: 1.125rem; }
+.offer-date { font-family: var(--display); font-size: 1.6rem; color: var(--cinnabar); }
 
 /* five-element journey sections */
 .el-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: center; }
