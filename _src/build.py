@@ -24,6 +24,13 @@ PHONE_TEL = "+18182539307"
 EMAIL = "info@fulllotushealth.com"
 ADDR = dict(street="2116 N Glenoaks Blvd, Ste 3", city="Burbank", region="CA", zip="91504")
 ADDR_LINE = "2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504"
+# Monday–Friday only. Used in the footer, contact blocks, new-patients page, and JSON-LD.
+HOURS_LINE = "Monday to Friday, 9am to 5pm. Closed Saturday and Sunday."
+FINDING_NOTE = "The entrance is easy to miss. Look for Suite 3 at 2116 N Glenoaks Blvd, Burbank."
+# Founding client offer on /full-lotus-skin. Set the end date in _src/config.json ("founding_offer_end").
+FOUNDING_OFFER_END = (CFG.get("founding_offer_end") or "[END DATE]").strip() or "[END DATE]"
+FOUNDING_NANO = 275    # first nanoneedling visit; regular fee is SERVICES facial-nano-needling
+FOUNDING_MICRO = 400   # first microneedling visit; regular fee is SERVICES medical-microneedling-session
 GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:ChIJJVOw4haVwoARK0UW-MPNiMw"   # the clinic's Google listing
 MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504"
 
@@ -170,15 +177,30 @@ BY_SLUG = {s["slug"]: s for s in SERVICES}
 
 # ------------------------------------------------------------------ Five Element Rejuvenation series
 # First-pass copy. Roozbeh will rewrite the element text in his own words.
-# Series price follows the acupuncture pattern ($120 single, five at $100): 20% off five single sessions, so the fifth session is free.
+# Canonical skin fees (do not duplicate these numbers elsewhere):
+#   Microneedling: $500 single, $1,350 for 3 sessions, $2,000 for 5.
+#   Nanoneedling:  $350 single, $945 for 3 sessions, $1,400 for 5.
+# Five sessions are 20% off (the fifth is free). Three sessions are 10% off.
+# A single session counts toward either package. At visit 3, what has been paid
+# is credited if the client upgrades to the five-session series.
 SERIES = "Five Element Rejuvenation™"
 PACKAGES = {
-    "medical-microneedling-session": dict(price=2000, guide="/microneedling-burbank"),
-    "facial-nano-needling": dict(price=1400, guide="/nanoneedling-burbank"),
+    "medical-microneedling-session": dict(three=1350, five=2000, guide="/microneedling-burbank"),
+    "facial-nano-needling": dict(three=945, five=1400, guide="/nanoneedling-burbank"),
 }
 for _slug, _p in PACKAGES.items():
-    _p["per"] = _p["price"] // 5
+    _single = BY_SLUG[_slug]["price"]
+    if _p["three"] % 3 or _p["five"] % 5:
+        sys.exit(f"{_slug}: package price does not divide into equal sessions")
+    if _slug == "medical-microneedling-session" and (_single, _p["three"], _p["five"]) != (500, 1350, 2000):
+        sys.exit("Microneedling fees must stay $500 / $1,350 / $2,000")
+    if _slug == "facial-nano-needling" and (_single, _p["three"], _p["five"]) != (350, 945, 1400):
+        sys.exit("Nanoneedling fees must stay $350 / $945 / $1,400")
+    _p["single"] = _single
+    _p["per3"] = _p["three"] // 3
+    _p["per5"] = _p["five"] // 5
     _p["name"] = f'{SERIES} series: {BY_SLUG[_slug]["name"]}'
+    _p["three_name"] = f'3 sessions: {BY_SLUG[_slug]["name"]}'
 
 TESTIMONIALS_HOME = [
     ("Finding Roozbeh was like finding a rare and precious treasure. His insight and knowledge never ceases to amaze me and every treatment I have had from him over the past 5 years has felt in tune with what I needed at the time. His skillful application of needles means that even if in pain or sick, I can go to him for help and feel confident that he will be kind and gentle in his endeavor to help me feel better. After treatment I often stay for tea and meditation in the purpose built tea lounge… all in all Full Lotus Health is wonderful experience for body and mind and spirit.", "Sue"),
@@ -196,6 +218,7 @@ TESTIMONIALS_BEAUTY = [
 NAV = [
     ("/", "Home"),
     ("/treatments", "Natural beauty"),
+    ("/full-lotus-skin", "Full Lotus Skin"),
     ("/five-element-rejuvenation", "Five Elements"),
     ("/acupuncture", "Acupuncture & herbs"),
     ("/tea-ceremonies", "Tea ceremonies"),
@@ -261,6 +284,13 @@ def business_ld():
                     "addressRegion": ADDR["region"], "postalCode": ADDR["zip"], "addressCountry": "US"},
         "geo": {"@type": "GeoCoordinates", "latitude": 34.1929, "longitude": -118.3247},
         "hasMap": MAPS,
+        "openingHours": "Mo-Fr 09:00-17:00",
+        "openingHoursSpecification": [{
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            "opens": "09:00",
+            "closes": "17:00",
+        }],
         "areaServed": [{"@type": "City", "name": c} for c in ("Burbank", "Glendale", "Toluca Lake", "North Hollywood", "Studio City")],
         "founder": person_ld(),
         "employee": {"@id": f"{SITE}/#roozbeh"},
@@ -278,11 +308,17 @@ def service_ld(s, url=None, desc=None, priced=True):
         "areaServed": {"@type": "City", "name": "Burbank"},
     }
     if priced:
-        d["offers"] = {"@type": "Offer", "price": money(s["price"]), "priceCurrency": "USD", "url": BOOKS.get(s.get("slug")) or BOOK or f"{SITE}/book-online"}
+        book = BOOKS.get(s.get("slug")) or BOOK or f"{SITE}/book-online"
+        single = {"@type": "Offer", "name": "Single session", "price": money(s["price"]), "priceCurrency": "USD", "url": book}
         pk = PACKAGES.get(s.get("slug"))
         if pk:
-            d["offers"] = [d["offers"], {"@type": "Offer", "name": pk["name"] + " (5 sessions)", "price": money(pk["price"]),
-                                         "priceCurrency": "USD", "url": BOOKS.get(s.get("slug")) or BOOK or f"{SITE}/book-online"}]
+            d["offers"] = [
+                single,
+                {"@type": "Offer", "name": pk["three_name"], "price": money(pk["three"]), "priceCurrency": "USD", "url": book},
+                {"@type": "Offer", "name": pk["name"] + " (5 sessions)", "price": money(pk["five"]), "priceCurrency": "USD", "url": book},
+            ]
+        else:
+            d["offers"] = single
     return d
 
 
@@ -385,6 +421,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <div>
         <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal.png" width="84" height="84" alt=""></a>
         <p>Roozbeh Ghobadpour, L.Ac.<br>{ADDR["street"]}<br>{ADDR["city"]}, {ADDR["region"]} {ADDR["zip"]}</p>
+        <p>{HOURS_LINE}</p>
+        <p>{FINDING_NOTE}</p>
         <p><a href="{MAPS}" rel="noopener">Get directions</a></p>
       </div>
       <div>
@@ -399,6 +437,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <div>
         <h2>Visit</h2>
         <ul>
+          <li><a href="/full-lotus-skin">Full Lotus Skin</a></li>
           <li><a href="/treatments">Natural beauty</a></li>
           <li><a href="/acupuncture">Acupuncture &amp; herbal medicine</a></li>
           <li><a href="/tea-ceremonies">Tea ceremonies</a></li>
@@ -433,7 +472,9 @@ def contact_block():
 <li>Call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>
 <li>Text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>
 <li>Email <a href="mailto:{EMAIL}">{EMAIL}</a></li>
-</ul>"""
+</ul>
+<p>{HOURS_LINE}</p>
+<p>{FINDING_NOTE}</p>"""
 
 
 def cta(heading, text, label="Book a visit", extra="", tone=""):
@@ -601,7 +642,8 @@ def home():
 <section class="series-feature" aria-labelledby="sf-h"><div class="wrap sf-grid">
   <div><p class="eyebrow">New: Full Lotus Skin</p><h2 id="sf-h">{e(SERIES)}</h2>
   <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. Book all five and the fifth is free.</p>
-  <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="sms:{PHONE_TEL}">Text a question</a></p></div>
+  <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="/full-lotus-skin">Founding client offer</a></p>
+  <p class="fine">New to these treatments? A first microneedling or nanoneedling visit is reduced through {e(FOUNDING_OFFER_END)}.</p></div>
   <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg" alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
 </div></section>
 
@@ -646,14 +688,15 @@ def treatments():
   <p class="eyebrow">Skin treatments</p>
   <h2>Facial and skin treatments in Burbank</h2>
   <ul class="rates">
-    {rate_item("medical-microneedling-session", "Collagen induction therapy using medical-grade microneedles to trigger your skin's natural repair response. Targets fine lines, acne scarring, uneven texture, and hair loss, stimulating deep renewal that builds over time. Custom serums are applied during treatment and absorbed far more efficiently than topical application alone. Red light therapy is included. Also offered as the five-session " + SERIES + " series.")}
-    {rate_item("facial-nano-needling", "Nanoneedling combines ultra-fine nanotips with pure botanical serums for instant radiance with zero downtime. The tips open micro-channels in the skin's surface, infusing hyaluronic acid, vitamins, and custom serums exactly where they're needed. Ideal for sensitive skin, a pre-event glow, or between microneedling sessions. Includes red light therapy. Also offered as the five-session " + SERIES + " series.")}
+    {rate_item("medical-microneedling-session", "Collagen induction therapy using medical-grade microneedles to trigger your skin's natural repair response. Targets fine lines, acne scarring, uneven texture, and hair loss, stimulating deep renewal that builds over time. Custom serums are applied during treatment and absorbed far more efficiently than topical application alone. Red light therapy is included. Also offered as a 3-session package or the five-session " + SERIES + " series.")}
+    {rate_item("facial-nano-needling", "Nanoneedling combines ultra-fine nanotips with pure botanical serums for instant radiance with zero downtime. The tips open micro-channels in the skin's surface, infusing hyaluronic acid, vitamins, and custom serums exactly where they're needed. Ideal for sensitive skin, a pre-event glow, or between microneedling sessions. Includes red light therapy. Also offered as a 3-session package or the five-session " + SERIES + " series.")}
     {rate_item("full-lotus-lift", "Cosmetic acupuncture (the Full Lotus Lift). In Chinese medicine the mind is represented by the heart, and it opens to the face. We calm the mind, balance the body, and focus on specific tension-releasing and lifting points on the face. Includes red light therapy.")}
     <li><span class="name"><a href="/skin-conditions-burbank">Skin conditions</a></span><p class="desc">Chinese herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea, and other skin conditions, treating the pattern underneath, not just the surface.</p></li>
   </ul>
   <p style="margin-top:1.6rem">{book_btn("Book a treatment")}</p>
   <p style="margin-top:1.6rem">Read more: <a href="/microneedling-burbank">microneedling in Burbank</a>, <a href="/nanoneedling-burbank">nanoneedling in Burbank</a>, <a href="/cosmetic-acupuncture-burbank">cosmetic acupuncture in Burbank</a>, <a href="/skin-conditions-burbank">Chinese medicine for skin conditions</a>.</p>
-  <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Fees are on each treatment page.</p>
+  <p style="margin-top:1.2rem">New to Full Lotus Skin? The <a href="/full-lotus-skin">founding client offer</a> is a reduced first microneedling or nanoneedling visit, through {e(FOUNDING_OFFER_END)}.</p>
+  <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. A single session counts toward a 3-session package or the five-session series. Fees are on each treatment page.</p>
 </div></section>
 
 <section class="wash-g"><div class="wrap">
@@ -891,7 +934,7 @@ def book_online():
   <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
   <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95.</p>
   {faq_block([
-    ("Where are visits?", f"In person at {ADDR_LINE}, except the online consultations, which are by video."),
+    ("Where are visits?", f"In person at {ADDR_LINE}. {FINDING_NOTE} {HOURS_LINE} Online consultations are by video."),
     ("Which treatment should I choose?", "Book the one closest to what you need and we will decide together, or text a question. Skin treatments are described on the <a href=\"/treatments\">natural beauty page</a> and acupuncture on the <a href=\"/acupuncture\">acupuncture page</a>."),
     ("How long are visits?", "The length is shown beside each service. Visits are unhurried and often end with tea."),
   ], "Before you book")}
@@ -911,15 +954,22 @@ def confirm_pages():
         where = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
-        opt2 = ""
+        opt_rest = ""
+        offer_note = ""
+        cols = ""
         if pk:
-            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off). Your first session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
-        main = f'''<section class="cf"><div class="wrap cf-wrap">
+            cols = " three"
+            opt_rest = f'''<div class="cf-opt"><p class="cf-name">3 sessions</p><p class="cf-price">${pk["three"]:,}</p><p class="cf-sub">${pk["per3"]} a session. A single session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book 3 sessions</a></p></div><div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["five"]:,}</p><p class="cf-sub">5 sessions, one free (20% off). Your first session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
+            first = FOUNDING_NANO if s["slug"] == "facial-nano-needling" else FOUNDING_MICRO
+            offer_note = f'''<p class="cf-new">Founding client offer, through {e(FOUNDING_OFFER_END)}: a first visit is ${first} (normally ${s["price"]}). It includes a tea sitting, and it counts toward a 3- or 5-session package. The calendar takes the regular fee, so text or call and mention the offer to have it applied. <a href="/full-lotus-skin">See the offer</a>.</p>'''
+        main = f'''<section class="cf"><div class="wrap cf-wrap{" wide" if pk else ""}">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>
 <p class="lede">{e(s["tagline"])}</p>
-<div class="cf-opts{" two" if opt2 else ""}">{opt1}{opt2}</div>
-<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged $95.</li></ul>
+<div class="cf-opts{cols}">{opt1}{opt_rest}</div>
+{('<p>A single session counts toward either package. At visit 3 you can upgrade to the full series, and what you have paid is credited.</p>') if pk else ""}
+<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Hours:</strong> {HOURS_LINE}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged $95.</li></ul>
+{offer_note}
 {new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section>'''
@@ -985,7 +1035,10 @@ def five_element():
 <li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p>{book_btn("Book a session", slug="full-lotus-lift")}</p></li>
 <li class="g-card"><h3>Nanoneedling</h3><p>A gentle glow with no downtime. Five 60-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="facial-nano-needling")} <a href="/nanoneedling-burbank">About nanoneedling</a></p></li>
 <li class="g-card"><h3>Microneedling</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="medical-microneedling-session")} <a href="/microneedling-burbank">About microneedling</a></p></li>
-</ul></div></section>"""
+</ul>
+<ul class="checks">{"".join(f'<li><a href="/service-page/{slug}">{e(BY_SLUG[slug]["name"])}</a>: ${BY_SLUG[slug]["price"]} a session, ${PACKAGES[slug]["three"]:,} for 3 sessions, ${PACKAGES[slug]["five"]:,} for 5.</li>' for slug in ("facial-nano-needling", "medical-microneedling-session"))}</ul>
+<p>A single session counts toward either package. At visit 3 you can upgrade to the full series, and what you have paid is credited. Cosmetic acupuncture is booked by the session.</p>
+</div></section>"""
     qa = f"""<section><div class="wrap g-faq">{faq_block([
   ("What does Five Element mean here?", "Chinese medicine describes nature, and the skin, through five elements: Wood, Fire, Earth, Metal and Water. Here they are a simple language for what your skin is doing right now. They are not a diagnosis."),
   ("What is a session like?", "Every journey starts with an intake. Each session then leads with one element, with Earth's nourishment as the grounding base. Red light therapy is part of the treatment."),
@@ -995,10 +1048,10 @@ def five_element():
   ("What are the short-term results?", "Most people notice skin that looks fresher and feels more hydrated in the days after a session. Microneedling can leave mild pinkness for a day or so. Nanoneedling has no downtime."),
   ("What are the long-term results?", "Results build as the sessions add up. Skin tends to look firmer, smoother and more even over the course of the series. Individual results vary."),
   ("Why did you create it?", "I wanted a way to bring the thinking of Chinese medicine into skin care that feels calm, personal and unhurried, and to give each visit its own purpose."),
-  ("Do I have to do all five?", "The journey is designed as five sessions, one for each element. Book all five and the fifth session is free, which is 20% off."),
-  ("Can I try one session first?", "Yes. If you start with a single session and decide to continue, that first session counts toward the series."),
+  ("Do I have to do all five?", "The journey is designed as five sessions, one for each element. Book all five and the fifth session is free, which is 20% off. A three-session package is also available. At your third visit you can upgrade to the full series, and what you have already paid is credited."),
+  ("Can I try one session first?", "Yes. A single session counts toward a three-session package or the five-session series."),
   ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
-  ("Where is the clinic?", f"At {ADDR_LINE}."),
+  ("Where is the clinic?", f"At {ADDR_LINE}. {FINDING_NOTE} {HOURS_LINE}"),
 ])}</div></section>"""
     ask = f"""<section class="sand"><div class="wrap ty-note" style="text-align:center">
 <p class="eyebrow">Not sure where to start?</p><h2>Ask before you book</h2>
@@ -1118,7 +1171,7 @@ def new_patients():
     <ol class="steps">
       <li><h3>Book a time</h3><p>Pick your service and a time on the calendar.</p><p style="margin-top:.8rem">{book_btn("Book")}</p></li>
       <li><h3>Complete the intake form</h3><p>Tell us about your health history and goals. Roozbeh reviews it before you arrive, so your visit can begin with what matters most.</p></li>
-      <li><h3>Arrive a few minutes early</h3><p>We're at {ADDR_LINE}. Visits are unhurried and often end with tea.</p></li>
+      <li><h3>Arrive a few minutes early</h3><p>We're at {ADDR_LINE}. {FINDING_NOTE} {HOURS_LINE} Visits are unhurried and often end with tea.</p></li>
     </ol>
   </div>
   <div>
@@ -1131,7 +1184,8 @@ def new_patients():
 </div></section>
 <section class="sand"><div class="wrap">{faq_block([
     ("Do I need to fill out the form before I come?", "Yes. Complete it before your first visit so your appointment can begin with what matters most."),
-    ("Where do I go for my visit?", f"{ADDR_LINE}. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."),
+    ("Where do I go for my visit?", f"{ADDR_LINE}. {FINDING_NOTE} <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."),
+    ("What are your hours?", HOURS_LINE),
     ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95."),
     ("What treatments can I book?", "Acupuncture, microneedling, nanoneedling, cosmetic acupuncture, online consultations, and tea ceremonies. See <a href=\"/book-online\">all services</a>."),
   ], "New patient questions")}</div></section>"""
@@ -1164,7 +1218,7 @@ def service_faq(s):
     loc = ("This visit is online, by video. " if online else f"Full Lotus Health is at {ADDR_LINE}. ")
     items = []
     if not online:
-        items.append(("Where do I go?", f"{e(loc)}Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."))
+        items.append(("Where do I go?", f"{e(loc)}{FINDING_NOTE} Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."))
     else:
         items.append(("Where does this visit happen?", "Online, by video. You only need a private spot and a device with a camera."))
     if s["minutes"]:
@@ -1256,11 +1310,16 @@ def service_pages():
         pk = PACKAGES.get(s["slug"])
         series_fact = series_block = ""
         if pk:
-            series_fact = f'<dt>Series</dt><dd><span class="price">${pk["price"]:,}</span> for 5 sessions</dd>'
-            series_block = (f'<h2 id="series" style="margin-top:2rem">{e(SERIES)} series</h2>'
+            series_fact = (f'<dt>3 sessions</dt><dd><span class="price">${pk["three"]:,}</span></dd>'
+                           f'<dt>Series</dt><dd><span class="price">${pk["five"]:,}</span> for 5 sessions</dd>')
+            series_block = (f'<h2 id="series" style="margin-top:2rem">Packages</h2>'
+                            f'<p>A single session counts toward either package. At your third visit you can upgrade to the full {e(SERIES)} series, and what you have already paid is credited toward it.</p>'
+                            f'<h3>3 sessions</h3>'
+                            f'<p>Three sessions are ${pk["three"]:,}, which is ${pk["per3"]} a session instead of ${s["price"]}.</p>'
+                            f'<h3>{e(SERIES)} series</h3>'
                             f'<p>Five sessions, one for each element of Chinese medicine: Wood, Fire, Earth, Metal, and Water. '
                             f'Each session has its own focus and its own signature serum.</p>'
-                            f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per"]} a session instead of ${s["price"]}. If you start with a single session, it counts toward the series.</p>'
+                            f'<p>Booked as a series, the five sessions are ${pk["five"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per5"]} a session instead of ${s["price"]}.</p>'
                             f'<p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>')
         if s["group"] == "beauty":
             main = beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide)
@@ -1447,7 +1506,7 @@ def g_band(items):
 def g_series_promo(tone="sand"):
     return f"""<section class="{tone}"><div class="wrap ty-note" style="text-align:center">
 <p class="eyebrow">The series</p><h2>{e(SERIES)}</h2>
-<p>A journey through the five elements: five sessions, each led by one element, with a signature serum for each. Book all five and the fifth session is free.</p>
+<p>A journey through the five elements: five sessions, each led by one element, with a signature serum for each. Book all five and the fifth session is free. A three-session package is available too. A single session counts toward either one, and at your third visit you can upgrade to the full series, with what you have paid credited. Fees are on the treatment page.</p>
 <p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>
 </div></section>"""
 
@@ -1663,6 +1722,77 @@ def condition_pages():
                 breadcrumb_ld(pg["crumbs"] + [(pg["h1"], pg["path"])])])
 
 
+def full_lotus_skin():
+    """Founding-client landing page for Full Lotus Skin. Prices come from SERVICES, PACKAGES, and FOUNDING_*."""
+    nano = BY_SLUG["facial-nano-needling"]
+    micro = BY_SLUG["medical-microneedling-session"]
+    npk, mpk = PACKAGES[nano["slug"]], PACKAGES[micro["slug"]]
+
+    def fees(s, pk):
+        rows = (("Single session", f"${s['price']}"),
+                ("3 sessions", f"${pk['three']:,}"),
+                ("Five Element series, 5 sessions", f"${pk['five']:,}"))
+        return '<ul class="skin-fees">' + "".join(f'<li><span>{e(n)}</span><strong>{p}</strong></li>' for n, p in rows) + "</ul>"
+
+    hero_html = f'''<div class="hero-band tone-c skin-landing"><div class="wrap page-hero">
+<p class="crumbs"><a href="/">Home</a> / <a href="/treatments">Natural beauty</a></p>
+<div class="band short" aria-hidden="true"></div>
+<p class="eyebrow">Full Lotus Skin</p>
+<h1>Natural skin renewal, from a licensed acupuncturist in Burbank.</h1>
+<p class="lede">Microneedling and nanoneedling with custom herbal serums and red light. The visit is unhurried, and it often ends with tea.</p>
+<p class="g-actions">{book_btn("Book a visit")}<a class="btn ghost" href="#which">Which treatment?</a></p>
+</div></div>'''
+    which = f'''<section id="which"><div class="wrap">
+{g_head("Which treatment is right for you?", "Two ways to work with the skin", "Both are done here, with serums chosen for your skin and red light included. Depth is the difference.")}
+<div class="g-compare">
+<div class="g-cmp"><div class="g-cmp-art">{art.depth("nano")}</div>
+<p class="eyebrow">Nanoneedling</p><h3>The Glow Visit</h3>
+<p>60 minutes. No downtime. For event prep, sensitive skin, and maintenance.</p>
+{fees(nano, npk)}
+<p>{book_btn("Book nanoneedling", slug=nano["slug"])}</p>
+<p><a href="/nanoneedling-burbank">About nanoneedling in Burbank</a></p></div>
+<div class="g-cmp"><div class="g-cmp-art">{art.depth("micro")}</div>
+<p class="eyebrow">Microneedling</p><h3>The Results Series</h3>
+<p>90 minutes. Deeper collagen work for fine lines, scars, texture, and thinning hair, with 1 to 2 days of mild redness.</p>
+{fees(micro, mpk)}
+<p>{book_btn("Book microneedling", slug=micro["slug"])}</p>
+<p><a href="/microneedling-burbank">About microneedling in Burbank</a></p></div>
+</div>
+<p class="fine" style="margin-top:1.4rem">A single session counts toward a 3-session package or the five-session series. At visit 3 you can upgrade to the full {e(SERIES)} series, and what you have paid is credited.</p>
+</div></section>'''
+    offer = f'''<section class="sand" id="founding"><div class="wrap">
+{g_head("Founding clients", "A first visit, for a limited time", "For someone new to Full Lotus Skin. The first visit includes a tea sitting, and it counts toward a 3- or 5-session package.")}
+<p class="offer-until">Available through <span class="offer-date">{e(FOUNDING_OFFER_END)}</span></p>
+<div class="cf-opts two">
+<div class="cf-opt"><p class="cf-name">First nanoneedling visit</p><p class="cf-price">${FOUNDING_NANO}</p><p class="cf-sub">Normally ${nano["price"]} · 60 minutes</p><p>{book_btn("Book nanoneedling", slug=nano["slug"])}</p></div>
+<div class="cf-opt"><p class="cf-name">First microneedling visit</p><p class="cf-price">${FOUNDING_MICRO}</p><p class="cf-sub">Normally ${micro["price"]} · 90 minutes</p><p>{book_btn("Book microneedling", slug=micro["slug"])}</p></div>
+</div>
+<p class="g-actions"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="tel:{PHONE_TEL}">Call {PHONE_DISPLAY}</a></p>
+<p class="fine">Online booking holds a single session at the regular fee. Text or call and mention the founding offer so the first-visit price is applied.</p>
+</div></section>'''
+    say = f'''<section class="wash-g"><div class="wrap">
+{g_head("Patients", "What patients say")}
+{quotes(TESTIMONIALS_BEAUTY)}
+</div></section>'''
+    faq = f'''<section><div class="wrap g-faq">{faq_block([
+        ("Is there downtime?", "Nanoneedling has no downtime, so you can go straight back to your day. Microneedling can leave mild redness, similar to a light sunburn, for 1 to 2 days."),
+        ("Who performs the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience. You see him for the whole visit."),
+        ("What happens at a first visit?", f"Your first visit includes an intake and a treatment plan. Please complete the <a href=\"{e(INTAKE_HREF)}\">new patient form</a> before you come, so the visit can begin with what matters. The first visit counts toward a 3- or 5-session package."),
+        ("What should I keep off my skin the morning of?", "Come with a clean face. That morning, skip makeup, self-tanner, retinoids, and exfoliating acids. If you use a prescription product on your skin, note it on the intake form."),
+    ])}</div></section>'''
+    main = hero_html + rating_strip() + which + offer + say + faq + cta(
+        "Ready when you are.",
+        f"Book a time, or call or text {PHONE_DISPLAY}. If this is your first skin visit, mention the founding offer. It runs through {e(FOUNDING_OFFER_END)}.",
+        "Book a visit", tone="l")
+    OUT["full-lotus-skin.html"] = page(
+        "/full-lotus-skin",
+        "Microneedling Burbank & Nanoneedling Burbank | Full Lotus Skin",
+        "Microneedling Burbank and nanoneedling Burbank with custom herbal serums, red light, and an unhurried visit that often ends with tea.",
+        main,
+        ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), ("Full Lotus Skin", "/full-lotus-skin")])],
+        current="/full-lotus-skin")
+
+
 def notfound():
     main = hero("Page not found.", "That address doesn't lead anywhere. Try one of these.", tone="c") + """
 <section><div class="wrap"><ul class="checks"><li><a href="/">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture</a></li><li><a href="/book-online">Book online</a></li></ul></div></section>"""
@@ -1677,7 +1807,11 @@ def llms_txt():
             if s["group"] != group:
                 continue
             mins = f", {s['minutes']} min" if s.get("minutes") else ""
-            out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {s['short']}")
+            pk = PACKAGES.get(s["slug"])
+            extra = ""
+            if pk:
+                extra = f" Packages: 3 sessions ${pk['three']:,}; {SERIES} 5 sessions ${pk['five']:,}."
+            out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {s['short']}{extra}")
         return "\n".join(out)
     return f"""# {NAME}
 
@@ -1685,6 +1819,8 @@ def llms_txt():
 
 ## Quick facts
 - Address: {ADDR_LINE}
+- Finding the office: {FINDING_NOTE}
+- Hours: {HOURS_LINE}
 - Phone or text: {PHONE_DISPLAY} · Email: {EMAIL}
 - Serves Burbank, Glendale, Toluca Lake, North Hollywood, and Studio City
 - Self-pay clinic. Book online: {SITE}/book-online
@@ -1707,7 +1843,12 @@ def llms_txt():
 ## About the practitioner
 Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo San University (2015) and a B.A. from UCLA. He has over 10 years of clinical experience, is continuing advanced study in Chinese medicine dermatology, and is the Head Chinese Medicine Writer for Global Tea Hut magazine.
 
+## Full Lotus Skin founding offer
+- Through {FOUNDING_OFFER_END}. First nanoneedling visit ${FOUNDING_NANO} (normally ${BY_SLUG["facial-nano-needling"]["price"]}). First microneedling visit ${FOUNDING_MICRO} (normally ${BY_SLUG["medical-microneedling-session"]["price"]}). Includes a tea sitting. The first visit counts toward a 3- or 5-session package.
+- [Full Lotus Skin]({SITE}/full-lotus-skin)
+
 ## Key pages
+- [Full Lotus Skin founding offer]({SITE}/full-lotus-skin)
 - [Skin and beauty treatments]({SITE}/treatments)
 - [Microneedling in Burbank]({SITE}/microneedling-burbank)
 - [Nanoneedling in Burbank]({SITE}/nanoneedling-burbank)
@@ -1721,11 +1862,11 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/full-lotus-skin", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
-        pri = "0.6" if post else "1.0" if u == "/" else ("0.9" if u == "/treatments" or "burbank" in u or "needling" in u or "lift" in u else "0.7")
+        pri = "0.6" if post else "1.0" if u == "/" else ("0.9" if u in ("/treatments", "/full-lotus-skin") or "burbank" in u or "needling" in u or "lift" in u else "0.7")
         sm.append(f"<url><loc>{SITE}{u if u != '/' else '/'}</loc><lastmod>{post['date'] if post else TODAY}</lastmod><priority>{pri}</priority></url>")
     sm.append("</urlset>")
     OUT["sitemap.xml"] = "\n".join(sm) + "\n"
@@ -1735,7 +1876,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, full_lotus_skin, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
