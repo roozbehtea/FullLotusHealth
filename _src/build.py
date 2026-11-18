@@ -1522,10 +1522,11 @@ def micro_page(where):
               f'<a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 42 reviews</a></p>')
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
         f"A 90-minute skin renewal session from a licensed acupuncturist, with our own Full Lotus Skin serums and red light therapy. ${price} a session.",
-        ["90 minutes", "Numbing cream first", "A day or two of redness", "In Burbank since 2016"], art.skin_layers(),
+        ["90 minutes", "Numbing cream first", "A day or two of redness", "In Burbank since 2016"], None,
         book_slug=mn, book_label=f"Book microneedling, ${price}", after_actions=rating)
     tcm = f"""<section class="wash-c g-tcm"><div class="wrap">
-{g_head("What makes it different", "Chinese medicine, brought to your skin", "Most microneedling stops at the needles. Here a licensed acupuncturist brings Chinese medicine to your skin, with our own serums and red light therapy in every session.")}
+<div class="g-tcm-top"><div>{g_head("What makes it different", "Chinese medicine, brought to your skin", "Most microneedling stops at the needles. Here a licensed acupuncturist brings Chinese medicine to your skin, with our own serums and red light therapy in every session.")}</div>
+<div class="g-hero-art g-tcm-art">{art.skin_layers()}</div></div>
 {g_steps([("leaf", "A licensed acupuncturist", "Roozbeh is trained in Chinese medicine and looks at your skin as part of your whole health, so each session is planned around you."),
           ("bottle", "Full Lotus Skin serums", "Our serums work with the ancient Five Element system and modern botanical extract technology to influence collagen production and deeply nourish the skin. They go on as the needles open fresh channels, so they penetrate deeply."),
           ("light", "Red light in every session", "Red light therapy helps build collagen, and most people enjoy resting under it while the serums penetrate.")])}
