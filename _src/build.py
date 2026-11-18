@@ -1082,6 +1082,17 @@ def blog_ld():
                           "datePublished": p["date"]} for p in POSTS]}
 
 
+AUTHOR_BOX = """<aside class="author-box" id="author" aria-labelledby="author-h">
+<img src="/assets/photos/roozbeh-author-192.jpg" width="96" height="96" alt="Roozbeh Ghobadpour, L.Ac." loading="lazy">
+<div>
+<p class="eyebrow">About the author</p>
+<h2 class="h3" id="author-h">Roozbeh Ghobadpour, L.Ac.</h2>
+<p>Licensed acupuncturist and owner of Full Lotus Health, practicing in Burbank since 2016.</p>
+<p class="author-creds">California Acupuncture License #17220 &middot; NCCAOM Board-Certified Diplomate &middot; M.A. in Traditional Chinese Medicine, Yo San University</p>
+</div>
+</aside>"""
+
+
 def blog_posts():
     for i, p in enumerate(POSTS):
         url = f"/post/{p['slug']}"
@@ -1090,10 +1101,11 @@ def blog_posts():
         more = ""
         if others:
             more = '<h2 class="h3" style="margin-top:2.4rem">More from the blog</h2><ul class="checks">' + "".join(f'<li><a href="/post/{q["slug"]}">{e(q["title"])}</a></li>' for q in others) + "</ul>"
-        main = hero(e(p["title"]), f'By Roozbeh Ghobadpour, L.Ac. &middot; {pretty_date(p["date"])} &middot; {p["minutes"]} min read',
+        main = hero(e(p["title"]), f'By <a href="#author">Roozbeh Ghobadpour, L.Ac.</a> &middot; {pretty_date(p["date"])} &middot; {p["minutes"]} min read',
                     crumbs=[("Home", "/"), ("Blog", "/blog")], tone="m") + f"""
 <section><div class="wrap"><article class="prose">
 {p["body"]}
+{AUTHOR_BOX}
 <hr>
 
 <p>{book_btn("Book a visit")}</p>
@@ -1103,8 +1115,7 @@ def blog_posts():
               "datePublished": p["date"], "dateModified": p["date"], "mainEntityOfPage": SITE + url,
               "url": SITE + url, "inLanguage": "en-US", "isPartOf": {"@id": f"{SITE}/blog#blog"},
               "wordCount": len(_re.sub(r"<[^>]+>", " ", p["body"]).split()),
-              "author": {"@type": "Person", "@id": f"{SITE}/#roozbeh", "name": "Roozbeh Ghobadpour",
-                         "jobTitle": "Licensed Acupuncturist (L.Ac.)"},
+              "author": person_ld(),
               "publisher": {"@id": f"{SITE}/#business"}, "image": img_abs or OG_IMAGE}
         OUT[f"post/{p['slug']}.html"] = page(url, p["title"][:60], p["desc"], main,
             ld=[business_ld(), ld, breadcrumb_ld([("Home", "/"), ("Blog", "/blog"), (p["title"], url)])],
