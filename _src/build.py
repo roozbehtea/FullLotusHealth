@@ -167,6 +167,8 @@ SERVICES = [
          related=["gong-fu-tea-ceremony", "private-gong-fu-tea-ceremony"]),
 ]
 BY_SLUG = {s["slug"]: s for s in SERVICES}
+# One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
+CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
 
 # ------------------------------------------------------------------ Five Element Rejuvenation series
 # First-pass copy. Roozbeh will rewrite the element text in his own words.
@@ -311,8 +313,8 @@ OG_IMAGE = f"{SITE}/assets/og-share.jpg"
 OG_ALT = "A quiet tea table at Full Lotus Health, an acupuncture and skin clinic in Burbank, CA"
 
 
-def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False):
-    canon = SITE + (path if path != "/" else "/")
+def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None):
+    canon = canonical or (SITE + (path if path != "/" else "/"))
     nav_items = []
     for href, label in NAV:
         cur = ' aria-current="page"' if (current == href) else ""
@@ -326,7 +328,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
     nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
     sticky = "" if (focus or path in ("/book-online", "/new-patients") or path.startswith("/book/")) else \
-        f'<div class="sticky-cta">{book_btn("Book", small=True)}<a class="btn ghost small" href="sms:{PHONE_TEL}">Text us</a></div>'
+        f'<div class="sticky-cta">{book_btn("Book", small=True, slug=book_slug)}<a class="btn ghost small" href="sms:{PHONE_TEL}">Text us</a></div>'
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
     feed_link = f'<link rel="alternate" type="application/rss+xml" title="{NAME} blog" href="/feed.xml">\n' if POSTS else ""
     robots = ('<meta name="robots" content="noindex, follow">\n' if noindex
@@ -440,10 +442,10 @@ def contact_block():
 </ul>"""
 
 
-def cta(heading, text, label="Book a visit", extra="", tone=""):
+def cta(heading, text, label="Book a visit", extra="", tone="", slug=None):
     return f"""<section class="cta {tone}"><div class="wrap">
 <h2>{heading}</h2><p>{text}</p>
-<p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.4rem">{book_btn(label)} <a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>{extra}</p>
+<p style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.4rem">{book_btn(label, slug=slug)} <a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>{extra}</p>
 </div></section>"""
 
 
@@ -476,7 +478,7 @@ def photo(name, alt, lazy=True):
 def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
-    return f'<li><span class="name"><a href="/service-page/{slug}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
+    return f'<li><span class="name"><a href="{CANON_PAGE.get(slug, "/service-page/" + slug)}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
 
 
 # ------------------------------------------------------------------ blog posts
@@ -1166,6 +1168,14 @@ def new_patients():
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("New patients", "/new-patients")])], current="/new-patients")
 
 
+def faq_ld(items):
+    """FAQPage markup for a visible FAQ. Answers lose their links, since the markup takes plain text."""
+    def plain(a):
+        return html.unescape(_re.sub(r"<[^>]+>", "", a))
+    return {"@context": "https://schema.org", "@type": "FAQPage",
+            "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": plain(a)}} for q, a in items]}
+
+
 def faq_block(items, h="Common questions"):
     """Visible FAQ only (no FAQPage schema). items: list of (question, answer-html)."""
     rows = "".join(f"<h3>{e(q)}</h3><p>{a}</p>" for q, a in items)
@@ -1306,8 +1316,10 @@ def service_pages():
     <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
   </div>
 </div></section>"""
+        canon_to = CANON_PAGE.get(s["slug"])
         OUT[f"service-page/{s['slug']}.html"] = page(f"/service-page/{s['slug']}", s["title"], s["meta"], main,
-            ld=[business_ld(), service_ld(s), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online"), (s["name"], f"/service-page/{s['slug']}")])])
+            ld=[business_ld(), service_ld(s), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online"), (s["name"], f"/service-page/{s['slug']}")])],
+            canonical=(SITE + canon_to) if canon_to else None, book_slug=s["slug"] if canon_to else None)
         # old Wix booking-calendar addresses: forward to the service page, keep out of search
         OUT[f"booking-calendar/{s['slug']}.html"] = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(s['name'])} | {NAME}</title>
 <meta name="robots" content="noindex"><link rel="canonical" href="{SITE}/service-page/{s['slug']}">
@@ -1322,12 +1334,12 @@ TEA_ALT = "The tea room at Full Lotus Health: tatami mats, a low tea table set f
 PORTRAIT_ALT = "Roozbeh Ghobadpour, L.Ac., licensed acupuncturist at Full Lotus Health in Burbank"
 
 
-def g_hero(tone, eyebrow, h1, lede, chips, art_svg):
+def g_hero(tone, eyebrow, h1, lede, chips, art_svg, book_slug=None, book_label="Book a treatment", after_actions=""):
     cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in [("Home", "/"), ("Natural beauty", "/treatments")]) + "</p>"
     ch = "".join(f"<li>{e(c)}</li>" for c in chips)
     return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid{' g-hero-solo' if not art_svg else ''}">
 <div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><p class="eyebrow">{e(eyebrow)}</p><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
-<p class="g-actions">{book_btn("Book a treatment")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>
+<p class="g-actions">{book_btn(book_label, slug=book_slug)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>{after_actions}
 <ul class="chips">{ch}</ul></div>
 {('<div class="g-hero-art">' + art_svg + '</div>') if art_svg else ''}</div></div>"""
 
@@ -1453,13 +1465,13 @@ def offer_email():
 </form>"""
 
 
-def g_offer(name, line):
+def g_offer(name, line, book_slug=None):
     """First-visit offer, shown as a pop-up by /assets/offer-pop.js (no data collected)."""
     return f"""<dialog class="g-offer-pop" id="offer-pop" aria-labelledby="offer-pop-title">
 <button class="g-offer-x" type="button" data-close aria-label="Close">&times;</button>
 <div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
 <p class="eyebrow">New patients</p><h2 class="h3" id="offer-pop-title" tabindex="-1" autofocus>20% off your first {e(name)}</h2><p>{line}</p>
-<div class="g-offer-cta">{book_btn("Book your first visit")}</div>
+<div class="g-offer-cta">{book_btn("Book your first visit", slug=book_slug)}</div>
 {offer_email()}
 <p class="g-offer-later"><button type="button" data-close>Maybe later</button></p>
 </dialog><script src="/assets/offer-pop.js" defer></script><script src="/assets/signup.js" defer></script>"""
@@ -1479,53 +1491,71 @@ def g_series_promo(tone="sand"):
 
 
 def micro_page(where):
-    mi = BY_SLUG["medical-microneedling-session"]
+    """Microneedling page built to turn a "microneedling burbank" search into a booking: price, reviews and a Book button
+    up top, then what a session includes, who it suits, what to expect, fees, and a short FAQ (with FAQ markup).
+    Every Book button here books microneedling itself. Wording rules: no medical or cure claims, "skin renewal session"
+    (never "facial"), and nothing about how the serums are made."""
+    mn = "medical-microneedling-session"
+    mi, pk = BY_SLUG[mn], PACKAGES[mn]
+    price, series, per = mi["price"], pk["price"], pk["per"]
+    rating = (f'<p class="pb-rating g-hero-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span>'
+              f'<a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 42 reviews</a></p>')
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
-        "Deep rejuvenation for your face. Medical microneedling builds your skin's own collagen, softens the look of lines and scars, and nourishes the skin with custom serums and red light therapy, from a licensed acupuncturist.",
-        ["Builds collagen", "Natural anti-aging", "Custom serums", "Red light therapy included"], art.skin_layers())
-    pillars = f"""<section class="wash-c"><div class="wrap">
-{g_head("Why microneedling", "Natural anti-aging, from deep within the skin", "Instead of adding something to your face, microneedling asks your skin to renew itself.")}
-{g_cards([("glow", "Deep rejuvenation", "Works below the surface to renew the whole face, not just polish the top layer."),
-          ("repeat", "Collagen and elasticity", "Triggers your skin's own repair process, so it makes fresh collagen and elastin. Skin tends to look firmer, smoother and more youthful as results build."),
-          ("leaf", "Nourished with herbs", "Herbal serums that deeply nourish the skin and support collagen growth naturally, chosen for your skin. Red light therapy is part of every session.")])}
-<p class="g-cta-row">{book_btn("Book a treatment")}</p>
+        f"A 90-minute skin renewal session from a licensed acupuncturist, with Five Element herbal serums and red light therapy. ${price} a session.",
+        ["90 minutes", "Numbing cream first", "A day or two of redness", "In Burbank since 2016"], art.skin_layers(),
+        book_slug=mn, book_label=f"Book microneedling, ${price}", after_actions=rating)
+    say = f"""<section><div class="wrap">{g_head("Patients", "What patients say")}
+{quotes([("The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing! … The numbing cream is great and the whole procedure was completely painless.", "Stephany"),
+         ("I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.", "Rosa"),
+         ("The whole experience is calm and comfortable, and I genuinely look forward to my appointments. … It's just consistently good care from someone who clearly knows what he's doing.", "Chris")])}
 </div></section>"""
-    how = f"""<section><div class="wrap">
-{g_head("How it works", "Wake up your skin's own renewal")}
-{g_steps([("needle", "Fine channels, rich nourishment", "Fine, sterile, medical-grade needles create tiny controlled channels in the skin, and custom serums are carried in."),
-          ("heart", "Your skin repairs", "This switches on your skin's natural repair process."),
-          ("spark", "Collagen builds", "Over the following weeks your skin builds new collagen and elastin, so it looks firmer, smoother and more youthful. Most people do a series of sessions spaced several weeks apart.")])}
-</div></section>"""
-    help_ = f"""<section class="sand"><div class="wrap">{g_head("What it can help with", "Skin and hair concerns we treat")}
-{g_cards([("lines", "Fine lines and wrinkles", "Including crow's feet."), ("scar", "Acne scarring", None), ("texture", "Uneven texture and tone", None),
-          ("pores", "Enlarged pores", None), ("hair", "Thinning hair", "Along the hairline, with scalp microneedling."),
-          ("chat", "Not sure it fits?", f'<a href="sms:{PHONE_TEL}">Text a question</a> or book a session and we will decide together.')])}
-<p class="g-cta-row">{book_btn("Book a treatment")}</p></div></section>"""
-    why = g_why("deep-m", [("bottle", "Custom serums", "Chosen for your skin, and absorbed through the open channels during treatment."),
-                           ("light", "Red light therapy included", "Part of every session."),
-                           ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
-    table = f'<section><div class="wrap">{g_table("A natural path to younger-looking skin", "Rebuild your skin from within, instead of stripping, heating or injecting it.", MICRO_TABLE, [PEELS, LASER, INJECT])}</div></section>'
-    compare = f'<section class="sand"><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
-    session = g_session("wash-c", g_head("Your visit", "A session, start to finish", "Sessions are 90 minutes, and your first visit includes an intake and a treatment plan."),
-        [("intake", "Intake and plan", "Your first visit starts with an intake and a treatment plan."),
-         ("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
-         ("needle", "Treatment", "Microneedling with custom serums chosen for your skin."),
-         ("light", "Red light therapy", "Included with every session.")],
-        "<h3>Afterward</h3><p>Some redness, similar to a mild sunburn, usually settles within a day or two.</p><p>Results build over time. Most people do a series of sessions spaced several weeks apart, and your plan is set at your first visit.</p>",
+    included = g_session("wash-c", g_head("What's included", f"Everything in one ${price} session", "Sessions are 90 minutes. Your first visit includes an intake and a treatment plan."),
+        [("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
+         ("needle", "Microneedling", "Fine, sterile, medical-grade needles make tiny channels that prompt your skin to make new collagen."),
+         ("bottle", "Five Element herbal serums", "Chosen for your skin and absorbed through the fresh channels during treatment."),
+         ("light", "Red light therapy", "Included in every session, to support your skin's collagen.")],
+        f"<h3>Unhurried, one on one</h3><p>Every session is with Roozbeh himself, in a quiet private room. Visits often end with tea.</p><p>{book_btn('Book microneedling', slug=mn)}</p>",
         "treatment-microneedling", "Microneedling treatment at Full Lotus Health in Burbank")
-    say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("medical-microneedling-session")}</div></section>'
-    faq = f"""<section class="sand"><div class="wrap g-faq">{faq_block([
-  ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
-  ("How long does redness last?", "Expect some redness afterward, similar to a mild sunburn. It usually settles within a day or two."),
-  ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
-  ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered."),
-  ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
-  ("Microneedling or nanoneedling?", "Microneedling works deeper, for scarring, lines, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
-  ("Where is the clinic?", where),
-])}</div></section>"""
-    offer = g_offer("microneedling session", "Deep rejuvenation, nourishing herbal serums and red light therapy, at a welcome price for your first visit.")
-    return (hero_html + pillars + how + help_ + g_series_promo() + why + table + compare + session + say + faq + offer,
-            g_related(mi, [("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
+    suits = f"""<section><div class="wrap">{g_head("Who it suits", "Microneedling is a good fit if you want to soften")}
+{g_cards([("lines", "Fine lines and wrinkles", "Including crow's feet."), ("scar", "The look of acne scars", None), ("texture", "Uneven texture and tone", None),
+          ("pores", "Enlarged pores", None), ("hair", "Thinning along the hairline", "With scalp microneedling."),
+          ("chat", "Not sure it fits?", f'<a href="sms:{PHONE_TEL}">Text a question</a> first, or book a session and we will decide together.')])}
+</div></section>"""
+    expect = f"""<section class="sand"><div class="wrap">{g_head("What to expect", "Before, during and after")}
+{g_timeline([("intake", "Before", "Fill out the new patient form. Your first visit starts with an intake and a plan for your skin."),
+             ("needle", "During", "Numbing cream, then microneedling with herbal serums, then red light therapy. About 90 minutes in all."),
+             ("glow", "That day", "Redness, similar to a mild sunburn."),
+             ("repeat", "The weeks after", "Redness usually settles within a day or two, and results build over the following weeks. Most people do a series spaced several weeks apart.")])}
+</div></section>"""
+    fees = f"""<section class="wash-c" id="fees"><div class="wrap">{g_head("Fees", "Simple pricing", "Serums and red light therapy are always included.")}
+<div class="cf-opts two">
+<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${price}</p><p class="cf-sub">90 minutes</p><p>{book_btn("Choose a time", slug=mn)}</p></div>
+<div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">Five sessions, the fifth free (${per} a session). A first single session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">About the series</a></p></div>
+</div>
+<p class="fine">Payment is taken when you book your time. Cancelling is free up to 24 hours ahead; less than 24 hours' notice is charged $95.</p>
+</div></section>"""
+    why = g_why("deep-m", [("shield", "A licensed acupuncturist, not a med spa", "California acupuncture license 17220. Roozbeh does every session himself."),
+                           ("bottle", "Five Element herbal serums", "Chosen for your skin at each session."),
+                           ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
+    compare = f'<section><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
+    faqs = [
+        ("How much does microneedling cost in Burbank?", f"${price} for a 90-minute session, with herbal serums and red light therapy included. The {e(SERIES)} series of five sessions is ${series:,}, so the fifth session is free, and a first single session counts toward it."),
+        ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
+        ("How much downtime is there?", "Expect redness similar to a mild sunburn. It usually settles within a day or two."),
+        ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
+        ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered."),
+        ("Is this a med spa?", "No. Full Lotus Health is a licensed acupuncturist's clinic. Roozbeh Ghobadpour, L.Ac., does every session himself and has practiced in Burbank since 2016."),
+        ("Microneedling or nanoneedling?", "Microneedling works deeper, for lines, the look of scars, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
+        ("How do I book?", f"Use any Book button on this page to pick a time, or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>. New patients, please fill out the <a href=\"{INTAKE_HREF}\">intake form</a> before your first visit."),
+        ("Where is the clinic?", where),
+    ]
+    faq = f'<section class="sand"><div class="wrap g-faq">{faq_block(faqs)}</div></section>'
+    offer = g_offer("microneedling session", "Deep rejuvenation, nourishing herbal serums and red light therapy, at a welcome price for your first visit.", book_slug=mn)
+    related = f"""<section><div class="wrap g-related"><div><h2 class="h3">Questions?</h2>
+<p><a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>. Please don't send health details by text or email.</p></div>
+<div><h2 class="h3">Also see</h2><ul class="checks"><li><a href="/nanoneedling-burbank">Nanoneedling in Burbank</a></li><li><a href="/cosmetic-acupuncture-burbank">Cosmetic acupuncture in Burbank</a></li><li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
+    closing = cta("Ready for your first session?", f"Choose a time online, ${price} for 90 minutes, or text a question first.", "Book microneedling", slug=mn)
+    return (hero_html + say + included + suits + expect + fees + why + compare + faq + offer, related, [faq_ld(faqs)], closing)
 
 
 def nano_page(where):
@@ -1581,9 +1611,9 @@ def landing_pages():
     where = f"Full Lotus Health is at {ADDR_LINE}, convenient to Glendale, Toluca Lake, North Hollywood, and Studio City."
     pages = [
       dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
-           title="Microneedling Burbank: What to Expect | Full Lotus Health",
-           meta="Microneedling in Burbank for fine lines, acne scars, texture, and thinning hair. What a 90-minute session involves, and how a series works.",
-           h1="Microneedling in Burbank, CA", rich=micro_page(where),
+           title="Microneedling in Burbank, CA from $500 | Full Lotus Health",
+           meta="Microneedling in Burbank from a licensed acupuncturist: 90-minute skin renewal sessions with herbal serums and red light therapy, $500. Rated 5.0 on Google.",
+           h1="Microneedling in Burbank, CA", rich=micro_page(where), book="medical-microneedling-session", priced=True,
            more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
            title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
@@ -1613,10 +1643,14 @@ def landing_pages():
     for pg in pages:
         svc = pg["svc"]
         if "rich" in pg:
-            main = pg["rich"][0] + pg["rich"][1] + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
+            book = pg.get("book")
+            closing = pg["rich"][3] if len(pg["rich"]) > 3 else cta("Ready to book?", "Choose a time that works for you.", "Book a treatment", slug=book)
+            main = pg["rich"][0] + pg["rich"][1] + closing
+            extra_ld = pg["rich"][2] if len(pg["rich"]) > 2 else []
             OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
-                ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
-                    breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
+                ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=pg.get("priced", False)),
+                    breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])] + extra_ld,
+                book_slug=book)
             continue
         more = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in pg["more"])
         main = hero(e(pg["h1"]), e(pg["lede"]), crumbs=[("Home", "/"), ("Natural beauty", "/treatments")], tone=pg["tone"]) + pg.get('extra', '') + f"""
@@ -1747,7 +1781,7 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
