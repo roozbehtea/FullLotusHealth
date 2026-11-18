@@ -1533,7 +1533,7 @@ def micro_page(where):
     what = f"""<section><div class="wrap g-tcm-top">
 <div>{g_head("What is microneedling?", "Tiny channels that prompt new collagen")}
 <p>Microneedling uses a pen with fine, sterile needles to make thousands of tiny channels in the skin. Your skin responds by making new collagen, and results build gently over the following weeks. The channels close within hours.</p>
-<p>The diagram shows the needles passing through the epidermis, the skin's outer layer, into the dermis, where collagen is made. While the channels are open, serums can be absorbed up to hundreds of times more than through unbroken skin. That is why Full Lotus Skin serums go on during the treatment: together with the microneedling itself, they make each session a powerful skin rejuvenation.</p></div>
+<p>The diagram shows the needles passing through the epidermis, the skin's outer layer, into the dermis, where collagen is made. While the channels are open, serums pass through far more easily: lab studies on human skin found microneedles let up to 1,000 to 10,000 times more through the skin's outer barrier. That is why Full Lotus Skin serums go on during the treatment: together with the microneedling itself, they make each session a powerful skin rejuvenation.</p></div>
 <div class="g-hero-art g-tcm-art">{art.skin_layers()}</div></div></section>"""
     us_col = ("Full Lotus microneedling", "With a licensed acupuncturist",
         "Microneedling, Full Lotus Skin serums applied as the channels open, and red light therapy, all in one 90-minute session planned around your whole health.",
