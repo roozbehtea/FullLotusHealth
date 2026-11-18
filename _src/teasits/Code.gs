@@ -44,6 +44,7 @@ function cfg_() {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
+    if (String(p.action || '').indexOf('appt_') === 0) return json_(apptGet_(p));          // appointments: Booking.gs
     if (p.action === 'confirm') return json_(confirm_(String(p.session || '')));
     if (p.action === 'release') return json_(release_(String(p.session || '')));
     return json_({ sits: listSits_() });
@@ -57,6 +58,7 @@ function doPost(e) {
   var body = {};
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { return json_({ error: 'bad_request' }); }
   try {
+    if (String(body.action || '').indexOf('appt_') === 0) return json_(apptPost_(body));   // appointments: Booking.gs
     if (body.action === 'reserve') return json_(reserve_(body));
     return json_({ error: 'bad_request' });
   } catch (err) {
@@ -246,6 +248,7 @@ function release_(session) {
  * window before returning to the site, and marks stale holds as expired.
  */
 function reconcile() {
+  try { apptReconcile_(); } catch (err) { console.error('appointments: ' + err); }          // appointments: Booking.gs
   var cutoff = Date.now() - HOLD_MINUTES * 60000;
   var rs = rows_();
   for (var i = 0; i < rs.length; i++) {
@@ -313,6 +316,7 @@ function stripe_(method, path, params) {
 /** Run once from the Apps Script editor: creates the Reservations tab and the 10-minute check. */
 function setup() {
   sheet_();
+  apptSetup_();                                                                             // appointments: Booking.gs
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'reconcile') ScriptApp.deleteTrigger(t);
   });
