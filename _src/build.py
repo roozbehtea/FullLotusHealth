@@ -1501,19 +1501,32 @@ def micro_page(where):
     rating = (f'<p class="pb-rating g-hero-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span>'
               f'<a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 42 reviews</a></p>')
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
-        f"A 90-minute skin renewal session from a licensed acupuncturist, with Five Element herbal serums and red light therapy. ${price} a session.",
+        f"A 90-minute skin renewal session from a licensed acupuncturist, with our own Full Lotus Skin serums and red light therapy. ${price} a session.",
         ["90 minutes", "Numbing cream first", "A day or two of redness", "In Burbank since 2016"], art.skin_layers(),
         book_slug=mn, book_label=f"Book microneedling, ${price}", after_actions=rating)
+    tcm = f"""<section class="wash-c g-tcm"><div class="wrap">
+{g_head("What makes it different", "Chinese medicine, brought to your skin", "Most microneedling stops at the needles. Here a licensed acupuncturist brings Chinese medicine to your skin, with our own serums and red light therapy in every session.")}
+{g_steps([("leaf", "A licensed acupuncturist", "Roozbeh is trained in Chinese medicine and looks at your skin as part of your whole health, so each session is planned around you."),
+          ("bottle", "Full Lotus Skin serums", "Our serums work with the ancient Five Element system and modern botanical extract technology to influence collagen production and deeply nourish the skin. They go on as the needles open fresh channels, so they penetrate deeply."),
+          ("light", "Red light in every session", "Red light therapy helps build collagen, and most people enjoy resting under it while the serums penetrate.")])}
+<p class="g-cta-row">{book_btn(f"Book microneedling, ${price}", slug=mn)}</p></div></section>"""
+    us_col = ("Full Lotus microneedling", "With a licensed acupuncturist",
+        "Microneedling, Full Lotus Skin serums applied as the channels open, and red light therapy, all in one 90-minute session planned around your whole health.",
+        "A day or two of redness.")
+    spa_col = ("A typical med spa session", "",
+        "Microneedling, usually with a standard serum. Red light and other add-ons are often priced separately.",
+        "Usually no Chinese medicine assessment, and the same day or two of redness.")
+    table = f'<section><div class="wrap">{g_table("What Full Lotus adds to microneedling", "The same core treatment, with Chinese medicine, our own serums and red light therapy built in. Here is how it compares.", us_col, [spa_col, PEELS, LASER, INJECT])}</div></section>'
     say = f"""<section><div class="wrap">{g_head("Patients", "What patients say")}
 {quotes([("The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing! … The numbing cream is great and the whole procedure was completely painless.", "Stephany"),
          ("I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.", "Rosa"),
          ("The whole experience is calm and comfortable, and I genuinely look forward to my appointments. … It's just consistently good care from someone who clearly knows what he's doing.", "Chris")])}
 </div></section>"""
-    included = g_session("wash-c", g_head("What's included", f"Everything in one ${price} session", "Sessions are 90 minutes. Your first visit includes an intake and a treatment plan."),
+    included = g_session("sand", g_head("What's included", f"Everything in one ${price} session", "Sessions are 90 minutes. Your first visit includes an intake and a treatment plan."),
         [("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
          ("needle", "Microneedling", "Fine, sterile, medical-grade needles make tiny channels that prompt your skin to make new collagen."),
-         ("bottle", "Five Element herbal serums", "Chosen for your skin and absorbed through the fresh channels during treatment."),
-         ("light", "Red light therapy", "Included in every session, to support your skin's collagen.")],
+         ("bottle", "Full Lotus Skin serums", "Chosen for your skin and applied as the needles open fresh channels, so they penetrate deeply."),
+         ("light", "Red light therapy", "Included in every session. Most people enjoy resting under it while the serums penetrate.")],
         f"<h3>Unhurried, one on one</h3><p>Every session is with Roozbeh himself, in a quiet private room. Visits often end with tea.</p><p>{book_btn('Book microneedling', slug=mn)}</p>",
         "treatment-microneedling", "Microneedling treatment at Full Lotus Health in Burbank")
     suits = f"""<section><div class="wrap">{g_head("Who it suits", "Microneedling is a good fit if you want to soften")}
@@ -1523,7 +1536,7 @@ def micro_page(where):
 </div></section>"""
     expect = f"""<section class="sand"><div class="wrap">{g_head("What to expect", "Before, during and after")}
 {g_timeline([("intake", "Before", "Fill out the new patient form. Your first visit starts with an intake and a plan for your skin."),
-             ("needle", "During", "Numbing cream, then microneedling with herbal serums, then red light therapy. About 90 minutes in all."),
+             ("needle", "During", "Numbing cream, then microneedling with Full Lotus Skin serums, then red light therapy. About 90 minutes in all."),
              ("glow", "That day", "Redness, similar to a mild sunburn."),
              ("repeat", "The weeks after", "Redness usually settles within a day or two, and results build over the following weeks. Most people do a series spaced several weeks apart.")])}
 </div></section>"""
@@ -1535,27 +1548,27 @@ def micro_page(where):
 <p class="fine">Payment is taken when you book your time. Cancelling is free up to 24 hours ahead; less than 24 hours' notice is charged $95.</p>
 </div></section>"""
     why = g_why("deep-m", [("shield", "A licensed acupuncturist, not a med spa", "California acupuncture license 17220. Roozbeh does every session himself."),
-                           ("bottle", "Five Element herbal serums", "Chosen for your skin at each session."),
+                           ("bottle", "Full Lotus Skin serums", "Our own Five Element serums, chosen for your skin at each session."),
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
     compare = f'<section><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
     faqs = [
-        ("How much does microneedling cost in Burbank?", f"${price} for a 90-minute session, with herbal serums and red light therapy included. The {e(SERIES)} series of five sessions is ${series:,}, so the fifth session is free, and a first single session counts toward it."),
+        ("How much does microneedling cost in Burbank?", f"${price} for a 90-minute session, with Full Lotus Skin serums and red light therapy included. The {e(SERIES)} series of five sessions is ${series:,}, so the fifth session is free, and a first single session counts toward it."),
         ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
         ("How much downtime is there?", "Expect redness similar to a mild sunburn. It usually settles within a day or two."),
         ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
         ("Do you offer microneedling for thinning hair?", "Yes. Scalp microneedling along the hairline is offered."),
-        ("Is this a med spa?", "No. Full Lotus Health is a licensed acupuncturist's clinic. Roozbeh Ghobadpour, L.Ac., does every session himself and has practiced in Burbank since 2016."),
+        ("Is this a med spa?", "No. Full Lotus Health is a licensed acupuncturist's clinic. Roozbeh Ghobadpour, L.Ac., does every session himself and brings Chinese medicine to your skin, with our own Full Lotus Skin serums and red light therapy in every session. He has practiced in Burbank since 2016."),
         ("Microneedling or nanoneedling?", "Microneedling works deeper, for lines, the look of scars, and thinning hair. <a href=\"/nanoneedling-burbank\">Nanoneedling</a> is a gentler surface treatment for glow and hydration, with no downtime."),
         ("How do I book?", f"Use any Book button on this page to pick a time, or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>. New patients, please fill out the <a href=\"{INTAKE_HREF}\">intake form</a> before your first visit."),
         ("Where is the clinic?", where),
     ]
     faq = f'<section class="sand"><div class="wrap g-faq">{faq_block(faqs)}</div></section>'
-    offer = g_offer("microneedling session", "Deep rejuvenation, nourishing herbal serums and red light therapy, at a welcome price for your first visit.", book_slug=mn)
+    offer = g_offer("microneedling session", "Deep rejuvenation, Full Lotus Skin serums and red light therapy, at a welcome price for your first visit.", book_slug=mn)
     related = f"""<section><div class="wrap g-related"><div><h2 class="h3">Questions?</h2>
 <p><a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>. Please don't send health details by text or email.</p></div>
 <div><h2 class="h3">Also see</h2><ul class="checks"><li><a href="/nanoneedling-burbank">Nanoneedling in Burbank</a></li><li><a href="/cosmetic-acupuncture-burbank">Cosmetic acupuncture in Burbank</a></li><li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
     closing = cta("Ready for your first session?", f"Choose a time online, ${price} for 90 minutes, or text a question first.", "Book microneedling", slug=mn)
-    return (hero_html + say + included + suits + expect + fees + why + compare + faq + offer, related, [faq_ld(faqs)], closing)
+    return (hero_html + tcm + say + included + suits + expect + fees + table + why + compare + faq + offer, related, [faq_ld(faqs)], closing)
 
 
 def nano_page(where):
@@ -1612,7 +1625,7 @@ def landing_pages():
     pages = [
       dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
            title="Microneedling in Burbank, CA from $500 | Full Lotus Health",
-           meta="Microneedling in Burbank from a licensed acupuncturist: 90-minute skin renewal sessions with herbal serums and red light therapy, $500. Rated 5.0 on Google.",
+           meta="Microneedling in Burbank from a licensed acupuncturist: Chinese medicine for your skin, with Full Lotus Skin serums and red light therapy. 90 minutes, $500.",
            h1="Microneedling in Burbank, CA", rich=micro_page(where), book="medical-microneedling-session", priced=True,
            more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
