@@ -202,6 +202,8 @@ NAV = [
     ("/blog", "Blog"),
     ("/new-patients", "New patients"),
 ]
+# The desktop header is full, so these show only in the phone/tablet menu (and the footer links them everywhere).
+NAV_MENU_ONLY = {"/blog"}
 
 
 # ------------------------------------------------------------------ structured data
@@ -317,7 +319,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
         if href == "/new-patients" and INTAKE:   # first-time patients go straight to the form
             nav_items.append(f'<li><a href="{e(INTAKE)}" rel="noopener">New patient form</a></li>')
             continue
-        nav_items.append(f'<li><a href="{href}"{cur}>{e(label)}</a></li>')
+        li = ' class="nav-menu-only"' if href in NAV_MENU_ONLY else ""
+        nav_items.append(f'<li{li}><a href="{href}"{cur}>{e(label)}</a></li>')
     if focus:   # email landing page: no menu to wander off into
         nav_items = []
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')

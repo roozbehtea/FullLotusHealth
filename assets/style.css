@@ -346,6 +346,7 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .rates li { border-left: 0; }
 
 @media (min-width: 70.01rem) and (max-width: 90rem) { .nav a.tel { display: none; } }
+@media (min-width: 70.01rem) { .nav li.nav-menu-only { display: none; } }
 
 /* ---- Homepage: trust bar under the hero ---- */
 .proof-bar { background: var(--cinnabar); color: var(--on-cinnabar); padding-block: clamp(1.8rem, 3.5vw, 2.6rem); text-align: center; }
