@@ -1525,12 +1525,16 @@ def micro_page(where):
         ["90 minutes", "Numbing cream first", "A day or two of redness", "In Burbank since 2016"], None,
         book_slug=mn, book_label=f"Book microneedling, ${price}", after_actions=rating)
     tcm = f"""<section class="wash-c g-tcm"><div class="wrap">
-<div class="g-tcm-top"><div>{g_head("What makes it different", "Chinese medicine, brought to your skin", "Most microneedling stops at the needles. Here a licensed acupuncturist brings Chinese medicine to your skin, with our own serums and red light therapy in every session.")}</div>
-<div class="g-hero-art g-tcm-art">{art.skin_layers()}</div></div>
+{g_head("What makes it different", "Chinese medicine, brought to your skin", "Most microneedling stops at the needles. Here a licensed acupuncturist brings Chinese medicine to your skin, with our own serums and red light therapy in every session.")}
 {g_steps([("leaf", "A licensed acupuncturist", "Roozbeh is trained in Chinese medicine and looks at your skin as part of your whole health, so each session is planned around you."),
           ("bottle", "Full Lotus Skin serums", "Our serums work with the ancient Five Element system and modern botanical extract technology to influence collagen production and deeply nourish the skin. They go on as the needles open fresh channels, so they penetrate deeply."),
           ("light", "Red light in every session", "Red light therapy helps build collagen, and most people enjoy resting under it while the serums penetrate.")])}
 <p class="g-cta-row">{book_btn(f"Book microneedling, ${price}", slug=mn)}</p></div></section>"""
+    what = f"""<section><div class="wrap g-tcm-top">
+<div>{g_head("What is microneedling?", "Tiny channels that prompt new collagen")}
+<p>Microneedling uses a pen with fine, sterile needles to make thousands of tiny channels in the skin. Your skin responds by making new collagen, and results build gently over the following weeks. The channels close within hours.</p>
+<p>The diagram shows the needles passing through the epidermis, the skin's outer layer, into the dermis, where collagen is made. While the channels are open, serums can reach deeper than they would on the surface, which is why Full Lotus Skin serums go on during the treatment.</p></div>
+<div class="g-hero-art g-tcm-art">{art.skin_layers()}</div></div></section>"""
     us_col = ("Full Lotus microneedling", "With a licensed acupuncturist",
         "Microneedling, Full Lotus Skin serums applied as the channels open, and red light therapy, all in one 90-minute session planned around your whole health.",
         "A day or two of redness.")
@@ -1589,7 +1593,7 @@ def micro_page(where):
 <p><a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>. Please don't send health details by text or email.</p></div>
 <div><h2 class="h3">Also see</h2><ul class="checks"><li><a href="/nanoneedling-burbank">Nanoneedling in Burbank</a></li><li><a href="/cosmetic-acupuncture-burbank">Cosmetic acupuncture in Burbank</a></li><li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
     closing = cta("Ready for your first session?", f"Choose a time online, ${price} for 90 minutes, or text a question first.", "Book microneedling", slug=mn)
-    return (hero_html + tcm + say + included + suits + expect + fees + table + why + compare + faq + offer, related, [faq_ld(faqs)], closing)
+    return (hero_html + what + tcm + say + included + suits + expect + fees + table + why + compare + faq + offer, related, [faq_ld(faqs)], closing)
 
 
 def nano_page(where):

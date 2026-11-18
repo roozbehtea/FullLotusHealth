@@ -763,6 +763,6 @@ p, li, dd, blockquote { text-wrap: pretty; }
 
 /* Microneedling page: Google rating under the hero buttons */
 .g-hero .g-hero-rating { justify-content: flex-start; margin: -0.4rem 0 1.2rem; }
-.g-tcm-top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; margin-bottom: var(--space-4); }
-.g-tcm-top .g-head { margin-bottom: 0; }
+.g-tcm-top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+.g-tcm-top .g-head { margin-bottom: var(--space-3); }
 @media (max-width: 52rem) { .g-tcm-top { grid-template-columns: 1fr; } }
