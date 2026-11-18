@@ -32,6 +32,7 @@ BOOKS = {k: v.strip() for k, v in CFG.get("booking_urls", {}).items() if v.strip
 INTAKE = CFG.get("intake_url", "").strip()
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
+BOOKAPI = (CFG.get("booking_api_url", "") or TEASITS).strip()   # optional: same web app also runs appointment booking (_src/booking); when set, /book/<service> is the on-site scheduler
 missing = [k for k, v in (("booking_url or booking_urls", BOOK or BOOKS), ("intake_url", INTAKE)) if not v]
 if missing:
     msg = "Missing in _src/config.json: " + ", ".join(missing)
@@ -167,6 +168,18 @@ SERVICES = [
          related=["gong-fu-tea-ceremony", "private-gong-fu-tea-ceremony"]),
 ]
 BY_SLUG = {s["slug"]: s for s in SERVICES}
+
+# Services that can be booked on the site (the table in _src/booking/Booking.gs), checked against SERVICES so prices and lengths never drift.
+APPT = {}
+if BOOKAPI:
+    import re as _rx
+    _gs = (pathlib.Path(__file__).parent / "booking" / "Booking.gs").read_text()
+    _m = _rx.search(r"/\*json\*/\s*(\{.*?\})\s*/\*end\*/", _gs, _rx.S)
+    APPT = json.loads(_m.group(1)) if _m else {}
+    for _slug, _a in APPT.items():
+        _s = BY_SLUG.get(_slug)
+        if not _s or _s["price"] != _a["price"] or _s["minutes"] != _a["minutes"]:
+            sys.exit(f"_src/booking/Booking.gs does not match SERVICES for {_slug}: fix the price or minutes in one of them")
 # One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
 CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
 
@@ -304,7 +317,7 @@ def book_btn(label="Book", cls="", small=False, slug=None, direct=False, site_wi
     c = "btn " + ("small " if small else "") + cls
     if slug is None and BOOK_HERE and not site_wide:
         slug = BOOK_HERE
-    if slug and slug in BOOKS and not direct:   # first the confirm step, where the fee is easy to read
+    if slug and (slug in BOOKS or slug in APPT) and not direct:   # first the confirm step, where the fee is easy to read
         return f'<a class="{c.strip()}" href="/book/{slug}">{e(label)}</a>'
     if slug and slug in BOOKS:
         return f'<a class="{c.strip()}" href="{e(BOOKS[slug])}" rel="noopener">{e(label)}</a>'
@@ -930,12 +943,34 @@ def book_online():
 def confirm_pages():
     """One step between "Book" and the Google calendar: shows the fee large, what is included, and the policy."""
     for s in SERVICES:
-        if s["slug"] not in BOOKS:
+        if s["slug"] not in BOOKS and s["slug"] not in APPT:
             continue
         pk = PACKAGES.get(s["slug"])
         mins = f'{s["minutes"]} minutes' if s["minutes"] else ""
         where = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
+        if s["slug"] in APPT:
+            series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
+            gl = f' data-fallback="{e(BOOKS[s["slug"]])}"' if s["slug"] in BOOKS else ""
+            main = f'''<section class="cf"><div class="wrap cf-wrap sch-wrap">
+<p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
+<h1>{e(s["name"])}</h1>
+<p class="lede">{e(s["tagline"])}</p>
+<p><strong>{e(mins)} &middot; ${s["price"]}</strong> &middot; {e(where)}</p>
+{series}
+<div id="sched" class="sch" data-endpoint="{e(BOOKAPI)}" data-service="{e(s["slug"])}"{gl}>
+  <p class="sch-status notice" role="status" aria-live="polite" hidden></p>
+  <div class="sch-cal"><p class="fine">Loading times&hellip;</p></div>
+  <div class="sch-times"></div>
+  <div class="sch-details"></div>
+  <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
+</div>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time. Nothing is booked until payment goes through.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged $95.</li></ul>
+{new}
+<p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
+</div></section><script src="/assets/booking.js" defer></script>'''
+            OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
+            continue
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
         opt2 = ""
         if pk:

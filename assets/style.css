@@ -559,8 +559,8 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 }
 
 /* ---- Tea sits (reservation list, assets/teasits.js) ---- */
-.ts-status { margin-bottom: var(--space-3); }
-.ts-status.err { background: var(--cinnabar-wash); }
+.ts-status, .sch-status { margin-bottom: var(--space-3); }
+.ts-status.err, .sch-status.err { background: var(--cinnabar-wash); }
 .ts-list { list-style: none; margin: 0; padding: 0; max-width: 56rem; }
 .ts-sit { display: grid; grid-template-columns: 1fr auto auto auto; gap: 1.2rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--surface-300); }
 .ts-sit:first-child { border-top: 1px solid var(--surface-300); }
@@ -579,13 +579,13 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .ts-sit.full .btn { opacity: 0.55; cursor: default; }
 .ts-form { padding: 1.2rem 1.3rem 0.6rem; margin: 0 0 1rem; background: var(--surface-200); border-radius: 0 0 var(--radius-md) var(--radius-md); }
 .ts-for { margin-top: 0; }
-.ts-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem 1rem; align-items: end; }
-.ts-fields label { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 500; font-size: 0.9375rem; }
-.ts-fields input, .ts-fields select { font: inherit; font-weight: 400; padding: 0.75rem 0.9rem; color: var(--ink); background: #fffaf1; border: 2px solid var(--surface-300); border-radius: var(--radius-sm); min-width: 0; }
-.ts-fields input:focus, .ts-fields select:focus { outline: 2px solid var(--lapis); outline-offset: 1px; border-color: var(--lapis); }
+.ts-fields, .sch-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem 1rem; align-items: end; }
+.ts-fields label, .sch-fields label { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 500; font-size: 0.9375rem; }
+.ts-fields input, .ts-fields select, .sch-fields input, .sch-fields textarea { font: inherit; font-weight: 400; padding: 0.75rem 0.9rem; color: var(--ink); background: #fffaf1; border: 2px solid var(--surface-300); border-radius: var(--radius-sm); min-width: 0; }
+.ts-fields input:focus, .ts-fields select:focus, .sch-fields input:focus, .sch-fields textarea:focus { outline: 2px solid var(--lapis); outline-offset: 1px; border-color: var(--lapis); }
 .ts-actions { margin: 1.1rem 0 0.4rem; }
-.ts-form .btn { cursor: pointer; }
-.ts-form .btn[disabled] { opacity: 0.6; cursor: wait; }
+.ts-form .btn, .sch-form .btn { cursor: pointer; }
+.ts-form .btn[disabled], .sch-form .btn[disabled] { opacity: 0.6; cursor: wait; }
 @media (max-width: 40rem) {
   .ts-sit { grid-template-columns: 1fr auto; row-gap: 0.7rem; }
   .ts-sit .ts-seats { grid-row: 2; }
@@ -766,3 +766,34 @@ p, li, dd, blockquote { text-wrap: pretty; }
 .g-tcm-top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
 .g-tcm-top .g-head { margin-bottom: var(--space-3); }
 @media (max-width: 52rem) { .g-tcm-top { grid-template-columns: 1fr; } }
+
+/* online booking: day grid, times, details (assets/booking.js) */
+.sch { max-width: 44rem; margin-top: var(--space-3); }
+.sch-cal, .sch-times, .sch-details { margin-bottom: var(--space-3); }
+.sch-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.sch-dow { text-align: center; font-size: 0.8125rem; font-weight: 600; color: var(--ink-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.sch-day { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; min-height: 2.75rem; padding: 0.25rem; font: inherit; font-size: 0.9375rem; font-variant-numeric: lining-nums tabular-nums; color: var(--ink); background: transparent; border: 2px solid transparent; border-radius: var(--radius-sm); }
+.sch-mo { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+.sch-day.off { color: var(--ink-muted); opacity: 0.45; }
+.sch-day.out { opacity: 0.25; }
+button.sch-day { cursor: pointer; }
+.sch-day.open { background: #fffaf1; border-color: var(--lapis); font-weight: 600; }
+.sch-day.wait { border: 2px dashed var(--surface-300); color: var(--ink-muted); }
+button.sch-day:hover { background: var(--lapis-wash); }
+.sch-day.on, .sch-day.on:hover { background: var(--lapis); border-color: var(--lapis); color: var(--on-lapis); border-style: solid; }
+.sch-key { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin: var(--space-1) 0 0; }
+.sch-sw { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 3px; vertical-align: -0.1em; margin-right: 0.35rem; }
+.sch-sw.open { background: #fffaf1; border: 2px solid var(--lapis); }
+.sch-sw.wait { border: 2px dashed var(--surface-300); }
+.sch-slots { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 var(--space-2); }
+.sch-slot { min-width: 6.5rem; min-height: 2.75rem; padding: 0.6rem 1.2rem; font: inherit; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; color: var(--lapis-deep); background: #fffaf1; border: 2px solid var(--lapis); border-radius: var(--radius-pill); cursor: pointer; }
+.sch-slot:hover { background: var(--lapis-wash); }
+.sch-slot[aria-pressed="true"] { background: var(--lapis); color: var(--on-lapis); }
+.sch-form { padding: 1.2rem 1.3rem 0.6rem; background: var(--surface-200); border-radius: var(--radius-md); }
+.sch-form .h3 { margin-top: 0; }
+.sch-sum { margin: 0 0 var(--space-2); }
+.sch-wide { grid-column: 1 / -1; }
+.sch-fields textarea { resize: vertical; }
+.linkish { font: inherit; padding: 0; color: var(--cinnabar); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px; cursor: pointer; }
+.linkish:hover { color: var(--cinnabar-deep); text-decoration-thickness: 2px; }
+@media (prefers-reduced-motion: reduce) { .sch * { transition: none !important; } }
