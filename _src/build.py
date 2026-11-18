@@ -297,8 +297,13 @@ def breadcrumb_ld(trail):
 
 
 # ------------------------------------------------------------------ layout
-def book_btn(label="Book", cls="", small=False, slug=None, direct=False):
+BOOK_HERE = None   # a treatment's slug while its guide page is built, so that page's Book buttons book that treatment
+
+
+def book_btn(label="Book", cls="", small=False, slug=None, direct=False, site_wide=False):
     c = "btn " + ("small " if small else "") + cls
+    if slug is None and BOOK_HERE and not site_wide:
+        slug = BOOK_HERE
     if slug and slug in BOOKS and not direct:   # first the confirm step, where the fee is easy to read
         return f'<a class="{c.strip()}" href="/book/{slug}">{e(label)}</a>'
     if slug and slug in BOOKS:
@@ -326,7 +331,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     if focus:   # email landing page: no menu to wander off into
         nav_items = []
     nav_items.append(f'<li><a class="tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></li>')
-    nav_items.append(f'<li>{book_btn("Book", small=True)}</li>')
+    nav_items.append(f'<li>{book_btn("Book", small=True, site_wide=True)}</li>')
     sticky = "" if (focus or path in ("/book-online", "/new-patients") or path.startswith("/book/")) else \
         f'<div class="sticky-cta">{book_btn("Book", small=True, slug=book_slug)}<a class="btn ghost small" href="sms:{PHONE_TEL}">Text us</a></div>'
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
@@ -373,7 +378,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
     </a>
     <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
-    {book_btn("Book", cls="call-mobile", small=True)}
+    {book_btn("Book", cls="call-mobile", small=True, site_wide=True)}
     <label for="menu-check" class="menu-toggle">Menu</label>
     <nav class="nav" aria-label="Main">
       <ul>
@@ -389,7 +394,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
   <div class="wrap">
     <div class="cols">
       <div>
-        <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal.png" width="84" height="84" alt=""></a>
+        <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal-168.png" width="84" height="84" alt="" loading="lazy"></a>
         <p>Roozbeh Ghobadpour, L.Ac.<br>{ADDR["street"]}<br>{ADDR["city"]}, {ADDR["region"]} {ADDR["zip"]}</p>
         <p><a href="{MAPS}" rel="noopener">Get directions</a></p>
       </div>
@@ -470,8 +475,23 @@ def photo(name, alt, lazy=True):
                 dims = f' width="{w}" height="{h}"'
             except Exception:
                 dims = ""
-            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}" alt="{e(alt)}"{dims}{' loading="lazy"' if lazy else ''}></figure>'
+            return f'<figure class="photo"><img src="/assets/photos/{name}.{ext}"{srcset(name)} alt="{e(alt)}"{dims}{' loading="lazy"' if lazy else ''}></figure>'
     return ""
+
+
+def srcset(name, sizes="(min-width: 52rem) 45vw, 100vw"):
+    """Smaller WebP copies made by _src/make_images.py, so phones don't download the full-size JPG."""
+    root = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "assets", "photos")
+    sub, base = _os.path.split(name)   # "elements/wood" lives in assets/photos/elements
+    found = []
+    for fn in _os.listdir(_os.path.join(root, sub)):
+        stem, ext = _os.path.splitext(fn)
+        if ext == ".webp" and stem.startswith(base + "-") and stem[len(base) + 1:].isdigit():
+            found.append(int(stem[len(base) + 1:]))
+    if not found:
+        return ""
+    return ' srcset="' + ", ".join(f"/assets/photos/{name}-{w}.webp {w}w" for w in sorted(found)) + f'" sizes="{sizes}"'
+
 
 
 
@@ -587,7 +607,7 @@ def home():
     main = f"""
 <section class="home-hero" aria-labelledby="home-h1">
   <div class="hh-grid">
-    <figure class="hh-photo"><img src="/assets/photos/hero.jpg" width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
+    <figure class="hh-photo"><img src="/assets/photos/hero.jpg"{srcset("hero", "(min-width: 56rem) 58vw, 100vw")} width="1504" height="1128" alt="The tea room at Full Lotus Health: tatami mats, a low tea table set for tea, floor cushions, lantern lamps and a Buddhist thangka on the wall" fetchpriority="high"></figure>
     <div class="hh-panel">
       <div class="band" aria-hidden="true"></div>
       <p class="eyebrow">Full Lotus Health &middot; Burbank</p>
@@ -608,7 +628,7 @@ def home():
   <div><p class="eyebrow">New: Full Lotus Skin</p><h2 id="sf-h">{e(SERIES)}</h2>
   <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. Book all five and the fifth is free.</p>
   <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="sms:{PHONE_TEL}">Text a question</a></p></div>
-  <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg" alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
+  <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg"{srcset("elements/" + k, "10rem")} alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
 </div></section>
 
 <section class="sand" aria-labelledby="ways-h"><div class="wrap">
@@ -639,8 +659,8 @@ def home():
 
 {cta("Ready to feel like yourself again?", "Book online, or text us a question. New patients, please fill out the intake form before your first visit.", "Book now")}
 """
-    OUT["index.html"] = page("/", "Microneedling & Acupuncture in Burbank | Full Lotus Health",
-        "Acupuncture, Chinese herbal medicine, and cosmetic microneedling in Burbank, CA. Licensed acupuncturist treating body, mind, and skin from the same diagnosis.",
+    OUT["index.html"] = page("/", "Microneedling & Cosmetic Acupuncture in Burbank | Full Lotus Health",
+        "Natural skin treatments in Burbank, CA: microneedling, nanoneedling and cosmetic acupuncture from a licensed acupuncturist, plus Chinese herbal medicine and tea.",
         main, ld=[business_ld()], current="/")
 
 
@@ -1626,12 +1646,12 @@ def landing_pages():
       dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
            title="Microneedling in Burbank, CA from $500 | Full Lotus Health",
            meta="Microneedling in Burbank from a licensed acupuncturist: Chinese medicine for your skin, with Full Lotus Skin serums and red light therapy. 90 minutes, $500.",
-           h1="Microneedling in Burbank, CA", rich=micro_page(where), book="medical-microneedling-session", priced=True,
+           h1="Microneedling in Burbank, CA", rich=lambda: micro_page(where), book="medical-microneedling-session", priced=True,
            more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
            title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
            meta="Nanoneedling facial in Burbank: a gentle, no-downtime surface treatment with herbal serums and red light therapy for glowing, hydrated skin.",
-           h1="Nanoneedling in Burbank, CA", rich=nano_page(where),
+           h1="Nanoneedling in Burbank, CA", rich=lambda: nano_page(where),
            more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/cosmetic-acupuncture-burbank", file="cosmetic-acupuncture-burbank.html", svc=li, tone="n",
            title="Cosmetic Acupuncture Burbank: Facial Lift | Full Lotus Health",
@@ -1653,13 +1673,16 @@ def landing_pages():
 ])}
 """, more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/nanoneedling-burbank", "Nanoneedling in Burbank")]),
     ]
+    global BOOK_HERE
     for pg in pages:
         svc = pg["svc"]
+        BOOK_HERE = svc["slug"]
         if "rich" in pg:
+            rich = pg["rich"]()
             book = pg.get("book")
-            closing = pg["rich"][3] if len(pg["rich"]) > 3 else cta("Ready to book?", "Choose a time that works for you.", "Book a treatment", slug=book)
-            main = pg["rich"][0] + pg["rich"][1] + closing
-            extra_ld = pg["rich"][2] if len(pg["rich"]) > 2 else []
+            closing = rich[3] if len(rich) > 3 else cta("Ready to book?", "Choose a time that works for you.", "Book a treatment", slug=book)
+            main = rich[0] + rich[1] + closing
+            extra_ld = rich[2] if len(rich) > 2 else []
             OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
                 ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=pg.get("priced", False)),
                     breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])] + extra_ld,
@@ -1679,6 +1702,7 @@ def landing_pages():
         OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
             ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
                 breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
+    BOOK_HERE = None
 
 
 def condition_pages():
