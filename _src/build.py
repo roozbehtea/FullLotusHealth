@@ -199,6 +199,7 @@ NAV = [
     ("/five-element-rejuvenation", "Five Elements"),
     ("/acupuncture", "Acupuncture & herbs"),
     ("/tea-ceremonies", "Tea ceremonies"),
+    ("/blog", "Blog"),
     ("/new-patients", "New patients"),
 ]
 
@@ -1067,7 +1068,15 @@ def blog():
 <section><div class="wrap"><ul class="post-list">{''.join(cards)}</ul></div></section>""" + cta("Questions about your own care?", "Choose a time, or text a question first.", "Book online")
     OUT["blog.html"] = page("/blog", "Blog: Acupuncture and Skin Care | Full Lotus Health",
         "Notes on acupuncture, Chinese herbal medicine, skin care, and tea from Roozbeh Ghobadpour, L.Ac., at Full Lotus Health in Burbank, CA.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Blog", "/blog")])])
+        main, ld=[business_ld(), blog_ld(), breadcrumb_ld([("Home", "/"), ("Blog", "/blog")])], current="/blog")
+
+
+def blog_ld():
+    """The blog as a whole, listing its articles, so search engines see one connected blog."""
+    return {"@context": "https://schema.org", "@type": "Blog", "@id": f"{SITE}/blog#blog", "url": f"{SITE}/blog",
+            "name": f"{NAME} blog", "inLanguage": "en-US", "publisher": {"@id": f"{SITE}/#business"},
+            "blogPost": [{"@type": "BlogPosting", "headline": p["title"], "url": f"{SITE}/post/{p['slug']}",
+                          "datePublished": p["date"]} for p in POSTS]}
 
 
 def blog_posts():
@@ -1089,11 +1098,14 @@ def blog_posts():
 </article></div></section>"""
         ld = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"], "description": p["desc"],
               "datePublished": p["date"], "dateModified": p["date"], "mainEntityOfPage": SITE + url,
-              "author": {"@type": "Person", "name": "Roozbeh Ghobadpour", "jobTitle": "Licensed Acupuncturist (L.Ac.)"},
+              "url": SITE + url, "inLanguage": "en-US", "isPartOf": {"@id": f"{SITE}/blog#blog"},
+              "wordCount": len(_re.sub(r"<[^>]+>", " ", p["body"]).split()),
+              "author": {"@type": "Person", "@id": f"{SITE}/#roozbeh", "name": "Roozbeh Ghobadpour",
+                         "jobTitle": "Licensed Acupuncturist (L.Ac.)"},
               "publisher": {"@id": f"{SITE}/#business"}, "image": img_abs or OG_IMAGE}
         OUT[f"post/{p['slug']}.html"] = page(url, p["title"][:60], p["desc"], main,
             ld=[business_ld(), ld, breadcrumb_ld([("Home", "/"), ("Blog", "/blog"), (p["title"], url)])],
-            og_type="article", og_image=img_abs)
+            og_type="article", og_image=img_abs, current="/blog")
 
 
 def feed():
