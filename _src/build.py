@@ -212,14 +212,25 @@ TESTIMONIALS_BEAUTY = [
 
 NAV = [
     ("/", "Home"),
-    ("/treatments", "Natural beauty"),
-    ("/five-element-rejuvenation", "Five Elements"),
+    ("Natural beauty", [
+        ("/treatments", "All beauty treatments"),
+        ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture"),
+        ("/microneedling-burbank", "Microneedling"),
+        ("/nanoneedling-burbank", "Nanoneedling"),
+        ("/five-element-rejuvenation", "Five Element Rejuvenation"),
+        ("/skin-conditions-burbank", "Skin conditions"),
+    ]),
     ("/acupuncture", "Acupuncture & herbs"),
-    ("/tea-ceremonies", "Tea ceremonies"),
+    ("Tea", [
+        ("/tea-ceremonies", "Tea ceremonies"),
+        ("/tea-sits", "Weekly tea sits"),
+    ]),
     ("/blog", "Blog"),
     ("/new-patients", "New patients"),
 ]
-# The desktop header is full, so these show only in the phone/tablet menu (and the footer links them everywhere).
+# Groups (a label plus a list of links) open as an accordion in the phone menu
+# and as a small drop-down panel on desktop. Built on <details>, so they work
+# with a keyboard and screen readers, and without JavaScript.
 NAV_MENU_ONLY = {"/blog"}
 
 
@@ -335,8 +346,17 @@ OG_ALT = "A quiet tea table at Full Lotus Health, an acupuncture and skin clinic
 
 def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None):
     canon = canonical or (SITE + (path if path != "/" else "/"))
+    current = current or path   # pages that don't name a menu item still light up their own link
     nav_items = []
     for href, label in NAV:
+        if isinstance(label, list):   # a group: accordion on phones, drop-down on desktop
+            here = any(current == h for h, _ in label)
+            links = "".join(
+                f'<li><a href="{h}"{" aria-current=\"page\"" if current == h else ""}>{e(t)}</a></li>' for h, t in label)
+            nav_items.append(
+                f'<li class="nav-group"><details name="nav-group"><summary{" class=\"is-current\"" if here else ""}>{e(href)}</summary>'
+                f'<ul>{links}</ul></details></li>')
+            continue
         cur = ' aria-current="page"' if (current == href) else ""
         if href == "/new-patients" and INTAKE:   # first-time patients go straight to the form
             nav_items.append(f'<li><a href="{e(INTAKE)}" rel="noopener">New patient form</a></li>')
@@ -383,6 +403,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
+<script src="/assets/nav.js" defer></script>
 {feed_link}{ld_blocks}</head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -896,7 +917,7 @@ def tea_sits():
 </div></section>""" + cta("Prefer a private ceremony?", "Gong fu and bowl tea ceremonies for you and up to five guests.", "Book a ceremony", tone="g")
     OUT["tea-sits.html"] = page("/tea-sits", "Weekly Tea Sits in Burbank | Full Lotus Health",
         "Weekly tea sits in Burbank: an hour of tea, mostly in silence, in the tradition of Wu De. Six seats per sit. See dates, seats left, and reserve online.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-ceremonies")
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-sits")
 
 
 def book_online():
