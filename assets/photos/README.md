@@ -10,3 +10,4 @@ Each photo is shown at 4:3, so landscape shots work best. Keep files under about
 - nanoneedling  Nanoneedling guide page
 
 Only use photos of clients with their written consent.
+- cosmetic-acupuncture, cosmetic-acupuncture-calm  Cosmetic acupuncture guide page. Stock photos from Pexels (free to use under the Pexels license; photographers Antoni Shkraba and RDNE Stock project). Swap in your own treatment photos any time.
