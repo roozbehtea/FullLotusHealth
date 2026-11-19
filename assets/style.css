@@ -440,19 +440,22 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .paths.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 52rem) { .paths.four { grid-template-columns: 1fr; } }
 
-/* ---- Tibetan cloud band in gold on the black tea sections ----
-   Art: assets/orn-cloud-band-gold.svg, traced from Roozbeh's chosen band. One band, centred, never stretched.
-   .night (Magic of tea) gets it top and mirrored at the bottom; the tea page hero gets it along its bottom edge. */
-.night, .hero-band.clouds { --cloud-w: min(100vw - 2 * var(--gutter), 54rem); --cloud-h: calc(var(--cloud-w) * 307 / 2028); --cloud-gap: clamp(0.75rem, 2vw, 1.4rem); position: relative; }
+/* ---- Layered gold clouds on the black tea sections ----
+   Art: assets/orn-clouds-tea-a.svg and -b.svg, composed by _src/make_cloud_fields.py from Roozbeh's chosen
+   band and single clouds. Colours are baked in for the night background. All clouds stay upright.
+   .night (Magic of tea) gets a field at top and bottom; the tea page hero gets one along its bottom edge. */
+.night, .hero-band.clouds { --cloud-w: min(100vw - 2 * var(--gutter), 66rem); --cloud-h: calc(var(--cloud-w) * 510 / 2400); --cloud-gap: clamp(0.75rem, 2vw, 1.4rem); position: relative; }
 .night { padding-block: calc(var(--section) + var(--cloud-h) + var(--cloud-gap)); }
 .hero-band.clouds .page-hero { padding-bottom: calc(clamp(2.6rem, 6vw, 4.8rem) + var(--cloud-h) + var(--cloud-gap)); }
 .night::before, .night::after, .hero-band.clouds::after {
   content: ""; position: absolute; left: 50%; width: var(--cloud-w); height: var(--cloud-h); pointer-events: none;
-  background: url("orn-cloud-band-gold.svg") no-repeat center / contain; opacity: 0.55; transform: translateX(-50%);
+  background: url("orn-clouds-tea-a.svg") no-repeat center / contain; transform: translateX(-50%);
 }
-.night::before { top: var(--cloud-gap); }
-.night::after { bottom: var(--cloud-gap); transform: translateX(-50%) scaleY(-1); }
+.night::before { top: var(--cloud-gap); background-image: url("orn-clouds-tea-b.svg"); }
+.night::after { bottom: var(--cloud-gap); }
 .hero-band.clouds::after { bottom: var(--cloud-gap); }
+/* On phones the field runs past both edges so the clouds stay a readable size. */
+@media (max-width: 40rem) { .night, .hero-band.clouds { --cloud-w: 150vw; overflow-x: clip; } }
 @media print { .night::before, .night::after, .hero-band.clouds::after { display: none; } }
 
 /* ---- Guide pages: microneedling and nanoneedling ---- */
