@@ -922,7 +922,7 @@ def book_online():
     fallback = ""
     if not BOOK and not BOOKS:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l") + rating_strip() + f"""
+    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l", cta_html=f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>') + rating_strip() + f"""
 <section><div class="wrap">
   {fallback}
   {''.join(blocks)}
