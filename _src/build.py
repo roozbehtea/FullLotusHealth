@@ -24,8 +24,17 @@ PHONE_TEL = "+18182539307"
 EMAIL = "info@fulllotushealth.com"
 ADDR = dict(street="2116 N Glenoaks Blvd, Ste 3", city="Burbank", region="CA", zip="91504")
 ADDR_LINE = "2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504"
-GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:ChIJJVOw4haVwoARK0UW-MPNiMw"   # the clinic's Google listing
-MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504"
+PLACE_ID = "ChIJJVOw4haVwoARK0UW-MPNiMw"
+PARKING = "Street parking on Glenoaks."
+HOURS = "By appointment. Open times show in the booking calendar."
+LATE_FEE = 95
+NOTICE_HOURS = 24
+GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:" + PLACE_ID   # the clinic's Google listing
+MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504" + "&query_place_id=" + PLACE_ID
+# A place_id-only embed URL draws a world map unless you send a Maps API key.
+# The street address geocodes in the keyless embed. The place_id stays on the Google Maps link.
+MAP_EMBED = "https://maps.google.com/maps?q=2116+N+Glenoaks+Blvd+Ste+3,+Burbank,+CA+91504&ll=34.1929,-118.3247&z=16&hl=en&output=embed"
+MAPS_APPLE = "https://maps.apple.com/?ll=34.1929,-118.3247&q=Full%20Lotus%20Health&address=2116%20N%20Glenoaks%20Blvd,%20Ste%203,%20Burbank,%20CA%2091504"
 
 BOOK = CFG.get("booking_url", "").strip()
 BOOKS = {k: v.strip() for k, v in CFG.get("booking_urls", {}).items() if v.strip()}   # per-service Google Calendar booking pages, by service slug
@@ -33,6 +42,7 @@ INTAKE = CFG.get("intake_url", "").strip()
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
 BOOKAPI = (CFG.get("booking_api_url", "") or TEASITS).strip()   # optional: same web app also runs appointment booking (_src/booking); when set, /book/<service> is the on-site scheduler
+CHAT = CFG.get("chat_url", "").strip()   # optional: Apps Script for typed questions the guided chat does not recognize (_src/chat). Empty means guided chat only.
 missing = [k for k, v in (("booking_url or booking_urls", BOOK or BOOKS), ("intake_url", INTAKE)) if not v]
 if missing:
     msg = "Missing in _src/config.json: " + ", ".join(missing)
@@ -182,6 +192,15 @@ if BOOKAPI:
             sys.exit(f"_src/booking/Booking.gs does not match SERVICES for {_slug}: fix the price or minutes in one of them")
 # One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
 CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
+# Visits the chat may deep-link to /book/<slug>. Tea ceremonies are text-only, on purpose.
+BOOK_SLUGS = (
+    "acupuncture-initial-treatment", "acupuncture-repeat-treatment",
+    "medical-microneedling-session", "facial-nano-needling", "full-lotus-lift",
+    "initial-consultation-online", "repeat-consultation-online",
+)
+for _slug in BOOK_SLUGS:
+    if _slug not in BY_SLUG:
+        sys.exit(f"BOOK_SLUGS has {_slug}, which is not in SERVICES")
 
 # ------------------------------------------------------------------ Five Element Rejuvenation series
 # First-pass copy. Roozbeh will rewrite the element text in his own words.
@@ -331,7 +350,80 @@ OG_IMAGE = f"{SITE}/assets/og-share.jpg"
 OG_ALT = "A quiet tea table at Full Lotus Health, an acupuncture and skin clinic in Burbank, CA"
 
 
-def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None):
+def service_book(s):
+    """Where the chat sends someone who is ready to book this service."""
+    if s["group"] == "tea":
+        return f"sms:{PHONE_TEL}", "Text to book"
+    if s["slug"] in BOOK_SLUGS and (s["slug"] in BOOKS or s["slug"] in APPT):
+        return f"/book/{s['slug']}", "Book " + s["name"]
+    return "/book-online", "Book online"
+
+
+def map_embed():
+    return (
+        f'<figure class="visit-map"><iframe title="Map of {e(NAME)}, {e(ADDR_LINE)}" '
+        f'width="400" height="256" loading="lazy" referrerpolicy="no-referrer-when-downgrade" '
+        f'src="{e(MAP_EMBED)}"></iframe></figure>'
+    )
+
+
+def map_links():
+    return (
+        f'<p class="visit-links"><a href="{e(MAPS)}" rel="noopener">Open in Google Maps</a>'
+        f'<a href="{e(MAPS_APPLE)}" rel="noopener">Open in Apple Maps</a></p>'
+    )
+
+
+def visit_section(heading_id="visit-h"):
+    """Address, parking, hours, and the map. Used where the location is the point of the section."""
+    return f"""<section class="visit" aria-labelledby="{heading_id}"><div class="wrap split">
+  <div>
+    <p class="eyebrow">Visit</p>
+    <h2 id="{heading_id}">The clinic</h2>
+    <p>Roozbeh Ghobadpour, L.Ac.<br>{e(ADDR["street"])}<br>{e(ADDR["city"])}, {e(ADDR["region"])} {e(ADDR["zip"])}</p>
+    <p>{e(PARKING)}</p>
+    <p>{e(HOURS)}</p>
+    {contact_block()}
+    {map_links()}
+  </div>
+  <div>{map_embed()}</div>
+</div></section>"""
+
+
+def chat_widget():
+    chips = (
+        ("prices", "Prices"), ("book", "Book"), ("where", "Location"), ("hours", "Hours"),
+        ("cancel", "Cancellation"), ("intake", "New patients"), ("series", "Five Elements"), ("tea", "Tea"),
+    )
+    chip_html = "".join(
+        f'<button type="button" class="flh-chip" data-id="{i}">{e(label)}</button>' for i, label in chips
+    )
+    return f"""<div class="flh-chat" id="flh-chat" data-endpoint="{e(CHAT)}">
+  <button type="button" class="flh-chat-launch" aria-expanded="false" aria-controls="flh-chat-panel" aria-label="Ask the virtual assistant">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.2a1.5 1.5 0 0 1-1.5 1.5H10l-4.2 3.1a.6.6 0 0 1-.9-.5v-2.6H5A1.5 1.5 0 0 1 3.5 15.2V7A1.5 1.5 0 0 1 5 5.5z"/></svg>
+    <span>Ask</span>
+  </button>
+  <div id="flh-chat-panel" class="flh-chat-panel" role="dialog" aria-modal="false" aria-labelledby="flh-chat-title" hidden>
+    <div class="band" aria-hidden="true"></div>
+    <div class="flh-chat-head">
+      <p class="eyebrow" id="flh-chat-title">Virtual assistant</p>
+      <button type="button" class="flh-chat-close">Close</button>
+    </div>
+    <p class="flh-chat-note">Please don't share health details here. This assistant can't give medical advice.</p>
+    <div class="flh-chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+    <div class="flh-chat-chips" role="group" aria-label="Common questions">{chip_html}</div>
+    <form class="flh-chat-form">
+      <label class="sr" for="flh-chat-q">Your question</label>
+      <input id="flh-chat-q" class="flh-chat-input" maxlength="400" autocomplete="off" placeholder="Ask about fees, parking, booking">
+      <button class="btn small" type="submit">Send</button>
+    </form>
+    <p class="flh-chat-fail" hidden>The assistant couldn't load. Text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+  </div>
+</div>
+<script src="/assets/chat.js" defer></script>"""
+
+
+def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True):
     canon = canonical or (SITE + (path if path != "/" else "/"))
     nav_items = []
     for href, label in NAV:
@@ -347,6 +439,8 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     nav_items.append(f'<li>{book_btn("Book", small=True, site_wide=True)}</li>')
     sticky = "" if (focus or path in ("/book-online", "/new-patients") or path.startswith("/book/")) else \
         f'<div class="sticky-cta">{book_btn("Book", small=True, slug=book_slug)}<a class="btn ghost small" href="sms:{PHONE_TEL}">Text us</a></div>'
+    body_cls = ' class="has-sticky"' if sticky else ""
+    loc_extra = f"<p>{e(PARKING)}</p><p>{e(HOURS)}</p>" + (map_embed() if footer_map else "") + map_links()
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
     feed_link = f'<link rel="alternate" type="application/rss+xml" title="{NAME} blog" href="/feed.xml">\n' if POSTS else ""
     robots = ('<meta name="robots" content="noindex, follow">\n' if noindex
@@ -382,7 +476,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
 {feed_link}{ld_blocks}</head>
-<body>
+<body{body_cls}>
 <a class="skip" href="#main">Skip to content</a>
 <div class="band" aria-hidden="true"></div>
 <header class="site-header">
@@ -409,7 +503,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
       <div>
         <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal-168.png" width="84" height="84" alt="" loading="lazy"></a>
         <p>Roozbeh Ghobadpour, L.Ac.<br>{ADDR["street"]}<br>{ADDR["city"]}, {ADDR["region"]} {ADDR["zip"]}</p>
-        <p><a href="{MAPS}" rel="noopener">Get directions</a></p>
+        {loc_extra}
       </div>
       <div>
         <h2>Contact</h2>
@@ -435,6 +529,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     <p class="legal">{NAME}</p>
   </div>
 </footer>
+{chat_widget()}
 {sticky}
 </body>
 </html>
@@ -670,11 +765,13 @@ def home():
 
 {signup_band("home")}
 
+{visit_section()}
+
 {cta("Ready to feel like yourself again?", "Book online, or text us a question. New patients, please fill out the intake form before your first visit.", "Book now")}
 """
     OUT["index.html"] = page("/", "Microneedling & Cosmetic Acupuncture in Burbank | Full Lotus Health",
         "Natural skin treatments in Burbank, CA: microneedling, nanoneedling and cosmetic acupuncture from a licensed acupuncturist, plus Chinese herbal medicine and tea.",
-        main, ld=[business_ld()], current="/")
+        main, ld=[business_ld()], current="/", footer_map=False)
 
 
 def treatments():
@@ -928,9 +1025,9 @@ def book_online():
   {fallback}
   {''.join(blocks)}
   <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
-  <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95.</p>
+  <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}.</p>
   {faq_block([
-    ("Where are visits?", f"In person at {ADDR_LINE}, except the online consultations, which are by video."),
+    ("Where are visits?", f"In person at {ADDR_LINE}. {PARKING} {HOURS} Online consultations are by video."),
     ("Which treatment should I choose?", "Book the one closest to what you need and we will decide together, or text a question. Skin treatments are described on the <a href=\"/treatments\">natural beauty page</a> and acupuncture on the <a href=\"/acupuncture\">acupuncture page</a>."),
     ("How long are visits?", "The length is shown beside each service. Visits are unhurried and often end with tea."),
   ], "Before you book")}
@@ -965,7 +1062,7 @@ def confirm_pages():
   <div class="sch-details"></div>
   <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
 </div>
-<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time. Nothing is booked until payment goes through.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged $95.</li></ul>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time. Nothing is booked until payment goes through.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
 {new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section><script src="/assets/booking.js" defer></script>'''
@@ -980,7 +1077,7 @@ def confirm_pages():
 <h1>{e(s["name"])}</h1>
 <p class="lede">{e(s["tagline"])}</p>
 <div class="cf-opts{" two" if opt2 else ""}">{opt1}{opt2}</div>
-<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged $95.</li></ul>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
 {new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section>'''
@@ -1201,7 +1298,7 @@ def new_patients():
     <ol class="steps">
       <li><h3>Book a time</h3><p>Pick your service and a time on the calendar.</p><p style="margin-top:.8rem">{book_btn("Book")}</p></li>
       <li><h3>Complete the intake form</h3><p>Tell us about your health history and goals. Roozbeh reviews it before you arrive, so your visit can begin with what matters most.</p></li>
-      <li><h3>Arrive a few minutes early</h3><p>We're at {ADDR_LINE}. Visits are unhurried and often end with tea.</p></li>
+      <li><h3>Arrive a few minutes early</h3><p>We're at {ADDR_LINE}. {PARKING} Visits are unhurried and often end with tea.</p></li>
     </ol>
   </div>
   <div>
@@ -1212,15 +1309,17 @@ def new_patients():
     {contact_block()}
   </div>
 </div></section>
+{visit_section("find-h")}
 <section class="sand"><div class="wrap">{faq_block([
     ("Do I need to fill out the form before I come?", "Yes. Complete it before your first visit so your appointment can begin with what matters most."),
-    ("Where do I go for my visit?", f"{ADDR_LINE}. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."),
-    ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95."),
+    ("Where do I go for my visit?", f"{ADDR_LINE}. {PARKING} <a href=\"{MAPS}\" rel=\"noopener\">Open in Google Maps</a> or <a href=\"{MAPS_APPLE}\" rel=\"noopener\">Apple Maps</a>."),
+    ("What are your hours?", HOURS),
+    ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}."),
     ("What treatments can I book?", "Acupuncture, microneedling, nanoneedling, cosmetic acupuncture, online consultations, and tea ceremonies. See <a href=\"/book-online\">all services</a>."),
   ], "New patient questions")}</div></section>"""
     OUT["new-patients.html"] = page("/new-patients", "New Patients | Full Lotus Health, Burbank",
         "New to Full Lotus Health? Book a time, then complete the new patient intake form before your first visit in Burbank, CA.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("New patients", "/new-patients")])], current="/new-patients")
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("New patients", "/new-patients")])], current="/new-patients", footer_map=False)
 
 
 def faq_ld(items):
@@ -1255,13 +1354,13 @@ def service_faq(s):
     loc = ("This visit is online, by video. " if online else f"Full Lotus Health is at {ADDR_LINE}. ")
     items = []
     if not online:
-        items.append(("Where do I go?", f"{e(loc)}Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City. <a href=\"{MAPS}\" rel=\"noopener\">Get directions</a>."))
+        items.append(("Where do I go?", f"{e(loc)}{e(PARKING)} {e(HOURS)} Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City. <a href=\"{MAPS}\" rel=\"noopener\">Open in Google Maps</a> or <a href=\"{MAPS_APPLE}\" rel=\"noopener\">Apple Maps</a>."))
     else:
         items.append(("Where does this visit happen?", "Online, by video. You only need a private spot and a device with a camera."))
     if s["minutes"]:
         items.append((f"How long is a {s['name'].split(':')[-1].strip().lower()} visit?", f"Plan on {s['minutes']} minutes. Visits are unhurried."))
     items.append(("How do I book?", f"Use the Book button on this page to pick a time on the calendar. New patients, please complete the <a href=\"/new-patients\">intake form</a> before your first visit."))
-    items.append(("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged $95."))
+    items.append(("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}."))
     return faq_block(items)
 
 
@@ -1605,7 +1704,7 @@ def micro_page(where):
 <div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${price}</p><p class="cf-sub">90 minutes</p><p>{book_btn("Choose a time", slug=mn)}</p></div>
 <div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">Five sessions, the fifth free (${per} a session). A first single session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">About the series</a></p></div>
 </div>
-<p class="fine">Payment is taken when you book your time. Cancelling is free up to 24 hours ahead; less than 24 hours' notice is charged $95.</p>
+<p class="fine">Payment is taken when you book your time. Cancelling is free up to 24 hours ahead; less than 24 hours' notice is charged ${LATE_FEE}.</p>
 </div></section>"""
     why = g_why("deep-m", [("shield", "A licensed acupuncturist, not a med spa", "California acupuncture license 17220. Roozbeh does every session himself."),
                            ("bottle", "Full Lotus Skin serums", "Our own Five Element serums, chosen for your skin at each session."),
@@ -1816,15 +1915,23 @@ def llms_txt():
             mins = f", {s['minutes']} min" if s.get("minutes") else ""
             out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {s['short']}")
         return "\n".join(out)
+    series_bits = [f"{BY_SLUG[slug]['name']} series of 5: ${p['price']:,}" for slug, p in PACKAGES.items()]
+    intake_link = INTAKE or f"{SITE}/new-patients"
     return f"""# {NAME}
 
 > Acupuncture and Chinese medicine clinic in Burbank, CA, run by one licensed acupuncturist and focused on skin: microneedling, nanoneedling, and cosmetic acupuncture. Practitioner: Roozbeh Ghobadpour, L.Ac. (California acupuncture license #17220, NCCAOM Board-Certified Diplomate), in practice since 2016. "The calmest hour of your week."
 
 ## Quick facts
 - Address: {ADDR_LINE}
+- Parking: {PARKING} (N Glenoaks Blvd.)
+- Hours: {HOURS}
 - Phone or text: {PHONE_DISPLAY} · Email: {EMAIL}
 - Serves Burbank, Glendale, Toluca Lake, North Hollywood, and Studio City
-- Self-pay clinic. Book online: {SITE}/book-online
+- Self-pay clinic. Payment is taken when you book. Nothing is booked until payment goes through. Book online: {SITE}/book-online
+- Cancellation: free up to {NOTICE_HOURS} hours ahead. Less than {NOTICE_HOURS} hours' notice, or a no-show, is charged ${LATE_FEE}. Call or text to cancel.
+- New patients complete the intake form before the first visit: {intake_link}
+- {SERIES}: five sessions through Wood, Fire, Earth, Metal, and Water, with red light therapy included. Book all five and the fifth is free. {". ".join(series_bits)}. {SITE}/five-element-rejuvenation
+- Tea ceremonies are booked by text at {PHONE_DISPLAY}. Weekly tea sits: {SITE}/tea-sits
 - Google reviews: {GOOGLE_REVIEWS}
 - In California, microneedling may be performed by physicians and licensed acupuncturists.
 
@@ -1857,6 +1964,65 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 """
 
 
+def chat_facts():
+    """Facts for the chat bubble. Prices and fees come from SERVICES, PACKAGES, and the constants above."""
+    services = []
+    for s in SERVICES:
+        href, label = service_book(s)
+        services.append({
+            "slug": s["slug"],
+            "name": s["name"],
+            "price": s["price"],
+            "minutes": s["minutes"],
+            "group": s["group"],
+            "short": s["short"],
+            "book": href,
+            "bookLabel": label,
+            "page": CANON_PAGE.get(s["slug"], "/service-page/" + s["slug"]),
+        })
+    return {
+        "clinic": NAME,
+        "practitioner": "Roozbeh Ghobadpour, L.Ac.",
+        "credentials": (
+            "California acupuncture license #17220. NCCAOM Board-Certified Diplomate. "
+            "M.A. in Traditional Chinese Medicine from Yo San University (2015), and a B.A. from UCLA. "
+            "In practice since 2016, and the only practitioner at the clinic. "
+            "Head Chinese Medicine Writer for Global Tea Hut magazine."
+        ),
+        "phone": PHONE_DISPLAY,
+        "phoneTel": PHONE_TEL,
+        "email": EMAIL,
+        "address": ADDR_LINE,
+        "parking": PARKING,
+        "hours": HOURS,
+        "payment": "Payment is taken when you book your time. Nothing is booked until payment goes through.",
+        "lateFee": LATE_FEE,
+        "noticeHours": NOTICE_HOURS,
+        "selfPay": "This is a self-pay clinic.",
+        "also": "Chinese herbal medicine, cupping, moxibustion, and therapeutic massage are also offered. A fee for those is not listed on the site. Text the clinic and ask.",
+        "intakeHref": INTAKE or "/new-patients",
+        "bookOnline": "/book-online",
+        "teaSitsHref": "/tea-sits",
+        "teaSitsBlurb": "Weekly tea sits are an hour of tea, mostly in silence, with six seats. Dates are on the tea sits page.",
+        "mapsGoogle": MAPS,
+        "mapsApple": MAPS_APPLE,
+        "series": {
+            "name": SERIES,
+            "href": "/five-element-rejuvenation",
+            "summary": (
+                f"{SERIES} is a five-session journey through Wood, Fire, Earth, Metal, and Water, "
+                "with red light therapy included. You can take it as cosmetic acupuncture, nanoneedling, or microneedling. "
+                "Book all five and the fifth is free."
+            ),
+            "packages": [
+                {"slug": slug, "name": BY_SLUG[slug]["name"], "price": p["price"], "sessions": 5}
+                for slug, p in PACKAGES.items()
+            ],
+        },
+        "services": services,
+    }
+
+
 def seo_files():
     urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -1868,6 +2034,7 @@ def seo_files():
     OUT["sitemap.xml"] = "\n".join(sm) + "\n"
     OUT["robots.txt"] = f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n"
     OUT["llms.txt"] = llms_txt()
+    OUT["assets/chat-facts.json"] = json.dumps(chat_facts(), ensure_ascii=False, indent=2) + "\n"
     OUT["CNAME"] = "www.fulllotushealth.com\n"
     OUT[".nojekyll"] = ""
 

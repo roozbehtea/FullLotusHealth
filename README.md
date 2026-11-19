@@ -14,5 +14,7 @@ Static HTML/CSS site for https://www.fulllotushealth.com, hosted on GitHub Pages
 4. Commit and push to `main`. GitHub Pages publishes within a minute.
 
 Copy lives in `_src/build.py`; styling in `assets/style.css` (colours, type and spacing follow the Full Lotus Health design system).
+
+A chat bubble on every page answers from the same prices and clinic facts as the build (`assets/chat-facts.json`). It needs no API key. Typed questions it does not recognize can optionally go through `_src/chat` (see that folder's README). The clinic map is on the homepage Visit section, the new-patients page, and the footer of other pages. Parking and hours live next to the address constants at the top of `_src/build.py`.
 Logos in `assets/`: `logo-horizontal.svg` (header), `logo-badge.svg` (home hero), `logo-ring.svg` (spare), `logo-seal.svg` / `logo-seal.png` (footer, social image, structured data), `favicon-64.png`, `apple-touch-icon.png`.
 The SVGs are auto-traced from the design-system files. Have a designer redraw them before any trademark filing.
