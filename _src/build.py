@@ -1038,7 +1038,7 @@ def five_element():
 </ul></div></section>"""
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
         "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element and its own signature serum. Book all five and the fifth is free.",
-        ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"],
+        [],
         "")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
 <ul class="g-cards ty-paths">
@@ -1394,7 +1394,7 @@ def g_hero(tone, eyebrow, h1, lede, chips, art_svg, book_slug=None, book_label="
     return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid{' g-hero-solo' if not art_svg else ''}">
 <div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><p class="eyebrow">{e(eyebrow)}</p><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
 <p class="g-actions">{book_btn(book_label, slug=book_slug)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>{after_actions}
-<ul class="chips">{ch}</ul></div>
+{('<ul class="chips">' + ch + '</ul>') if ch else ''}</div>
 {('<div class="g-hero-art">' + art_svg + '</div>') if art_svg else ''}</div></div>"""
 
 
