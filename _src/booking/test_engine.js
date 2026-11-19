@@ -25,10 +25,14 @@ const Utilities = {
     throw new Error('fmt ' + fmt);
   }
 };
-const ctx = { Utilities, console, TZ, prop_: (k, d) => d, cfg_: () => ({ match: 'tea sit' }), Date, Math, JSON, String, parseInt, parseFloat, isNaN, Array, Object };
+const sheets = {};
+const SpreadsheetApp = { openById(id) { const t = sheets[id]; if (!t) throw new Error('no sheet ' + id); return {
+  getSheets: () => [{ getName: () => 'Form Responses 1', getLastRow: () => t.length, getLastColumn: () => t[0].length,
+    getRange: (r, c, nr, nc) => ({ getValues: () => t.slice(r - 1, r - 1 + nr).map(row => row.slice(c - 1, c - 1 + nc)) }) }] }; } };
+const ctx = { Utilities, SpreadsheetApp, console, TZ, prop_: (k, d) => d, cfg_: () => ({ match: 'tea sit' }), Date, Math, JSON, String, parseInt, parseFloat, isNaN, Array, Object };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname, 'Booking.gs'), 'utf8') + '\nthis.__api={apptDays_,apptCfg_,slotFree_,at_,addDays_,dayKey_,dow_,APPT_SERVICES};', ctx);
-const { apptDays_, apptCfg_, at_, addDays_, dayKey_, dow_, APPT_SERVICES } = ctx.__api;
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'Booking.gs'), 'utf8') + '\nthis.__api={AC,apptFormsNote_,apptFormList_,apptCfg_,apptDays_,apptCfg_,slotFree_,at_,addDays_,dayKey_,dow_,APPT_SERVICES};', ctx);
+const { AC, apptFormsNote_, apptFormList_, apptDays_, apptCfg_, at_, addDays_, dayKey_, dow_, APPT_SERVICES } = ctx.__api;
 
 let n = 0; const ok = (name, fn) => { fn(); n++; console.log('ok  ' + name); };
 const cfg = apptCfg_();
@@ -103,4 +107,45 @@ ok('daylight saving change does not shift clinic times (Nov 1 2026 fall back)', 
   const n2 = Utilities.parseDate('2026-10-28 12:00', TZ, 'yyyy-MM-dd HH:mm').getTime();
   apptDays_([], 60, cfg, n2).forEach(d => d.slots.forEach(s => assert(/:(00|30) /.test(Utilities.formatDate(new Date(s.start), TZ, 'h:mm a')))));
 });
+ok('an all-day event takes the day off the calendar entirely', () => {
+  const key = '2026-11-27', off = { s: at_(key, 0), e: at_(addDays_(key, 1), 0), full: true, dayOff: true };
+  const days = apptDays_([off], 60, cfg, now);
+  assert(!days.some(d => d.date === key), 'Nov 27 should not be listed');
+  assert(days.some(d => d.date === '2026-11-25'), 'other days still listed');
+});
+
+// ---- recognizing returning patients
+{
+  const c = apptCfg_();
+  sheets[c.intakeSheet] = [['Timestamp', 'Email Address', 'Full name', 'Mobile phone', 'Emergency contact phone'],
+    ['t', 'Ana@Example.com ', 'Ana', '(818) 555-0101', '310-555-9999'], ['t', 'bo@example.com', 'Bo', '818.555.0102', '']];
+  sheets[c.skinSheet] = [['Timestamp', 'Email Address', 'Mobile phone'], ['t', 'ana@example.com', '8185550101']];
+  const row = (slug, note) => { const r = []; r[AC.svc - 1] = slug; r[AC.note - 1] = note; return r; };
+  const names = (slug, note) => apptFormList_(APPT_SERVICES[slug], row(slug, note)).map(f => f.name).join(' + ');
+  const note = (slug, email, phone, tick) => apptFormsNote_(slug, APPT_SERVICES[slug], email, phone, !!tick);
+  ok('a new skin patient gets both forms', () => {
+    const n1 = note('facial-nano-needling', 'new@example.com', '8185550000'); assert.strictEqual(n1, '');
+    assert.strictEqual(names('facial-nano-needling', n1), 'New Patient Intake + Skin Treatment Intake & Consent');
+  });
+  ok('a returning skin patient matched by email gets no forms', () => {
+    const n1 = note('full-lotus-lift', 'ana@example.com', ''); assert.strictEqual(names('full-lotus-lift', n1), '', n1);
+  });
+  ok('an acupuncture patient booking a first skin treatment gets only the skin form (matched by phone)', () => {
+    const n1 = note('medical-microneedling-session', 'other@example.com', '+1 818 555 0102');
+    assert.strictEqual(n1, 'Forms on file: New Patient Intake');
+    assert.strictEqual(names('medical-microneedling-session', n1), 'Skin Treatment Intake & Consent');
+  });
+  ok('an emergency contact phone does not count as a match', () => {
+    assert.strictEqual(note('acupuncture-initial-treatment', 'x@example.com', '310-555-9999'), '');
+  });
+  ok('the tick drops every form; repeat visits never get forms', () => {
+    assert.strictEqual(names('facial-nano-needling', note('facial-nano-needling', 'new@example.com', '', true)), '');
+    assert.strictEqual(names('acupuncture-repeat-treatment', note('acupuncture-repeat-treatment', 'new@example.com', '')), '');
+  });
+  ok('an unreadable sheet never blocks a booking, it just sends the forms', () => {
+    delete sheets[c.skinSheet];
+    const n1 = note('facial-nano-needling', 'ana@example.com', '');
+    assert.strictEqual(names('facial-nano-needling', n1), 'Skin Treatment Intake & Consent');
+  });
+}
 console.log(`\n${n} checks passed`);

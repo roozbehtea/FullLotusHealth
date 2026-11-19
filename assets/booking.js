@@ -1,12 +1,13 @@
 /* Online booking: pick a day, pick a time, give your details, pay with Stripe. Nothing is booked until payment succeeds.
    Talks to the Apps Script web app in _src/teasits + _src/booking (URL set as teasits_url in _src/config.json).
-   Collects name, email, phone and an optional short note. No health details. */
+   Collects name, email and phone, plus an "I've already completed the forms" box. The server also recognizes returning patients and leaves out forms they already did. No health details. */
 (function () {
   var root = document.getElementById("sched");
   if (!root) return;
   var API = root.getAttribute("data-endpoint");
   var SLUG = root.getAttribute("data-service");
   var GOOGLE = root.getAttribute("data-fallback") || "";
+  var SKIN = root.getAttribute("data-skin-intake") || "";                 // skin services also need the Skin Treatment Intake & Consent
   var cal = root.querySelector(".sch-cal"), times = root.querySelector(".sch-times"), details = root.querySelector(".sch-details");
   var status = root.querySelector(".sch-status");
   var KEY = "fl-appt-session";
@@ -57,11 +58,17 @@
     if (s) before = getJSON("?action=appt_release&session=" + encodeURIComponent(s)).then(function () { return false; }, function () { return false; });
   }
 
+  function formsLine(r) {                                                // only the forms this patient still needs
+    var skin = r.skin !== undefined ? r.skin : (r.intake && !!SKIN), links = [];
+    if (r.intake) links.push('<a href="' + esc(r.intakeUrl) + '" rel="noopener">new patient form</a>');
+    if (skin && (r.skinUrl || SKIN)) links.push('<a href="' + esc(r.skinUrl || SKIN) + '" rel="noopener">skin treatment form</a>');
+    return links.length ? " Before you come, please fill in the " + links.join(" and the ") + "." : "";
+  }
   function done(r) {
     cal.innerHTML = ""; times.innerHTML = ""; details.innerHTML = "";
     say("<strong>You are booked.</strong> " + esc(r.service) + ", " + esc(r.when) + ". A confirmation is on its way to your email" +
       (r.online ? ", and Roozbeh will send your video link before the visit" : "") + "." +
-      (r.intake ? ' Before you come, please <a href="' + esc(r.intakeUrl) + '" rel="noopener">fill in the new patient form</a>.' : "") +
+      formsLine(r) +
       (r.series ? " If you would like a series of treatments, we will plan the rest together after this first session." : ""));
     root.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -133,7 +140,7 @@
       field("name", "Name", 'autocomplete="name" required maxlength="80"') +
       field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"') +
       field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"') +
-      '<label class="sch-wide"><span>Anything we should know? <span class="fine">(optional, please no health details here)</span></span><textarea name="note" rows="2" maxlength="300"></textarea></label></div>' +
+      (sv.intake ? '<label class="sch-wide sch-check"><input type="checkbox" name="returning" value="yes"> I\'ve already completed the forms</label>' : "") + "</div>" +
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">Continue to payment, ' + money(sv.price) + "</button></p>" +
       '<p class="fine">You will pay securely with Stripe, and your time is held for 30 minutes while you do. Nothing is booked until payment goes through. Cancelling is free up to 24 hours ahead; less than 24 hours\' notice is charged $95.</p>' +
@@ -146,7 +153,7 @@
       if (!form.checkValidity()) { form.reportValidity(); return; }
       btn.disabled = true; msg.className = "gmsg"; msg.textContent = "Holding your time...";
       post({ action: "appt_book", service: SLUG, start: s.start, name: form.elements.name.value, email: form.elements.email.value,
-        phone: form.elements.phone.value, note: form.elements.note.value, website: form.elements.website.value })
+        phone: form.elements.phone.value, returning: !!(form.elements.returning && form.elements.returning.checked), website: form.elements.website.value })
         .then(function (r) {
           if (r.ok && r.url) { store(KEY, r.session); location.href = r.url; return; }
           btn.disabled = false; msg.className = "gmsg err";

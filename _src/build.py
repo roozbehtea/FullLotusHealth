@@ -11,6 +11,7 @@ treatments.html at /treatments, so the old Wix addresses keep working with no re
 import json, sys, html, pathlib, datetime
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import art
+from make_cloud_fields import cloud_field
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "_src" / "config.json").read_text())
@@ -39,6 +40,8 @@ MAPS_APPLE = "https://maps.apple.com/?ll=34.1929,-118.3247&q=Full%20Lotus%20Heal
 BOOK = CFG.get("booking_url", "").strip()
 BOOKS = {k: v.strip() for k, v in CFG.get("booking_urls", {}).items() if v.strip()}   # per-service Google Calendar booking pages, by service slug
 INTAKE = CFG.get("intake_url", "").strip()
+SKIN_INTAKE = CFG.get("skin_intake_url", "").strip()   # Skin Treatment Intake & Consent (Google Form), for the skin services below
+SKIN_SLUGS = {"full-lotus-lift", "medical-microneedling-session", "facial-nano-needling"}
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
 BOOKAPI = (CFG.get("booking_api_url", "") or TEASITS).strip()   # optional: same web app also runs appointment booking (_src/booking); when set, /book/<service> is the on-site scheduler
@@ -229,14 +232,25 @@ TESTIMONIALS_BEAUTY = [
 
 NAV = [
     ("/", "Home"),
-    ("/treatments", "Natural beauty"),
-    ("/five-element-rejuvenation", "Five Elements"),
+    ("Natural beauty", [
+        ("/treatments", "All beauty treatments"),
+        ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture"),
+        ("/microneedling-burbank", "Microneedling"),
+        ("/nanoneedling-burbank", "Nanoneedling"),
+        ("/five-element-rejuvenation", "Five Element Rejuvenation"),
+        ("/skin-conditions-burbank", "Skin conditions"),
+    ]),
     ("/acupuncture", "Acupuncture & herbs"),
-    ("/tea-ceremonies", "Tea ceremonies"),
+    ("Tea", [
+        ("/tea-ceremonies", "Tea ceremonies"),
+        ("/tea-sits", "Weekly tea sits"),
+    ]),
     ("/blog", "Blog"),
     ("/new-patients", "New patients"),
 ]
-# The desktop header is full, so these show only in the phone/tablet menu (and the footer links them everywhere).
+# Groups (a label plus a list of links) open as an accordion in the phone menu
+# and as a small drop-down panel on desktop. Built on <details>, so they work
+# with a keyboard and screen readers, and without JavaScript.
 NAV_MENU_ONLY = {"/blog"}
 
 
@@ -425,8 +439,17 @@ def chat_widget():
 
 def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True):
     canon = canonical or (SITE + (path if path != "/" else "/"))
+    current = current or path   # pages that don't name a menu item still light up their own link
     nav_items = []
     for href, label in NAV:
+        if isinstance(label, list):   # a group: accordion on phones, drop-down on desktop
+            here = any(current == h for h, _ in label)
+            links = "".join(
+                f'<li><a href="{h}"{" aria-current=\"page\"" if current == h else ""}>{e(t)}</a></li>' for h, t in label)
+            nav_items.append(
+                f'<li class="nav-group"><details name="nav-group"><summary{" class=\"is-current\"" if here else ""}>{e(href)}</summary>'
+                f'<ul>{links}</ul></details></li>')
+            continue
         cur = ' aria-current="page"' if (current == href) else ""
         if href == "/new-patients" and INTAKE:   # first-time patients go straight to the form
             nav_items.append(f'<li><a href="{e(INTAKE)}" rel="noopener">New patient form</a></li>')
@@ -475,6 +498,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
+<script src="/assets/nav.js" defer></script>
 {feed_link}{ld_blocks}</head>
 <body{body_cls}>
 <a class="skip" href="#main">Skip to content</a>
@@ -536,11 +560,11 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 """
 
 
-def hero(title, lede, crumbs=None, tone="c", cta_html=""):
+def hero(title, lede, crumbs=None, tone="c", cta_html="", cls="", deco=""):
     cr = ""
     if crumbs:
         cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in crumbs) + "</p>"
-    return f'<div class="hero-band tone-{tone}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div></div>'
+    return f'<div class="hero-band tone-{tone}{(" " + cls) if cls else ""}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div>{deco}</div>'
 
 
 def rating_strip():
@@ -667,6 +691,13 @@ HOME_QUOTES = [
 
 # (heading, hub page, one line, [(link text, href)])
 HOME_WAYS = [
+    ("Acupuncture and Herbal Medicine", "/acupuncture",
+     "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
+     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine")]),
+    ("Tea Ceremony: Medicine for the Mind", "/tea-ceremonies",
+     "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
+     [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
+      ("Private ceremony", "/service-page/private-gong-fu-tea-ceremony")]),
     ("Facial and Hair Rejuvenation", "/treatments",
      "Microneedling, nanoneedling and cosmetic acupuncture, with custom serums and red light therapy. Scalp microneedling for thinning hair.",
      [("Microneedling", "/microneedling-burbank"), ("Nanoneedling", "/nanoneedling-burbank"),
@@ -674,13 +705,6 @@ HOME_WAYS = [
     ("Chinese Medicine Dermatology", "/skin-conditions-burbank",
      "Herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea and other skin conditions, treating the pattern underneath, not just the rash.",
      [("Skin conditions", "/skin-conditions-burbank"), ("Online consultation", "/service-page/initial-consultation-online")]),
-    ("Acupuncture and Herbal Medicine", "/acupuncture",
-     "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
-     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine")]),
-    ("Tea: The Ultimate Chinese Herb", "/tea-ceremonies",
-     "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
-     [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
-      ("Private ceremony", "/service-page/private-gong-fu-tea-ceremony")]),
 ]
 
 
@@ -720,17 +744,22 @@ def home():
     <div class="hh-panel">
       <div class="band" aria-hidden="true"></div>
       <p class="eyebrow">Full Lotus Health &middot; Burbank</p>
-      <h1 id="home-h1">Acupuncture and skin treatments in Burbank.</h1>
-      <p class="lede">The calmest hour of your week: unhurried visits with one licensed acupuncturist, often ending with tea.</p>
+      <h1 id="home-h1">The calmest hour of your week</h1>
+      <p class="lede">Acupuncture and skin treatments in Burbank: unhurried visits with one licensed acupuncturist, often ending with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
-      {('<p class="fine" style="margin-top:1rem"><strong>First visit?</strong> <a href="' + e(INTAKE) + '" rel="noopener">Start with the new patient form</a></p>') if INTAKE else ""}
     </div>
   </div>
 </section>
 
 <section class="proof-bar" aria-label="What patients say about Full Lotus Health"><div class="wrap">
-  <p class="pb-line">Trusted by 300+ patients since 2016</p>
+  <p class="pb-line">Trusted by hundreds of patients since 2016</p>
   <p class="pb-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>
+</div></section>
+
+<section class="sand" aria-labelledby="ways-h"><div class="wrap">
+  <p class="eyebrow">Where to start</p>
+  <h2 id="ways-h">Four ways in</h2>
+  <div class="paths four ways">{"".join(ways)}</div>
 </div></section>
 
 <section class="series-feature" aria-labelledby="sf-h"><div class="wrap sf-grid">
@@ -738,12 +767,6 @@ def home():
   <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. Book all five and the fifth is free.</p>
   <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="sms:{PHONE_TEL}">Text a question</a></p></div>
   <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg"{srcset("elements/" + k, "10rem")} alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
-</div></section>
-
-<section class="sand" aria-labelledby="ways-h"><div class="wrap">
-  <p class="eyebrow">Where to start</p>
-  <h2 id="ways-h">Four ways in</h2>
-  <div class="paths four ways">{"".join(ways)}</div>
 </div></section>
 
 <section class="wash-g" aria-labelledby="reviews-h"><div class="wrap">
@@ -754,7 +777,7 @@ def home():
 </div></section>
 
 <section class="deep-l" aria-labelledby="meet-h"><div class="wrap split">
-  <div>{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
+  <div class="meet-photo">{photo("roozbeh-portrait", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
   <div>
     <p class="eyebrow">Your practitioner</p>
     <h2 id="meet-h">Meet Roozbeh</h2>
@@ -770,7 +793,7 @@ def home():
 
 {cta("Ready to feel like yourself again?", "Book online, or text us a question. New patients, please fill out the intake form before your first visit.", "Book now")}
 """
-    OUT["index.html"] = page("/", "Microneedling & Cosmetic Acupuncture in Burbank | Full Lotus Health",
+    OUT["index.html"] = page("/", "Acupuncture, Microneedling & Tea in Burbank | Full Lotus Health",
         "Natural skin treatments in Burbank, CA: microneedling, nanoneedling and cosmetic acupuncture from a licensed acupuncturist, plus Chinese herbal medicine and tea.",
         main, ld=[business_ld()], current="/", footer_map=False)
 
@@ -938,7 +961,7 @@ def consult():
 
 def tea():
     main = hero("The sacred art of presence.",
-        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat")) + f"""
+        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat"), cls="clouds", deco=cloud_field("a", "bottom")) + f"""
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
@@ -947,13 +970,13 @@ def tea():
     <li><span class="name"><a href="/service-page/private-gong-fu-tea-ceremony">Private Gong Fu ceremony</a></span><p class="desc">A private session for up to five guests.</p></li>
   </ul>
 </div></section>
-<section class="night"><div class="wrap split">
+<section class="night">{cloud_field("b", "top")}<div class="wrap split">
   <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2>{photo("tea-space", "The tea space at Full Lotus Health")}</div>
   <div>
     <p>In Chinese medicine, tea is known as the premier Chinese herb for the mind. In tea ceremony we drink aged, old growth, organic teas, which have a profound ability to calm and energize the mind and allow one to access the heart/mind in meditation.</p>
     <p>We provide tea ceremony in the tradition of Wu De, a foremost expert on tea who has written many books on tea and owns Global Tea Hut. Roozbeh has been studying with Wu De for over fifteen years, and Wu De has served tea at Full Lotus Health.</p>
   </div>
-</div></section>
+</div>{cloud_field("a", "bottom")}</section>
 <section><div class="wrap">
   <h2>Weekly tea sits</h2>
   <p>Once a week we sit together in the tea space and drink tea, mostly in silence. Six seats per sit. <a href="/tea-sits">See dates and seats left</a>.</p>
@@ -993,7 +1016,7 @@ def tea_sits():
 </div></section>""" + cta("Prefer a private ceremony?", "Gong fu and bowl tea ceremonies for you and up to five guests.", "Book a ceremony", tone="g")
     OUT["tea-sits.html"] = page("/tea-sits", "Weekly Tea Sits in Burbank | Full Lotus Health",
         "Weekly tea sits in Burbank: an hour of tea, mostly in silence, in the tradition of Wu De. Six seats per sit. See dates, seats left, and reserve online.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-ceremonies")
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-sits")
 
 
 def book_online():
@@ -1021,7 +1044,7 @@ def book_online():
     fallback = ""
     if not BOOK and not BOOKS:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l") + rating_strip() + f"""
+    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l", cta_html=f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>') + rating_strip() + f"""
 <section><div class="wrap">
   {fallback}
   {''.join(blocks)}
@@ -1050,6 +1073,8 @@ def confirm_pages():
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
             gl = f' data-fallback="{e(BOOKS[s["slug"]])}"' if s["slug"] in BOOKS else ""
+            if SKIN_INTAKE and s["slug"] in SKIN_SLUGS:
+                gl += f' data-skin-intake="{e(SKIN_INTAKE)}"'
             main = f'''<section class="cf"><div class="wrap cf-wrap sch-wrap">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>
@@ -1118,32 +1143,24 @@ def five_element():
         wash = "sand" if i % 2 == 0 else ""
         img = photo(f"elements/{k}", f"Hand-painted {colour.lower()} painting for the {n} element", lazy=(i > 0))
         sections.append(f"""<section id="{k}" class="{wash}"><div class="wrap el-grid{' el-flip' if i % 2 else ''}">
-<div class="el-text"><p class="eyebrow">Session {i + 1} of 5 &middot; {e(colour)}</p>
+<div class="el-text"><p class="eyebrow">Session {i + 1} of 5</p>
 <h2><span class="el-emoji" aria-hidden="true">{em}</span> {e(n)}: {e(job)}</h2>
 <p>{e(desc)}</p>
 <dl class="el-facts">
 <dt>Leads with</dt><dd>{e(leads)}</dd>
 <dt>Signature serum</dt><dd><strong>{e(serum)}</strong>: {e(serum_note)}</dd>
-<dt>Tea pairing</dt><dd>{e(tea)}</dd>
 <dt>What you may notice</dt><dd>{e(feel)}</dd>
 </dl></div>
 {img}</div></section>""")
-    what = f"""<section><div class="wrap">{g_head("What is it?", "A way to choose, and a way to pace", "Chinese medicine describes nature, and the skin, through five elements. Here they give each session a clear purpose.")}
-<ul class="g-cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-<li class="g-card"><h3>A language for skin, not a diagnosis</h3><p>Wood, Fire, Earth, Metal and Water are names for what your skin is doing right now: congested, flushed, tired, tight or thirsty. Your own assessment decides which one leads.</p></li>
-<li class="g-card"><h3>Earth is the center</h3><p>Everyone receives an Earth formula as the base, and one other element is chosen as the modifier. That keeps it simple: two products per session, matched to you.</p></li>
-<li class="g-card"><h3>Five sessions, five focuses</h3><p>The journey walks through all five, one element per session, several weeks apart, so your skin has time to renew in between. Each element has its own colour, its own serum and its own tea.</p></li>
-<li class="g-card"><h3>Two ways to deliver it</h3><p>With microneedling, purified water-soluble boosters go in with the treatment. With nanoneedling, botanical serums work at the surface, with no downtime. Red light therapy is part of both.</p></li>
-</ul></div></section>"""
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
-        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element, each with its own painted colour and its own signature serum. Book all five and the fifth is free.",
-        ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"],
+        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element and its own signature serum. Book all five and the fifth is free.",
+        [],
         "")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
 <ul class="g-cards ty-paths">
-<li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p>{book_btn("Book a session", slug="full-lotus-lift")}</p></li>
-<li class="g-card"><h3>Nanoneedling</h3><p>A gentle glow with no downtime. Five 60-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="facial-nano-needling")} <a href="/nanoneedling-burbank">About nanoneedling</a></p></li>
-<li class="g-card"><h3>Microneedling</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="medical-microneedling-session")} <a href="/microneedling-burbank">About microneedling</a></p></li>
+<li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p class="g-actions ty-acts">{book_btn("Book", slug="full-lotus-lift")}<a class="btn ghost" href="/cosmetic-acupuncture-burbank">About cosmetic acupuncture</a></p></li>
+<li class="g-card"><h3>Nanoneedling</h3><p>A gentle glow with no downtime. Five 60-minute sessions with red light therapy.</p><p class="g-actions ty-acts">{book_btn("Book", slug="facial-nano-needling")}<a class="btn ghost" href="/nanoneedling-burbank">About nanoneedling</a></p></li>
+<li class="g-card"><h3>Microneedling</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions with red light therapy.</p><p class="g-actions ty-acts">{book_btn("Book", slug="medical-microneedling-session")}<a class="btn ghost" href="/microneedling-burbank">About microneedling</a></p></li>
 </ul></div></section>"""
     qa = f"""<section><div class="wrap g-faq">{faq_block([
   ("What does Five Element mean here?", "Chinese medicine describes nature, and the skin, through five elements: Wood, Fire, Earth, Metal and Water. Here they are a simple language for what your skin is doing right now. They are not a diagnosis."),
@@ -1164,7 +1181,7 @@ def five_element():
 <p>Tell us about your skin and we will suggest the right way in. Text or email, whichever is easier.</p>
 <p class="g-actions" style="justify-content:center"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="mailto:{EMAIL}?subject=Five%20Element%20Rejuvenation">Email us</a></p>
 </div></section>"""
-    main = hero_html + what + "".join(sections) + apply_to + qa + ask
+    main = hero_html + "".join(sections) + apply_to + qa + ask
     OUT["five-element-rejuvenation.html"] = page("/five-element-rejuvenation", f"{SERIES} | Full Lotus Health",
         "Five Element Rejuvenation: a five-session journey through Wood, Fire, Earth, Metal and Water, with cosmetic acupuncture, nanoneedling or microneedling in Burbank. The fifth session is free.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (SERIES, "/five-element-rejuvenation")])])
@@ -1495,7 +1512,7 @@ def g_hero(tone, eyebrow, h1, lede, chips, art_svg, book_slug=None, book_label="
     return f"""<div class="hero-band tone-{tone} g-hero"><div class="wrap g-hero-grid{' g-hero-solo' if not art_svg else ''}">
 <div class="g-hero-text">{cr}<div class="band short" aria-hidden="true"></div><p class="eyebrow">{e(eyebrow)}</p><h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>
 <p class="g-actions">{book_btn(book_label, slug=book_slug)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>{after_actions}
-<ul class="chips">{ch}</ul></div>
+{('<ul class="chips">' + ch + '</ul>') if ch else ''}</div>
 {('<div class="g-hero-art">' + art_svg + '</div>') if art_svg else ''}</div></div>"""
 
 
