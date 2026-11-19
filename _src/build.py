@@ -659,7 +659,7 @@ def home():
 </div></section>
 
 <section class="deep-l" aria-labelledby="meet-h"><div class="wrap split">
-  <div>{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
+  <div class="meet-photo">{photo("roozbeh-portrait", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
   <div>
     <p class="eyebrow">Your practitioner</p>
     <h2 id="meet-h">Meet Roozbeh</h2>

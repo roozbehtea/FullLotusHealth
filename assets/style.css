@@ -380,6 +380,8 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 /* ---- Homepage: practitioner credentials ---- */
 .creds { font-size: 0.9375rem; padding-top: 0.9rem; border-top: 1px solid rgba(244, 236, 223, 0.35); }
 .deep-l .photo { margin: 0; }
+.meet-photo .photo { max-width: 26rem; }
+.meet-photo .photo img { aspect-ratio: 2 / 3; }
 
 /* ---- Homepage: email signup ---- */
 .sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
