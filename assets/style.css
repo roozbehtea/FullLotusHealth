@@ -696,6 +696,8 @@ p, li, dd, blockquote { text-wrap: pretty; }
 .ty-offer-t { font-family: var(--display); font-size: 1.6rem; }
 .ty-paths { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 52rem) { .ty-grid, .ty-paths { grid-template-columns: 1fr; } }
+.ty-paths .g-card { display: flex; flex-direction: column; }
+.g-card .ty-acts { margin: auto 0 0; padding-top: 1.4rem; gap: 0.75rem; }
 
 /* confirm step before the calendar */
 .cf-wrap { max-width: 44rem; }

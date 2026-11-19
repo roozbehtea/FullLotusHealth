@@ -1035,9 +1035,9 @@ def five_element():
         "")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
 <ul class="g-cards ty-paths">
-<li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p>{book_btn("Book a session", slug="full-lotus-lift")}</p></li>
-<li class="g-card"><h3>Nanoneedling</h3><p>A gentle glow with no downtime. Five 60-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="facial-nano-needling")} <a href="/nanoneedling-burbank">About nanoneedling</a></p></li>
-<li class="g-card"><h3>Microneedling</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions with red light therapy.</p><p>{book_btn("See fees and book", slug="medical-microneedling-session")} <a href="/microneedling-burbank">About microneedling</a></p></li>
+<li class="g-card"><h3>Cosmetic acupuncture</h3><p>The gentlest way in. Fine needles along the face, with each session shaped by that session's element. No downtime.</p><p class="g-actions ty-acts">{book_btn("Book", slug="full-lotus-lift")}<a class="btn ghost" href="/cosmetic-acupuncture-burbank">About cosmetic acupuncture</a></p></li>
+<li class="g-card"><h3>Nanoneedling</h3><p>A gentle glow with no downtime. Five 60-minute sessions with red light therapy.</p><p class="g-actions ty-acts">{book_btn("Book", slug="facial-nano-needling")}<a class="btn ghost" href="/nanoneedling-burbank">About nanoneedling</a></p></li>
+<li class="g-card"><h3>Microneedling</h3><p>Deeper renewal for lines, scars and texture. Five 90-minute sessions with red light therapy.</p><p class="g-actions ty-acts">{book_btn("Book", slug="medical-microneedling-session")}<a class="btn ghost" href="/microneedling-burbank">About microneedling</a></p></li>
 </ul></div></section>"""
     qa = f"""<section><div class="wrap g-faq">{faq_block([
   ("What does Five Element mean here?", "Chinese medicine describes nature, and the skin, through five elements: Wood, Fire, Earth, Metal and Water. Here they are a simple language for what your skin is doing right now. They are not a diagnosis."),
