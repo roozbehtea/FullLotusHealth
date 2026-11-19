@@ -7,6 +7,7 @@
   var API = root.getAttribute("data-endpoint");
   var SLUG = root.getAttribute("data-service");
   var GOOGLE = root.getAttribute("data-fallback") || "";
+  var SKIN = root.getAttribute("data-skin-intake") || "";                 // skin services also need the Skin Treatment Intake & Consent
   var cal = root.querySelector(".sch-cal"), times = root.querySelector(".sch-times"), details = root.querySelector(".sch-details");
   var status = root.querySelector(".sch-status");
   var KEY = "fl-appt-session";
@@ -61,7 +62,8 @@
     cal.innerHTML = ""; times.innerHTML = ""; details.innerHTML = "";
     say("<strong>You are booked.</strong> " + esc(r.service) + ", " + esc(r.when) + ". A confirmation is on its way to your email" +
       (r.online ? ", and Roozbeh will send your video link before the visit" : "") + "." +
-      (r.intake ? ' Before you come, please <a href="' + esc(r.intakeUrl) + '" rel="noopener">fill in the new patient form</a>.' : "") +
+      (r.intake ? ' Before you come, please fill in the <a href="' + esc(r.intakeUrl) + '" rel="noopener">new patient form</a>' +
+        (SKIN ? ' and the <a href="' + esc(SKIN) + '" rel="noopener">skin treatment form</a>' : "") + "." : "") +
       (r.series ? " If you would like a series of treatments, we will plan the rest together after this first session." : ""));
     root.scrollIntoView({ behavior: "smooth", block: "start" });
   }

@@ -30,6 +30,8 @@ MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blv
 BOOK = CFG.get("booking_url", "").strip()
 BOOKS = {k: v.strip() for k, v in CFG.get("booking_urls", {}).items() if v.strip()}   # per-service Google Calendar booking pages, by service slug
 INTAKE = CFG.get("intake_url", "").strip()
+SKIN_INTAKE = CFG.get("skin_intake_url", "").strip()   # Skin Treatment Intake & Consent (Google Form), for the skin services below
+SKIN_SLUGS = {"full-lotus-lift", "medical-microneedling-session", "facial-nano-needling"}
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
 BOOKAPI = (CFG.get("booking_api_url", "") or TEASITS).strip()   # optional: same web app also runs appointment booking (_src/booking); when set, /book/<service> is the on-site scheduler
@@ -951,6 +953,8 @@ def confirm_pages():
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
             gl = f' data-fallback="{e(BOOKS[s["slug"]])}"' if s["slug"] in BOOKS else ""
+            if SKIN_INTAKE and s["slug"] in SKIN_SLUGS:
+                gl += f' data-skin-intake="{e(SKIN_INTAKE)}"'
             main = f'''<section class="cf"><div class="wrap cf-wrap sch-wrap">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>

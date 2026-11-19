@@ -1,6 +1,7 @@
 {
   "booking_url": "",
   "intake_url": "https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform",
+  "skin_intake_url": "https://docs.google.com/forms/d/e/1FAIpQLSdNzCi2CoU4WeAVBHHNp1IrKtoAUavYBMhe7aeQzBGxJSuMiw/viewform",
   "signup_url": "",
   "teasits_url": "https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec",
   "booking_urls": {

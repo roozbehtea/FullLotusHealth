@@ -22,6 +22,7 @@
  *   APPT_ROTATE=true            vary which free windows are shown from day to day
  *   APPT_NOTICE_HOURS=24  APPT_WINDOW_DAYS=21  APPT_CAPACITY=2 (treatment rooms)
  *   INTAKE_URL                  new patient form link
+ *   SKIN_INTAKE_URL             Skin Treatment Intake & Consent link (skin services, in addition to the new patient form)
  */
 
 // Keep this block in step with SERVICES in _src/build.py (build.py checks it and warns when they differ).
@@ -57,9 +58,13 @@ function apptCfg_() {
     noticeMs: parseFloat(prop_('APPT_NOTICE_HOURS', '24')) * 3600000,
     windowDays: parseInt(prop_('APPT_WINDOW_DAYS', '21'), 10),
     capacity: parseInt(prop_('APPT_CAPACITY', '2'), 10),
-    intake: prop_('INTAKE_URL', 'https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform')
+    intake: prop_('INTAKE_URL', 'https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform'),
+    skinIntake: prop_('SKIN_INTAKE_URL', 'https://docs.google.com/forms/d/e/1FAIpQLSdNzCi2CoU4WeAVBHHNp1IrKtoAUavYBMhe7aeQzBGxJSuMiw/viewform')
   };
 }
+
+// Skin services also need the Skin Treatment Intake & Consent form, on top of the new patient form.
+var APPT_SKIN = { 'full-lotus-lift': true, 'medical-microneedling-session': true, 'facial-nano-needling': true };
 
 // ------------------------------------------------------------------ entry points (called from Code.gs)
 function apptGet_(p) {
@@ -361,7 +366,8 @@ function apptFinish_(session) {
   var svc = APPT_SERVICES[r[AC.svc - 1]] || { name: r[AC.svcName - 1] };
   if (!r[AC.eventId - 1]) {
     var cal = CalendarApp.getCalendarById(c.calendarId) || CalendarApp.getDefaultCalendar();
-    var intake = svc.intake ? '\n\nBefore your visit, please complete the New Patient Intake form: ' + apptCfg_().intake : '';
+    var intake = svc.intake ? '\n\nBefore your visit, please complete the New Patient Intake form: ' + apptCfg_().intake +
+      (APPT_SKIN[r[AC.svc - 1]] ? '\nand the Skin Treatment Intake & Consent form: ' + apptCfg_().skinIntake : '') : '';
     var ev = cal.createEvent(r[AC.svcName - 1] + ' (' + r[AC.name - 1] + ')', new Date(r[AC.start - 1]), new Date(r[AC.end - 1]), {
       description: 'Booked online\n' + r[AC.name - 1] + '\n' + r[AC.email - 1] + '\n' + r[AC.phone - 1] +
         (r[AC.note - 1] ? '\nNote: ' + r[AC.note - 1] : '') +
@@ -380,7 +386,8 @@ function apptFinish_(session) {
 function apptEmails_(r, svc) {
   var c = cfg_(), name = r[AC.name - 1], email = r[AC.email - 1], when = r[AC.when - 1];
   var where = svc.online ? 'Online, by video. Roozbeh will email you the video link before your visit.' : 'Full Lotus Health, ' + c.address;
-  var intake = svc.intake ? '\nPlease fill in the New Patient Intake form before you come: ' + apptCfg_().intake + '\n' : '';
+  var intake = svc.intake ? '\nPlease fill in the New Patient Intake form before you come: ' + apptCfg_().intake + '\n' +
+    (APPT_SKIN[r[AC.svc - 1]] ? 'And the Skin Treatment Intake & Consent form: ' + apptCfg_().skinIntake + '\n' : '') : '';
   var series = svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '';
   MailApp.sendEmail({
     to: email, replyTo: c.notify, name: 'Full Lotus Health',
