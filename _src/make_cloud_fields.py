@@ -28,25 +28,37 @@ def mix(a):
 
 TONE = {"back": mix(0.26), "mid": mix(0.40), "front": mix(0.60)}
 
-# A field is W x H units; the page sizes it with --cloud-w / --cloud-h (same 2400:510 ratio).
-W, H = 2400, 510
+# A field is W x H units; the page sizes it with --cloud-w / --cloud-h (same W:H ratio, see style.css).
+W, H = 2400, 420
 # (cloud, x, y, width, layer); drawn in list order, back to front. x/y = top-left in the field.
 FIELDS = {
     "a": [
-        ("curls", 120, 70, 330, "back"),
-        ("band", 520, 100, 1150, "back"),
-        ("bold", 1820, 60, 360, "back"),
-        ("tail", -40, 200, 470, "mid"),
-        ("curls", 1880, 190, 470, "mid"),
-        ("band", 300, 230, 1800, "front"),
+        ("curls", 40, 30, 250, "back"),
+        ("band", 330, 60, 760, "back"),
+        ("bold", 1090, 20, 270, "back"),
+        ("band", 1380, 55, 720, "back"),
+        ("tail", 2120, 35, 260, "back"),
+        ("tail", -30, 140, 330, "mid"),
+        ("curls", 700, 120, 290, "mid"),
+        ("bold", 1260, 130, 300, "mid"),
+        ("curls", 2050, 140, 330, "mid"),
+        ("band", 230, 225, 1150, "front"),
+        ("tail", 1330, 215, 360, "front"),
+        ("band", 1600, 250, 820, "front"),
     ],
     "b": [
-        ("bold", 200, 60, 340, "back"),
-        ("band", 760, 95, 1120, "back"),
-        ("tail", 1900, 80, 380, "back"),
-        ("bold", 1860, 200, 520, "mid"),
-        ("tail", 30, 190, 490, "mid"),
-        ("band", 340, 230, 1800, "front"),
+        ("bold", 60, 25, 260, "back"),
+        ("band", 360, 55, 740, "back"),
+        ("tail", 1120, 30, 260, "back"),
+        ("band", 1420, 60, 700, "back"),
+        ("curls", 2140, 30, 240, "back"),
+        ("curls", -20, 135, 320, "mid"),
+        ("tail", 760, 125, 300, "mid"),
+        ("curls", 1300, 135, 290, "mid"),
+        ("bold", 2040, 135, 340, "mid"),
+        ("band", 10, 245, 820, "front"),
+        ("bold", 780, 215, 360, "front"),
+        ("band", 1100, 225, 1150, "front"),
     ],
 }
 
