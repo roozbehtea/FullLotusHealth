@@ -149,5 +149,63 @@
       "bookLabel": "Text to book",
       "page": "/service-page/bowl-tea-ceremony"
     }
+  ],
+  "posts": [
+    {
+      "title": "What to expect from nanoneedling in Burbank",
+      "href": "/post/nanoneedling-burbank-what-to-expect",
+      "summary": "A gentle skin renewal session with custom serums and red light therapy, and no downtime. Here is what nanoneedling at Full Lotus Health is like.",
+      "keywords": [
+        "expect",
+        "nanoneedling",
+        "expect nanoneedling"
+      ]
+    },
+    {
+      "title": "Ten years of Full Lotus Health in Burbank",
+      "href": "/post/ten-years-full-lotus-health-burbank",
+      "summary": "Full Lotus Health opened on Glenoaks Blvd in October 2016. Ten years on, a thank-you to Burbank and a look at how the practice has grown.",
+      "keywords": [
+        "ten",
+        "years",
+        "ten years"
+      ]
+    },
+    {
+      "title": "Cosmetic acupuncture in Burbank: what it is and how it works",
+      "href": "/post/cosmetic-acupuncture-burbank-what-to-know",
+      "summary": "Cosmetic acupuncture uses points on the face and body to ease tension and bring out your natural glow. Here is what a visit involves.",
+      "keywords": [
+        "cosmetic",
+        "acupuncture",
+        "works",
+        "cosmetic acupuncture",
+        "acupuncture works"
+      ]
+    },
+    {
+      "title": "Microneedling vs nanoneedling: which is right for you?",
+      "href": "/post/microneedling-vs-nanoneedling-burbank",
+      "summary": "Microneedling works deeper for scars and lines. Nanoneedling is a gentle glow treatment with no downtime.",
+      "keywords": [
+        "microneedling",
+        "nanoneedling",
+        "microneedling nanoneedling"
+      ]
+    },
+    {
+      "title": "What to expect at your first acupuncture visit in Burbank",
+      "href": "/post/first-acupuncture-visit-burbank",
+      "summary": "A plain walkthrough of a first acupuncture visit at Full Lotus Health: the intake, how the needles feel, the rest, and tea afterward.",
+      "keywords": [
+        "expect",
+        "first",
+        "acupuncture",
+        "visit",
+        "expect first",
+        "first acupuncture",
+        "acupuncture visit"
+      ]
+    }
   ]
 }

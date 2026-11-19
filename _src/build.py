@@ -638,8 +638,9 @@ def load_posts():
         body_md = m.group(2).strip()
         body = _md.markdown(body_md, extensions=["extra", "smarty"])
         words = len(_re.sub(r"<[^>]+>", " ", body).split())
+        tags = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
         posts.append(dict(slug=slug, title=meta["title"], desc=meta["description"], date=meta["date"],
-                          image=meta.get("image", ""), alt=meta.get("image_alt", ""), body=body,
+                          tags=tags, image=meta.get("image", ""), alt=meta.get("image_alt", ""), body=body,
                           minutes=max(1, round(words / 220))))
     posts.sort(key=lambda p: p["date"], reverse=True)
     return posts
@@ -1961,6 +1962,9 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 - [Tea ceremonies]({SITE}/tea-ceremonies)
 - [New patients]({SITE}/new-patients)
 - [Book online]({SITE}/book-online)
+
+## Blog
+{chr(10).join(f"- [{p['title']}]({SITE}/post/{p['slug']}): {p['desc']}" for p in POSTS)}
 """
 
 
@@ -2020,6 +2024,44 @@ def chat_facts():
             ],
         },
         "services": services,
+        "posts": [chat_post(p) for p in POSTS],
+    }
+
+
+# Words that show up in almost every title, so they would not tell one post from another.
+_CHAT_STOP = {
+    "a", "an", "the", "and", "or", "of", "to", "in", "on", "at", "for", "from", "your", "you",
+    "it", "is", "how", "what", "which", "vs", "with", "by", "be", "are", "this", "that", "its",
+    "as", "into", "about", "right", "burbank", "full", "lotus", "health",
+}
+
+
+def chat_post_keywords(title, tags):
+    """Keywords the chat uses to notice a post. Built from the title and any tags, so a new post needs no hand list."""
+    tokens = _re.findall(r"[a-z0-9]+", (title or "").lower())
+    content = [t for t in tokens if t not in _CHAT_STOP and len(t) >= 3]
+    keys = []
+    for t in content:
+        if t not in keys:
+            keys.append(t)
+    for a, b in zip(content, content[1:]):
+        phrase = f"{a} {b}"
+        if phrase not in keys:
+            keys.append(phrase)
+    for tag in tags or []:
+        t = tag.strip().lower()
+        if t and t not in keys:
+            keys.append(t)
+    return keys
+
+
+def chat_post(p):
+    sentences = _re.split(r"(?<=[.!?])\s+", (p["desc"] or "").strip())
+    return {
+        "title": p["title"],
+        "href": f"/post/{p['slug']}",
+        "summary": " ".join(s for s in sentences[:2] if s),
+        "keywords": chat_post_keywords(p["title"], p.get("tags")),
     }
 
 

@@ -308,14 +308,58 @@
     return fn ? fn(facts) : null;
   }
 
+  function hasKeyword(text, keyword) {
+    var esc = String(keyword).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("\\b" + esc + "\\b").test(text);
+  }
+  function bestPost(facts, text) {
+    var posts = facts.posts || [];
+    var best = null;
+    var bestScore = 1;
+    posts.forEach(function (p) {
+      var score = 0;
+      (p.keywords || []).forEach(function (k) {
+        if (!hasKeyword(text, k)) return;
+        score += k.indexOf(" ") >= 0 ? 3 : (k.length >= 8 ? 2 : 1);
+      });
+      if (score > bestScore) { best = p; bestScore = score; }
+    });
+    return best;
+  }
+  function readMore(post) {
+    return { href: post.href, label: "Read more: " + post.title };
+  }
+  function withPost(ans, post) {
+    if (!ans || !post) return ans;
+    var links = ans.links || [];
+    for (var i = 0; i < links.length; i++) if (links[i].href === post.href) return ans;
+    ans.links = links.concat([readMore(post)]);
+    return ans;
+  }
+  function postAnswer(facts, post) {
+    return {
+      id: "post",
+      text: post.summary,
+      links: [readMore(post), { href: facts.bookOnline, label: "Book a visit", primary: true }]
+    };
+  }
+
   function reply(facts, raw) {
     var text = normalize(raw);
     if (!text || /^(hi|hello|hey|hiya|help|good morning|good afternoon|good evening)$/.test(text)) return hello();
     var askingMoney = /\b(price|prices|cost|costs|fee|fees|how much|charge|book|booking)\b/.test(text);
-    if (MEDICAL.test(text) || (CONDITION.test(text) && !askingMoney)) return medical(facts);
+    var post = bestPost(facts, text);
+    if (MEDICAL.test(text) || (CONDITION.test(text) && !askingMoney)) return withPost(medical(facts), post);
     var services = matchServices(facts, text);
     var topics = topicsIn(text);
     if (topics.offer && !topics.series) return offer(facts);
+    var reading = /\b(expect|what happens|how does|how do|what is|what's|tell me about|blog|article|difference|versus|vs|which is|compare|comparison|how it works)\b/.test(text);
+    var practical = askingMoney || topics.where || topics.hours || topics.cancel || topics.pay || topics.intake || topics.contact || topics.book || topics.insurance || topics.who;
+    if (post && reading && !practical) {
+      var readingAnswer = postAnswer(facts, post);
+      if (services.length === 1) readingAnswer.links.push(bookLink(services[0], false));
+      return readingAnswer;
+    }
     if (/\bacupuncture\b/.test(text) && !services.length) {
       services = facts.services.filter(function (s) { return s.group === "acu"; });
     }
@@ -323,14 +367,15 @@
       services = services.concat(facts.services.filter(function (s) { return s.group === "consult"; }));
     }
     var cautious = CONDITION.test(text);
-    if (services.length === 1) return serviceAnswer(facts, services[0], cautious);
+    if (services.length === 1) return withPost(serviceAnswer(facts, services[0], cautious), post);
     if (services.length > 1 && (askingMoney || topics.book || topics.price || (!topics.where && !topics.hours && !topics.cancel))) {
       var lines = services.map(function (s) { return s.name + ": " + money(s.price) + minutes(s) + "."; });
       if (cautious) lines.push("I can't say whether a visit is right for you. Roozbeh can discuss that with you.");
-      return { id: "service", text: lines.join("\n"), links: services.map(function (s, i) { return bookLink(s, i === 0); }) };
+      return withPost({ id: "service", text: lines.join("\n"), links: services.map(function (s, i) { return bookLink(s, i === 0); }) }, post);
     }
     var order = ["series", "where", "cancel", "pay", "intake", "hours", "tea", "contact", "who", "also", "insurance", "scope", "offer", "book", "price", "services"];
-    for (var i = 0; i < order.length; i++) if (topics[order[i]]) return BY_ID[order[i]](facts);
+    for (var i = 0; i < order.length; i++) if (topics[order[i]]) return withPost(BY_ID[order[i]](facts), topics.offer ? null : post);
+    if (post) return postAnswer(facts, post);
     return null;
   }
 

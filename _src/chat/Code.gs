@@ -96,6 +96,7 @@ function ask_(key, facts, q) {
     'Answer in two or three short sentences, plain prose, no markdown, no bullet list.',
     'Use ONLY the facts below. If they do not contain the answer, say you do not know and give the phone number from the facts.',
     'Never give medical advice, diagnose, or say a treatment will help a condition. For a health question, say Roozbeh can discuss it at a visit.',
+    'The facts include blog posts, with a title and a short summary each. They are general reading. You may name a relevant post. Do not use a post to diagnose or to say a treatment will help.',
     'Do not invent offers, discounts, free consultations, guarantees, or testimonials.',
     'Do not ask the person to share health details.',
     'Tea ceremonies are booked by texting the clinic. Weekly tea sits are on the tea sits page. Other visits are booked at https://www.fulllotushealth.com/book-online',

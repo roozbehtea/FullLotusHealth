@@ -92,6 +92,30 @@ assert(chat.reply(facts, "do you have wifi in the tea room?") === null, "unknown
 var hi = chat.reply(facts, "hello");
 assert(hi.id === "hello" && hi.text.length > 20, "greeting");
 
+function postHit(q, href) {
+  var r = chat.reply(facts, q);
+  assert(r && has(r, href), q + " links " + href);
+  assert(/Read more: /.test(blob(r)), "read more label for " + q);
+  assert(r.id === "post" && r.text && r.text.length < 400, "short post summary for " + q);
+  assert(!/free consult|20% off your first/i.test(r.text), "post answer invents no offer");
+  var file = href.replace(/^\//, "") + ".html";
+  assert(fs.existsSync(path.join(root, file)), "post page exists " + href);
+}
+postHit("what to expect at a first acupuncture visit", "/post/first-acupuncture-visit-burbank");
+postHit("how does cosmetic acupuncture work?", "/post/cosmetic-acupuncture-burbank-what-to-know");
+postHit("what is the difference between microneedling and nanoneedling?", "/post/microneedling-vs-nanoneedling-burbank");
+postHit("what to expect from nanoneedling", "/post/nanoneedling-burbank-what-to-expect");
+postHit("tell me about ten years of full lotus", "/post/ten-years-full-lotus-health-burbank");
+
+var healthPost = chat.reply(facts, "will microneedling help my acne scars?");
+assert(healthPost.id === "medical", "health question stays a visit reply");
+assert(has(healthPost, "/book/acupuncture-initial-treatment"), "health still books");
+assert(has(healthPost, "/post/microneedling-vs-nanoneedling-burbank"), "health can link a post as reading");
+assert(!/\b(it will help|this will help)\b/i.test(healthPost.text), "health post link is not a promise");
+
+var stillPrice = chat.reply(facts, "how much is nanoneedling?");
+assert(has(stillPrice, "$350") && stillPrice.id !== "post", "a price question stays a price");
+
 ["prices", "book", "where", "hours", "cancel", "intake", "series", "tea"].forEach(function (id) {
   var r = chat.replyById(facts, id);
   assert(r && r.text && r.id === id, "chip " + id);
