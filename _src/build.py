@@ -1019,13 +1019,12 @@ def five_element():
         wash = "sand" if i % 2 == 0 else ""
         img = photo(f"elements/{k}", f"Hand-painted {colour.lower()} painting for the {n} element", lazy=(i > 0))
         sections.append(f"""<section id="{k}" class="{wash}"><div class="wrap el-grid{' el-flip' if i % 2 else ''}">
-<div class="el-text"><p class="eyebrow">Session {i + 1} of 5 &middot; {e(colour)}</p>
+<div class="el-text"><p class="eyebrow">Session {i + 1} of 5</p>
 <h2><span class="el-emoji" aria-hidden="true">{em}</span> {e(n)}: {e(job)}</h2>
 <p>{e(desc)}</p>
 <dl class="el-facts">
 <dt>Leads with</dt><dd>{e(leads)}</dd>
 <dt>Signature serum</dt><dd><strong>{e(serum)}</strong>: {e(serum_note)}</dd>
-<dt>Tea pairing</dt><dd>{e(tea)}</dd>
 <dt>What you may notice</dt><dd>{e(feel)}</dd>
 </dl></div>
 {img}</div></section>""")
