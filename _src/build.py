@@ -571,6 +571,13 @@ HOME_QUOTES = [
 
 # (heading, hub page, one line, [(link text, href)])
 HOME_WAYS = [
+    ("Acupuncture and Herbal Medicine", "/acupuncture",
+     "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
+     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine")]),
+    ("Tea Ceremony: Medicine for the Mind", "/tea-ceremonies",
+     "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
+     [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
+      ("Private ceremony", "/service-page/private-gong-fu-tea-ceremony")]),
     ("Facial and Hair Rejuvenation", "/treatments",
      "Microneedling, nanoneedling and cosmetic acupuncture, with custom serums and red light therapy. Scalp microneedling for thinning hair.",
      [("Microneedling", "/microneedling-burbank"), ("Nanoneedling", "/nanoneedling-burbank"),
@@ -578,13 +585,6 @@ HOME_WAYS = [
     ("Chinese Medicine Dermatology", "/skin-conditions-burbank",
      "Herbal medicine and acupuncture for acne, eczema, psoriasis, rosacea and other skin conditions, treating the pattern underneath, not just the rash.",
      [("Skin conditions", "/skin-conditions-burbank"), ("Online consultation", "/service-page/initial-consultation-online")]),
-    ("Acupuncture and Herbal Medicine", "/acupuncture",
-     "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
-     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine")]),
-    ("Tea: The Ultimate Chinese Herb", "/tea-ceremonies",
-     "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
-     [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
-      ("Private ceremony", "/service-page/private-gong-fu-tea-ceremony")]),
 ]
 
 
@@ -636,17 +636,17 @@ def home():
   <p class="pb-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span><a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 40+ reviews</a></p>
 </div></section>
 
+<section class="sand" aria-labelledby="ways-h"><div class="wrap">
+  <p class="eyebrow">Where to start</p>
+  <h2 id="ways-h">Four ways in</h2>
+  <div class="paths four ways">{"".join(ways)}</div>
+</div></section>
+
 <section class="series-feature" aria-labelledby="sf-h"><div class="wrap sf-grid">
   <div><p class="eyebrow">New: Full Lotus Skin</p><h2 id="sf-h">{e(SERIES)}</h2>
   <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. Book all five and the fifth is free.</p>
   <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="sms:{PHONE_TEL}">Text a question</a></p></div>
   <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg"{srcset("elements/" + k, "10rem")} alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
-</div></section>
-
-<section class="sand" aria-labelledby="ways-h"><div class="wrap">
-  <p class="eyebrow">Where to start</p>
-  <h2 id="ways-h">Four ways in</h2>
-  <div class="paths four ways">{"".join(ways)}</div>
 </div></section>
 
 <section class="wash-g" aria-labelledby="reviews-h"><div class="wrap">
