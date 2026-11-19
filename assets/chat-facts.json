@@ -1,0 +1,211 @@
+{
+  "clinic": "Full Lotus Health",
+  "practitioner": "Roozbeh Ghobadpour, L.Ac.",
+  "credentials": "California acupuncture license #17220. NCCAOM Board-Certified Diplomate. M.A. in Traditional Chinese Medicine from Yo San University (2015), and a B.A. from UCLA. In practice since 2016, and the only practitioner at the clinic. Head Chinese Medicine Writer for Global Tea Hut magazine.",
+  "phone": "(818) 253-9307",
+  "phoneTel": "+18182539307",
+  "email": "info@fulllotushealth.com",
+  "address": "2116 N Glenoaks Blvd, Ste 3, Burbank, CA 91504",
+  "parking": "Street parking on Glenoaks.",
+  "hours": "By appointment. Open times show in the booking calendar.",
+  "payment": "Payment is taken when you book your time. Nothing is booked until payment goes through.",
+  "lateFee": 95,
+  "noticeHours": 24,
+  "selfPay": "This is a self-pay clinic.",
+  "also": "Chinese herbal medicine, cupping, moxibustion, and therapeutic massage are also offered. A fee for those is not listed on the site. Text the clinic and ask.",
+  "intakeHref": "https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform",
+  "bookOnline": "/book-online",
+  "teaSitsHref": "/tea-sits",
+  "teaSitsBlurb": "Weekly tea sits are an hour of tea, mostly in silence, with six seats. Dates are on the tea sits page.",
+  "mapsGoogle": "https://www.google.com/maps/search/?api=1&query=2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504&query_place_id=ChIJJVOw4haVwoARK0UW-MPNiMw",
+  "mapsApple": "https://maps.apple.com/?ll=34.1929,-118.3247&q=Full%20Lotus%20Health&address=2116%20N%20Glenoaks%20Blvd,%20Ste%203,%20Burbank,%20CA%2091504",
+  "series": {
+    "name": "Five Element Rejuvenation™",
+    "href": "/five-element-rejuvenation",
+    "summary": "Five Element Rejuvenation™ is a five-session journey through Wood, Fire, Earth, Metal, and Water, with red light therapy included. You can take it as cosmetic acupuncture, nanoneedling, or microneedling. Book all five and the fifth is free.",
+    "packages": [
+      {
+        "slug": "medical-microneedling-session",
+        "name": "Microneedling",
+        "price": 2000,
+        "sessions": 5
+      },
+      {
+        "slug": "facial-nano-needling",
+        "name": "Nanoneedling",
+        "price": 1400,
+        "sessions": 5
+      }
+    ]
+  },
+  "services": [
+    {
+      "slug": "medical-microneedling-session",
+      "name": "Microneedling",
+      "price": 500,
+      "minutes": 90,
+      "group": "beauty",
+      "short": "Collagen induction therapy with custom serums and red light therapy. For fine lines, acne scars, uneven texture, and thinning hair.",
+      "book": "/book/medical-microneedling-session",
+      "bookLabel": "Book Microneedling",
+      "page": "/microneedling-burbank"
+    },
+    {
+      "slug": "facial-nano-needling",
+      "name": "Nanoneedling",
+      "price": 350,
+      "minutes": 60,
+      "group": "beauty",
+      "short": "A gentle surface treatment with custom serums and red light therapy. No downtime. For glow, hydration, and sensitive skin.",
+      "book": "/book/facial-nano-needling",
+      "bookLabel": "Book Nanoneedling",
+      "page": "/service-page/facial-nano-needling"
+    },
+    {
+      "slug": "full-lotus-lift",
+      "name": "Cosmetic Acupuncture",
+      "price": 250,
+      "minutes": 60,
+      "group": "beauty",
+      "short": "Facial acupuncture at tension-releasing and lifting points, combined with constitutional body points. Red light therapy included.",
+      "book": "/book/full-lotus-lift",
+      "bookLabel": "Book Cosmetic Acupuncture",
+      "page": "/service-page/full-lotus-lift"
+    },
+    {
+      "slug": "acupuncture-initial-treatment",
+      "name": "Acupuncture: Initial Treatment",
+      "price": 180,
+      "minutes": 60,
+      "group": "acu",
+      "short": "A detailed intake, a treatment plan, and your first acupuncture treatment.",
+      "book": "/book/acupuncture-initial-treatment",
+      "bookLabel": "Book Acupuncture: Initial Treatment",
+      "page": "/service-page/acupuncture-initial-treatment"
+    },
+    {
+      "slug": "acupuncture-repeat-treatment",
+      "name": "Acupuncture: Repeat Treatment",
+      "price": 120,
+      "minutes": 45,
+      "group": "acu",
+      "short": "Acupuncture treatment following your plan from the initial intake.",
+      "book": "/book/acupuncture-repeat-treatment",
+      "bookLabel": "Book Acupuncture: Repeat Treatment",
+      "page": "/service-page/acupuncture-repeat-treatment"
+    },
+    {
+      "slug": "initial-consultation-online",
+      "name": "Initial Consultation (Online)",
+      "price": 180,
+      "minutes": 60,
+      "group": "consult",
+      "short": "A comprehensive online consultation with herbal prescriptions and nutritional guidance.",
+      "book": "/book/initial-consultation-online",
+      "bookLabel": "Book Initial Consultation (Online)",
+      "page": "/service-page/initial-consultation-online"
+    },
+    {
+      "slug": "repeat-consultation-online",
+      "name": "Repeat Consultation (Online)",
+      "price": 180,
+      "minutes": 45,
+      "group": "consult",
+      "short": "A follow-up session to review progress and adjust your wellness plan.",
+      "book": "/book/repeat-consultation-online",
+      "bookLabel": "Book Repeat Consultation (Online)",
+      "page": "/service-page/repeat-consultation-online"
+    },
+    {
+      "slug": "gong-fu-tea-ceremony",
+      "name": "Gong Fu Tea Ceremony",
+      "price": 55,
+      "minutes": 60,
+      "group": "tea",
+      "short": "Premium tea prepared with precision, for mindfulness and deep relaxation.",
+      "book": "sms:+18182539307",
+      "bookLabel": "Text to book",
+      "page": "/service-page/gong-fu-tea-ceremony"
+    },
+    {
+      "slug": "private-gong-fu-tea-ceremony",
+      "name": "Private Gong Fu Tea Ceremony",
+      "price": 250,
+      "minutes": null,
+      "group": "tea",
+      "short": "A private session for up to five guests, with loose-leaf tea prepared with precision and mindfulness.",
+      "book": "sms:+18182539307",
+      "bookLabel": "Text to book",
+      "page": "/service-page/private-gong-fu-tea-ceremony"
+    },
+    {
+      "slug": "bowl-tea-ceremony",
+      "name": "Bowl Tea Ceremony",
+      "price": 35,
+      "minutes": null,
+      "group": "tea",
+      "short": "A small-group ceremony of silent, mindful tea drinking.",
+      "book": "sms:+18182539307",
+      "bookLabel": "Text to book",
+      "page": "/service-page/bowl-tea-ceremony"
+    }
+  ],
+  "posts": [
+    {
+      "title": "What to expect from nanoneedling in Burbank",
+      "href": "/post/nanoneedling-burbank-what-to-expect",
+      "summary": "A gentle skin renewal session with custom serums and red light therapy, and no downtime. Here is what nanoneedling at Full Lotus Health is like.",
+      "keywords": [
+        "expect",
+        "nanoneedling",
+        "expect nanoneedling"
+      ]
+    },
+    {
+      "title": "Ten years of Full Lotus Health in Burbank",
+      "href": "/post/ten-years-full-lotus-health-burbank",
+      "summary": "Full Lotus Health opened on Glenoaks Blvd in October 2016. Ten years on, a thank-you to Burbank and a look at how the practice has grown.",
+      "keywords": [
+        "ten",
+        "years",
+        "ten years"
+      ]
+    },
+    {
+      "title": "Cosmetic acupuncture in Burbank: what it is and how it works",
+      "href": "/post/cosmetic-acupuncture-burbank-what-to-know",
+      "summary": "Cosmetic acupuncture uses points on the face and body to ease tension and bring out your natural glow. Here is what a visit involves.",
+      "keywords": [
+        "cosmetic",
+        "acupuncture",
+        "works",
+        "cosmetic acupuncture",
+        "acupuncture works"
+      ]
+    },
+    {
+      "title": "Microneedling vs nanoneedling: which is right for you?",
+      "href": "/post/microneedling-vs-nanoneedling-burbank",
+      "summary": "Microneedling works deeper for scars and lines. Nanoneedling is a gentle glow treatment with no downtime.",
+      "keywords": [
+        "microneedling",
+        "nanoneedling",
+        "microneedling nanoneedling"
+      ]
+    },
+    {
+      "title": "What to expect at your first acupuncture visit in Burbank",
+      "href": "/post/first-acupuncture-visit-burbank",
+      "summary": "A plain walkthrough of a first acupuncture visit at Full Lotus Health: the intake, how the needles feel, the rest, and tea afterward.",
+      "keywords": [
+        "expect",
+        "first",
+        "acupuncture",
+        "visit",
+        "expect first",
+        "first acupuncture",
+        "acupuncture visit"
+      ]
+    }
+  ]
+}
