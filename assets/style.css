@@ -533,8 +533,7 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
   .g-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .g-why-photo .photo img { aspect-ratio: 4 / 3; }
 }
-.g-cards.g-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (max-width: 34rem) { .g-cards, .g-cards.g-two, .g-time { grid-template-columns: 1fr; } }
+@media (max-width: 34rem) { .g-cards, .g-time { grid-template-columns: 1fr; } }
 
 /* Side-by-side comparison table */
 .g-table-wrap { overflow-x: auto; }

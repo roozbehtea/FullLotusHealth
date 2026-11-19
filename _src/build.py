@@ -1029,13 +1029,6 @@ def five_element():
 <dt>What you may notice</dt><dd>{e(feel)}</dd>
 </dl></div>
 {img}</div></section>""")
-    what = f"""<section><div class="wrap">{g_head("What is it?", "A way to choose, and a way to pace", "Chinese medicine describes nature, and the skin, through five elements. Here they give each session a clear purpose.")}
-<ul class="g-cards g-two">
-<li class="g-card"><h3>A language for skin, not a diagnosis</h3><p>Wood, Fire, Earth, Metal and Water are names for what your skin is doing right now: congested, flushed, tired, tight or thirsty. Your own assessment decides which one leads.</p></li>
-<li class="g-card"><h3>Earth is the center</h3><p>Everyone receives an Earth formula as the base, and one other element is chosen as the modifier. That keeps it simple: two products per session, matched to you.</p></li>
-<li class="g-card"><h3>Five sessions, five focuses</h3><p>The journey walks through all five, one element per session, several weeks apart, so your skin has time to renew in between. Each element has its own colour, its own serum and its own tea.</p></li>
-<li class="g-card"><h3>Two ways to deliver it</h3><p>With microneedling, purified water-soluble boosters go in with the treatment. With nanoneedling, botanical serums work at the surface, with no downtime. Red light therapy is part of both.</p></li>
-</ul></div></section>"""
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
         "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element and its own signature serum. Book all five and the fifth is free.",
         [],
@@ -1065,7 +1058,7 @@ def five_element():
 <p>Tell us about your skin and we will suggest the right way in. Text or email, whichever is easier.</p>
 <p class="g-actions" style="justify-content:center"><a class="btn" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a><a class="btn ghost" href="mailto:{EMAIL}?subject=Five%20Element%20Rejuvenation">Email us</a></p>
 </div></section>"""
-    main = hero_html + what + "".join(sections) + apply_to + qa + ask
+    main = hero_html + "".join(sections) + apply_to + qa + ask
     OUT["five-element-rejuvenation.html"] = page("/five-element-rejuvenation", f"{SERIES} | Full Lotus Health",
         "Five Element Rejuvenation: a five-session journey through Wood, Fire, Earth, Metal and Water, with cosmetic acupuncture, nanoneedling or microneedling in Burbank. The fifth session is free.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (SERIES, "/five-element-rejuvenation")])])
