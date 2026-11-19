@@ -11,7 +11,7 @@
  * What patients see: a curated set of openings (rules in apptDays_). Nothing is a booking until it is PAID:
  *                   the calendar event is created only after Stripe confirms payment, which is what stops a
  *                   cancelled or abandoned checkout from ever looking like an appointment.
- * Collects only name, email, phone and an optional short note. Health details stay in the Google Form intake.
+ * Collects only name, email, phone and an "I've already completed the forms" box (stored in Note; it leaves the form links out). Health details stay in the Google Form intake.
  *
  * Admin settings (Project Settings > Script properties; all optional, defaults in apptCfg_):
  *   APPT_CORE_DAYS=1,3,5        days offered first (1 = Mon ... 7 = Sun)
@@ -64,6 +64,8 @@ function apptCfg_() {
 }
 
 // Skin services also need the Skin Treatment Intake & Consent form, on top of the new patient form.
+var APPT_RETURNING = 'Returning patient: has already completed the forms';      // kept in the Note column; leaves the form links out
+function apptForms_(svc, r) { return !!svc.intake && String(r[AC.note - 1] || '') !== APPT_RETURNING; }
 var APPT_SKIN = { 'full-lotus-lift': true, 'medical-microneedling-session': true, 'facial-nano-needling': true };
 
 // ------------------------------------------------------------------ entry points (called from Code.gs)
@@ -252,7 +254,7 @@ function apptBook_(b) {
   var name = clean_(b.name, 80);
   var email = String(b.email || '').trim().toLowerCase();
   var phone = clean_(b.phone, 30);
-  var note = clean_(b.note, 300);
+  var note = (b.returning === true || b.returning === 'yes') ? APPT_RETURNING : '';
   var startMs = Date.parse(String(b.start || ''));
   if (!name) return { error: 'name' };
   if (!(email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) || /^[=+\-@]/.test(email)) return { error: 'email' };
@@ -317,7 +319,7 @@ function apptConfirm_(session) {
     lock.releaseLock();
   }
   var r = found.row, svc = APPT_SERVICES[r[AC.svc - 1]] || {};
-  return { ok: true, when: r[AC.when - 1], service: r[AC.svcName - 1], name: r[AC.name - 1], intake: !!svc.intake, online: !!svc.online, series: !!svc.series, intakeUrl: apptCfg_().intake };
+  return { ok: true, when: r[AC.when - 1], service: r[AC.svcName - 1], name: r[AC.name - 1], intake: apptForms_(svc, r), online: !!svc.online, series: !!svc.series, intakeUrl: apptCfg_().intake };
 }
 
 /** Went back from Stripe without paying: end the checkout and free the time now. Nothing was ever on the calendar. */
@@ -366,7 +368,7 @@ function apptFinish_(session) {
   var svc = APPT_SERVICES[r[AC.svc - 1]] || { name: r[AC.svcName - 1] };
   if (!r[AC.eventId - 1]) {
     var cal = CalendarApp.getCalendarById(c.calendarId) || CalendarApp.getDefaultCalendar();
-    var intake = svc.intake ? '\n\nBefore your visit, please complete the New Patient Intake form: ' + apptCfg_().intake +
+    var intake = apptForms_(svc, r) ? '\n\nBefore your visit, please complete the New Patient Intake form: ' + apptCfg_().intake +
       (APPT_SKIN[r[AC.svc - 1]] ? '\nand the Skin Treatment Intake & Consent form: ' + apptCfg_().skinIntake : '') : '';
     var ev = cal.createEvent(r[AC.svcName - 1] + ' (' + r[AC.name - 1] + ')', new Date(r[AC.start - 1]), new Date(r[AC.end - 1]), {
       description: 'Booked online\n' + r[AC.name - 1] + '\n' + r[AC.email - 1] + '\n' + r[AC.phone - 1] +
@@ -386,7 +388,7 @@ function apptFinish_(session) {
 function apptEmails_(r, svc) {
   var c = cfg_(), name = r[AC.name - 1], email = r[AC.email - 1], when = r[AC.when - 1];
   var where = svc.online ? 'Online, by video. Roozbeh will email you the video link before your visit.' : 'Full Lotus Health, ' + c.address;
-  var intake = svc.intake ? '\nPlease fill in the New Patient Intake form before you come: ' + apptCfg_().intake + '\n' +
+  var intake = apptForms_(svc, r) ? '\nPlease fill in the New Patient Intake form before you come: ' + apptCfg_().intake + '\n' +
     (APPT_SKIN[r[AC.svc - 1]] ? 'And the Skin Treatment Intake & Consent form: ' + apptCfg_().skinIntake + '\n' : '') : '';
   var series = svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '';
   MailApp.sendEmail({

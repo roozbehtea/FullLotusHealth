@@ -796,6 +796,8 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .sch-sum { margin: 0 0 var(--space-2); }
 .sch-wide { grid-column: 1 / -1; }
 .sch-fields textarea { resize: vertical; }
+.sch-fields label.sch-check { flex-direction: row; align-items: center; gap: 0.6rem; font-weight: 400; cursor: pointer; }
+.sch-fields .sch-check input { width: 1.25rem; height: 1.25rem; padding: 0; margin: 0; accent-color: var(--lapis); flex: none; }
 .linkish { font: inherit; padding: 0; color: var(--cinnabar); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px; cursor: pointer; }
 .linkish:hover { color: var(--cinnabar-deep); text-decoration-thickness: 2px; }
 @media (prefers-reduced-motion: reduce) { .sch * { transition: none !important; } }
