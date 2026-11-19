@@ -11,6 +11,7 @@ treatments.html at /treatments, so the old Wix addresses keep working with no re
 import json, sys, html, pathlib, datetime
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import art
+from make_cloud_fields import cloud_field
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "_src" / "config.json").read_text())
@@ -464,11 +465,11 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 """
 
 
-def hero(title, lede, crumbs=None, tone="c", cta_html="", cls=""):
+def hero(title, lede, crumbs=None, tone="c", cta_html="", cls="", deco=""):
     cr = ""
     if crumbs:
         cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in crumbs) + "</p>"
-    return f'<div class="hero-band tone-{tone}{(" " + cls) if cls else ""}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div></div>'
+    return f'<div class="hero-band tone-{tone}{(" " + cls) if cls else ""}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div>{deco}</div>'
 
 
 def rating_strip():
@@ -862,7 +863,7 @@ def consult():
 
 def tea():
     main = hero("The sacred art of presence.",
-        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat"), cls="clouds") + f"""
+        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat"), cls="clouds", deco=cloud_field("a", "bottom")) + f"""
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
@@ -871,13 +872,13 @@ def tea():
     <li><span class="name"><a href="/service-page/private-gong-fu-tea-ceremony">Private Gong Fu ceremony</a></span><p class="desc">A private session for up to five guests.</p></li>
   </ul>
 </div></section>
-<section class="night"><div class="wrap split">
+<section class="night">{cloud_field("b", "top")}<div class="wrap split">
   <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2>{photo("tea-space", "The tea space at Full Lotus Health")}</div>
   <div>
     <p>In Chinese medicine, tea is known as the premier Chinese herb for the mind. In tea ceremony we drink aged, old growth, organic teas, which have a profound ability to calm and energize the mind and allow one to access the heart/mind in meditation.</p>
     <p>We provide tea ceremony in the tradition of Wu De, a foremost expert on tea who has written many books on tea and owns Global Tea Hut. Roozbeh has been studying with Wu De for over fifteen years, and Wu De has served tea at Full Lotus Health.</p>
   </div>
-</div></section>
+</div>{cloud_field("a", "bottom")}</section>
 <section><div class="wrap">
   <h2>Weekly tea sits</h2>
   <p>Once a week we sit together in the tea space and drink tea, mostly in silence. Six seats per sit. <a href="/tea-sits">See dates and seats left</a>.</p>

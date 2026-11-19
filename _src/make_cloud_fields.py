@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
-"""Compose the layered gold cloud fields for the black tea sections.
+"""Layered, slowly moving gold clouds for the black tea sections.
 
 Art: Roozbeh's chosen Midjourney band and three single clouds, traced to paths
 (_src/clouds/clouds.json holds each cloud's line path and a filled silhouette).
-Each cloud is drawn as its silhouette in the night colour with its gold line on top,
-so a cloud in front hides the clouds behind it, as in thangka cloud painting.
+Each cloud is its own small SVG: its silhouette in the night colour with its gold line
+on top, so a cloud in front hides the clouds behind it, as in thangka cloud painting.
 Further-back clouds are smaller and dimmer. Every cloud stays upright.
 
-Run: python3 _src/make_cloud_fields.py   (writes assets/orn-clouds-tea-*.svg)
+The page places the clouds of a field with cloud_field() (used by build.py) and moves
+each one with a CSS transform animation (see "Layered gold clouds" in style.css), so the
+browser only slides finished images and never redraws the art.
+
+Run: python3 _src/make_cloud_fields.py   (writes assets/orn-cloud-<cloud>-<layer>.svg)
 """
 import json, os
 
 HERE = os.path.dirname(__file__)
 ART = json.load(open(os.path.join(HERE, "clouds", "clouds.json")))
-NIGHT = (0x1E, 0x1B, 0x18)   # --night; the fields only sit on night backgrounds
+NIGHT = (0x1E, 0x1B, 0x18)   # --night; the clouds only sit on night backgrounds
 GOLD = (0xB8, 0x94, 0x3F)    # same gold as the earlier cloud ornament
 
 
@@ -24,6 +28,7 @@ def mix(a):
 
 TONE = {"back": mix(0.26), "mid": mix(0.40), "front": mix(0.60)}
 
+# A field is W x H units; the page sizes it with --cloud-w / --cloud-h (same 2400:510 ratio).
 W, H = 2400, 510
 # (cloud, x, y, width, layer); drawn in list order, back to front. x/y = top-left in the field.
 FIELDS = {
@@ -45,20 +50,40 @@ FIELDS = {
     ],
 }
 
+# Motion: back bands drift furthest, single clouds drift and turn a little (the swirl),
+# the front band only sways. Each cloud gets its own speed and starting point.
+MOTION = {"back": ("drift", 23), "mid": ("swirl", 13), "front": ("sway", 17)}
 
-def svg(items):
-    used = sorted({c for c, *_ in items})
-    defs = "".join(f'<path id="{c}-f" d="{ART[c]["fill"]}"/><path id="{c}-l" d="{ART[c]["line"]}"/>' for c in used)
-    body = []
-    for c, x, y, w, layer in items:
-        s = w / ART[c]["w"]
-        body.append(f'<g transform="translate({x} {y}) scale({s:.4f})"><use href="#{c}-f" fill="#{"%02x%02x%02x" % NIGHT}"/><use href="#{c}-l" fill="{TONE[layer]}"/></g>')
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" fill-rule="evenodd">'
-            f'<defs>{defs}</defs>{"".join(body)}</svg>\n')
+
+def asset(c, layer):
+    return f"orn-cloud-{c}-{layer}.svg"
+
+
+def cloud_svg(c, layer):
+    a = ART[c]
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {a["w"]:g} {a["h"]:g}" fill-rule="evenodd">'
+            f'<path fill="#{"%02x%02x%02x" % NIGHT}" d="{a["fill"]}"/><path fill="{TONE[layer]}" d="{a["line"]}"/></svg>\n')
+
+
+def cloud_field(name, where):
+    """Markup for one field; where is 'top' or 'bottom' of its section."""
+    spans = []
+    for i, (c, x, y, w, layer) in enumerate(FIELDS[name]):
+        h = w * ART[c]["h"] / ART[c]["w"]
+        motion, dur = MOTION[layer if c == "band" else "mid"]   # single clouds always swirl
+        dur += (i * 2.3) % 5          # slightly different speed per cloud
+        delay = -((i * 7.1) % dur)    # and a different starting point
+        way = "alternate-reverse" if i % 2 else "alternate"
+        spans.append(
+            f'<span class="cl {motion}" style="left:{x / W * 100:.2f}%;top:{y / H * 100:.2f}%;'
+            f'width:{w / W * 100:.2f}%;height:{h / H * 100:.2f}%;background-image:url(/assets/{asset(c, layer)});'
+            f'animation-duration:{dur:.1f}s;animation-delay:{delay:.1f}s;animation-direction:{way}"></span>')
+    return f'<div class="cloud-field {where}" aria-hidden="true">{"".join(spans)}</div>'
 
 
 if __name__ == "__main__":
-    for name, items in FIELDS.items():
-        out = os.path.join(HERE, "..", "assets", f"orn-clouds-tea-{name}.svg")
-        open(out, "w").write(svg(items))
+    used = sorted({(c, layer) for items in FIELDS.values() for c, _, _, _, layer in items})
+    for c, layer in used:
+        out = os.path.join(HERE, "..", "assets", asset(c, layer))
+        open(out, "w").write(cloud_svg(c, layer))
         print("wrote", os.path.relpath(out))
