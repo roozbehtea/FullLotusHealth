@@ -673,7 +673,7 @@ def home():
 
 {cta("Ready to feel like yourself again?", "Book online, or text us a question. New patients, please fill out the intake form before your first visit.", "Book now")}
 """
-    OUT["index.html"] = page("/", "Microneedling & Cosmetic Acupuncture in Burbank | Full Lotus Health",
+    OUT["index.html"] = page("/", "Acupuncture, Microneedling & Tea in Burbank | Full Lotus Health",
         "Natural skin treatments in Burbank, CA: microneedling, nanoneedling and cosmetic acupuncture from a licensed acupuncturist, plus Chinese herbal medicine and tea.",
         main, ld=[business_ld()], current="/")
 
