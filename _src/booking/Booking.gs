@@ -11,7 +11,8 @@
  * What patients see: a curated set of openings (rules in apptDays_). Nothing is a booking until it is PAID:
  *                   the calendar event is created only after Stripe confirms payment, which is what stops a
  *                   cancelled or abandoned checkout from ever looking like an appointment.
- * Collects only name, email, phone and an "I've already completed the forms" box (stored in Note; it leaves the form links out). Health details stay in the Google Form intake.
+ * Collects only name, email, phone and an "I've already completed the forms" box. Forms the patient already did (the box,
+ * or their email or mobile phone found in that form's responses sheet) are left out of the confirmation, email and invite. Health details stay in the Google Form intake.
  *
  * Admin settings (Project Settings > Script properties; all optional, defaults in apptCfg_):
  *   APPT_CORE_DAYS=1,3,5        days offered first (1 = Mon ... 7 = Sun)
@@ -22,6 +23,7 @@
  *   APPT_ROTATE=true            vary which free windows are shown from day to day
  *   APPT_NOTICE_HOURS=24  APPT_WINDOW_DAYS=21  APPT_CAPACITY=2 (treatment rooms)
  *   INTAKE_URL                  new patient form link
+ *   INTAKE_SHEET_ID, SKIN_INTAKE_SHEET_ID   responses sheets checked to recognize returning patients
  *   SKIN_INTAKE_URL             Skin Treatment Intake & Consent link (skin services, in addition to the new patient form)
  */
 
@@ -59,14 +61,83 @@ function apptCfg_() {
     windowDays: parseInt(prop_('APPT_WINDOW_DAYS', '21'), 10),
     capacity: parseInt(prop_('APPT_CAPACITY', '2'), 10),
     intake: prop_('INTAKE_URL', 'https://docs.google.com/forms/d/e/1FAIpQLSfMS8d01yMjbKDpyX7065HTPgHsZNcFwGa9GGI5DhhPWkB6hg/viewform'),
-    skinIntake: prop_('SKIN_INTAKE_URL', 'https://docs.google.com/forms/d/e/1FAIpQLSdNzCi2CoU4WeAVBHHNp1IrKtoAUavYBMhe7aeQzBGxJSuMiw/viewform')
+    skinIntake: prop_('SKIN_INTAKE_URL', 'https://docs.google.com/forms/d/e/1FAIpQLSdNzCi2CoU4WeAVBHHNp1IrKtoAUavYBMhe7aeQzBGxJSuMiw/viewform'),
+    intakeSheet: prop_('INTAKE_SHEET_ID', '1kdRQ6FNAsIgsP0GYrzqhrW9YX0DtwL8PIY5I4zxOs2M'),          // New Patient Intake (responses)
+    skinSheet: prop_('SKIN_INTAKE_SHEET_ID', '1WAJnYsDRNffvLPk4DzjOV6S3PCGYO9M_GFQVU0wcm6s')      // Skin Treatment Intake & Consent (responses)
   };
 }
 
 // Skin services also need the Skin Treatment Intake & Consent form, on top of the new patient form.
-var APPT_RETURNING = 'Returning patient: has already completed the forms';      // kept in the Note column; leaves the form links out
-function apptForms_(svc, r) { return !!svc.intake && String(r[AC.note - 1] || '') !== APPT_RETURNING; }
 var APPT_SKIN = { 'full-lotus-lift': true, 'medical-microneedling-session': true, 'facial-nano-needling': true };
+
+// Forms a patient has already done are left out of the confirmation page, email and invite. What we know is kept
+// in the booking's Note column: the patient ticked "I've already completed the forms", or their email or mobile
+// phone was found in a form's responses sheet when they booked.
+var APPT_RETURNING = 'Returning patient: has already completed the forms';
+var APPT_ON_FILE = 'Forms on file: ';
+var APPT_NP_NAME = 'New Patient Intake', APPT_SKIN_NAME = 'Skin Treatment Intake & Consent';
+function apptNote_(r) { return String(r[AC.note - 1] || ''); }
+function apptNeedIntake_(svc, r) { var n = apptNote_(r); return !!svc.intake && n !== APPT_RETURNING && !(n.indexOf(APPT_ON_FILE) === 0 && n.indexOf(APPT_NP_NAME) >= 0); }
+function apptNeedSkin_(r) { var n = apptNote_(r); return !!APPT_SKIN[r[AC.svc - 1]] && n !== APPT_RETURNING && !(n.indexOf(APPT_ON_FILE) === 0 && n.indexOf(APPT_SKIN_NAME) >= 0); }
+function apptFormList_(svc, r) {
+  var cfg = apptCfg_(), out = [];
+  if (apptNeedIntake_(svc, r)) out.push({ name: APPT_NP_NAME, url: cfg.intake });
+  if (apptNeedSkin_(r)) out.push({ name: APPT_SKIN_NAME, url: cfg.skinIntake });
+  return out;
+}
+
+function apptPhoneKey_(s) { var d = String(s || '').replace(/\D/g, ''); return d.length >= 7 ? d.slice(-10) : ''; }
+/** The responses tab of a form's sheet, and which columns hold the email and mobile phone (0 if none). */
+function apptFormCols_(sheetId) {
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sh = ss.getSheets().filter(function (x) { return /^form responses/i.test(x.getName()); })[0] || ss.getSheets()[0];
+  var cols = sh.getLastColumn();
+  var head = cols ? sh.getRange(1, 1, 1, cols).getValues()[0].map(function (h) { return String(h).trim(); }) : [];
+  var pick = function (good, bad) {
+    for (var i = 0; i < head.length; i++) if (good.test(head[i]) && !(bad && bad.test(head[i]))) return i + 1;
+    return 0;
+  };
+  var ec = pick(/^email( address)?$/i) || pick(/email/i, /communicat|may email/i);
+  var pc = pick(/^mobile phone$/i) || pick(/phone/i, /emergency|physician|doctor/i);
+  return { sh: sh, rows: sh.getLastRow() - 1, ec: ec, pc: pc, head: head };
+}
+/** True if this email or mobile phone appears in a form's responses sheet. Reads only the email and phone columns. */
+function apptInSheet_(sheetId, email, phoneKey) {
+  if (!sheetId) return false;
+  var f = apptFormCols_(sheetId);
+  if (f.rows < 1) return false;
+  if (email && f.ec) {
+    var es = f.sh.getRange(2, f.ec, f.rows, 1).getValues();
+    for (var a = 0; a < es.length; a++) if (String(es[a][0]).trim().toLowerCase() === email) return true;
+  }
+  if (phoneKey && f.pc) {
+    var ps = f.sh.getRange(2, f.pc, f.rows, 1).getValues();
+    for (var b = 0; b < ps.length; b++) if (apptPhoneKey_(ps[b][0]) === phoneKey) return true;
+  }
+  return false;
+}
+/** Run from the editor to see which columns the returning-patient match reads. Logs column names and counts only. */
+function checkFormSheets() {
+  var c = apptCfg_();
+  [[APPT_NP_NAME, c.intakeSheet], [APPT_SKIN_NAME, c.skinSheet]].forEach(function (x) {
+    var f = apptFormCols_(x[1]);
+    console.log(x[0] + ': tab "' + f.sh.getName() + '", ' + Math.max(0, f.rows) + ' responses, email column "' +
+      (f.ec ? f.head[f.ec - 1] : 'NOT FOUND') + '", phone column "' + (f.pc ? f.head[f.pc - 1] : 'NOT FOUND') + '"');
+  });
+}
+/** The Note for a new booking: the patient's tick, or which forms we found for them (blank if none). Never blocks a booking. */
+function apptFormsNote_(slug, svc, email, phone, ticked) {
+  if (ticked) return APPT_RETURNING;
+  if (!svc.intake) return '';
+  var cfg = apptCfg_(), key = apptPhoneKey_(phone), found = [];
+  var check = function (id, name) {
+    try { if (apptInSheet_(id, email, key)) found.push(name); }
+    catch (err) { console.error('form match ' + name + ': ' + err); }
+  };
+  check(cfg.intakeSheet, APPT_NP_NAME);
+  if (APPT_SKIN[slug]) check(cfg.skinSheet, APPT_SKIN_NAME);
+  return found.length ? APPT_ON_FILE + found.join(', ') : '';
+}
 
 // ------------------------------------------------------------------ entry points (called from Code.gs)
 function apptGet_(p) {
@@ -254,12 +325,12 @@ function apptBook_(b) {
   var name = clean_(b.name, 80);
   var email = String(b.email || '').trim().toLowerCase();
   var phone = clean_(b.phone, 30);
-  var note = (b.returning === true || b.returning === 'yes') ? APPT_RETURNING : '';
   var startMs = Date.parse(String(b.start || ''));
   if (!name) return { error: 'name' };
   if (!(email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) || /^[=+\-@]/.test(email)) return { error: 'email' };
   if (phone.replace(/\D/g, '').length < 7) return { error: 'phone' };
   if (isNaN(startMs)) return { error: 'closed' };
+  var note = apptFormsNote_(String(b.service), svc, email, phone, b.returning === true || b.returning === 'yes');
 
   var c = cfg_(), cfg = apptCfg_();
   if (!c.stripeKey) return { error: 'setup' };
@@ -319,7 +390,8 @@ function apptConfirm_(session) {
     lock.releaseLock();
   }
   var r = found.row, svc = APPT_SERVICES[r[AC.svc - 1]] || {};
-  return { ok: true, when: r[AC.when - 1], service: r[AC.svcName - 1], name: r[AC.name - 1], intake: apptForms_(svc, r), online: !!svc.online, series: !!svc.series, intakeUrl: apptCfg_().intake };
+  return { ok: true, when: r[AC.when - 1], service: r[AC.svcName - 1], name: r[AC.name - 1], intake: apptNeedIntake_(svc, r), skin: apptNeedSkin_(r), online: !!svc.online, series: !!svc.series,
+    intakeUrl: apptCfg_().intake, skinUrl: apptCfg_().skinIntake };
 }
 
 /** Went back from Stripe without paying: end the checkout and free the time now. Nothing was ever on the calendar. */
@@ -368,8 +440,8 @@ function apptFinish_(session) {
   var svc = APPT_SERVICES[r[AC.svc - 1]] || { name: r[AC.svcName - 1] };
   if (!r[AC.eventId - 1]) {
     var cal = CalendarApp.getCalendarById(c.calendarId) || CalendarApp.getDefaultCalendar();
-    var intake = apptForms_(svc, r) ? '\n\nBefore your visit, please complete the New Patient Intake form: ' + apptCfg_().intake +
-      (APPT_SKIN[r[AC.svc - 1]] ? '\nand the Skin Treatment Intake & Consent form: ' + apptCfg_().skinIntake : '') : '';
+    var forms = apptFormList_(svc, r);
+    var intake = forms.length ? '\n\nBefore your visit, please complete the ' + forms.map(function (f) { return f.name + ' form: ' + f.url; }).join('\nand the ') : '';
     var ev = cal.createEvent(r[AC.svcName - 1] + ' (' + r[AC.name - 1] + ')', new Date(r[AC.start - 1]), new Date(r[AC.end - 1]), {
       description: 'Booked online\n' + r[AC.name - 1] + '\n' + r[AC.email - 1] + '\n' + r[AC.phone - 1] +
         (r[AC.note - 1] ? '\nNote: ' + r[AC.note - 1] : '') +
@@ -388,8 +460,10 @@ function apptFinish_(session) {
 function apptEmails_(r, svc) {
   var c = cfg_(), name = r[AC.name - 1], email = r[AC.email - 1], when = r[AC.when - 1];
   var where = svc.online ? 'Online, by video. Roozbeh will email you the video link before your visit.' : 'Full Lotus Health, ' + c.address;
-  var intake = apptForms_(svc, r) ? '\nPlease fill in the New Patient Intake form before you come: ' + apptCfg_().intake + '\n' +
-    (APPT_SKIN[r[AC.svc - 1]] ? 'And the Skin Treatment Intake & Consent form: ' + apptCfg_().skinIntake + '\n' : '') : '';
+  var forms = apptFormList_(svc, r);
+  var intake = forms.map(function (f, k) {
+    return k === 0 ? '\nPlease fill in the ' + f.name + ' form before you come: ' + f.url + '\n' : 'And the ' + f.name + ' form: ' + f.url + '\n';
+  }).join('');
   var series = svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '';
   MailApp.sendEmail({
     to: email, replyTo: c.notify, name: 'Full Lotus Health',

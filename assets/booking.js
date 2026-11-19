@@ -1,6 +1,6 @@
 /* Online booking: pick a day, pick a time, give your details, pay with Stripe. Nothing is booked until payment succeeds.
    Talks to the Apps Script web app in _src/teasits + _src/booking (URL set as teasits_url in _src/config.json).
-   Collects name, email and phone, plus an "I've already completed the forms" box that leaves the form links out. No health details. */
+   Collects name, email and phone, plus an "I've already completed the forms" box. The server also recognizes returning patients and leaves out forms they already did. No health details. */
 (function () {
   var root = document.getElementById("sched");
   if (!root) return;
@@ -58,12 +58,17 @@
     if (s) before = getJSON("?action=appt_release&session=" + encodeURIComponent(s)).then(function () { return false; }, function () { return false; });
   }
 
+  function formsLine(r) {                                                // only the forms this patient still needs
+    var skin = r.skin !== undefined ? r.skin : (r.intake && !!SKIN), links = [];
+    if (r.intake) links.push('<a href="' + esc(r.intakeUrl) + '" rel="noopener">new patient form</a>');
+    if (skin && (r.skinUrl || SKIN)) links.push('<a href="' + esc(r.skinUrl || SKIN) + '" rel="noopener">skin treatment form</a>');
+    return links.length ? " Before you come, please fill in the " + links.join(" and the ") + "." : "";
+  }
   function done(r) {
     cal.innerHTML = ""; times.innerHTML = ""; details.innerHTML = "";
     say("<strong>You are booked.</strong> " + esc(r.service) + ", " + esc(r.when) + ". A confirmation is on its way to your email" +
       (r.online ? ", and Roozbeh will send your video link before the visit" : "") + "." +
-      (r.intake ? ' Before you come, please fill in the <a href="' + esc(r.intakeUrl) + '" rel="noopener">new patient form</a>' +
-        (SKIN ? ' and the <a href="' + esc(SKIN) + '" rel="noopener">skin treatment form</a>' : "") + "." : "") +
+      formsLine(r) +
       (r.series ? " If you would like a series of treatments, we will plan the rest together after this first session." : ""));
     root.scrollIntoView({ behavior: "smooth", block: "start" });
   }
