@@ -464,11 +464,11 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 """
 
 
-def hero(title, lede, crumbs=None, tone="c", cta_html=""):
+def hero(title, lede, crumbs=None, tone="c", cta_html="", cls=""):
     cr = ""
     if crumbs:
         cr = '<p class="crumbs">' + " / ".join(f'<a href="{h}">{e(n)}</a>' for n, h in crumbs) + "</p>"
-    return f'<div class="hero-band tone-{tone}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div></div>'
+    return f'<div class="hero-band tone-{tone}{(" " + cls) if cls else ""}"><div class="wrap page-hero">{cr}<div class="band short" aria-hidden="true"></div><h1>{title}</h1><p class="lede">{lede}</p>{("<p class=\"g-actions\">" + cta_html + "</p>") if cta_html else ""}</div></div>'
 
 
 def rating_strip():
@@ -862,7 +862,7 @@ def consult():
 
 def tea():
     main = hero("The sacred art of presence.",
-        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat")) + f"""
+        "Our tea ceremonies are designed to help you step into a meditative rhythm. By focusing on the intentional ritual of tea, we create a space to slow the breath, calm the nervous system, and return to whole-system harmony. This practice is open to anyone seeking stress relief and a moment of true inner balance.", tone="n", cta_html=book_btn("Book a seat"), cls="clouds") + f"""
 <section><div class="wrap">
   <p>{book_btn("Book a seat")}</p>
   <ul class="rates" style="margin-top:2rem">
