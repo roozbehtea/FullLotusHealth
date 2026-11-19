@@ -458,9 +458,9 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .cl.drift { animation-name: cloud-drift; }
 .cl.swirl { animation-name: cloud-swirl; }
 .cl.sway { animation-name: cloud-sway; }
-@keyframes cloud-drift { from { transform: translate(-3%, 2%); } to { transform: translate(3%, -2%); } }
-@keyframes cloud-swirl { from { transform: translate(-2.5%, 2%) rotate(-3deg); } to { transform: translate(2.5%, -2.5%) rotate(3deg); } }
-@keyframes cloud-sway { from { transform: translateX(-0.8%); } to { transform: translateX(0.8%); } }
+@keyframes cloud-drift { from { transform: translate(-8%, 4%); } to { transform: translate(8%, -4%); } }
+@keyframes cloud-swirl { from { transform: translate(-7%, 5%) rotate(-9deg); } to { transform: translate(7%, -6%) rotate(9deg); } }
+@keyframes cloud-sway { from { transform: translate(-2.5%, 1.5%); } to { transform: translate(2.5%, -1.5%); } }
 /* On phones the field runs past both edges so the clouds stay a readable size. */
 @media (max-width: 40rem) { .night, .hero-band.clouds { --cloud-w: 150vw; overflow-x: clip; } }
 @media (prefers-reduced-motion: reduce) { .cloud-field .cl { animation: none; } }

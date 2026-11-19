@@ -52,7 +52,7 @@ FIELDS = {
 
 # Motion: back bands drift furthest, single clouds drift and turn a little (the swirl),
 # the front band only sways. Each cloud gets its own speed and starting point.
-MOTION = {"back": ("drift", 23), "mid": ("swirl", 13), "front": ("sway", 17)}
+MOTION = {"back": ("drift", 11), "mid": ("swirl", 6), "front": ("sway", 8)}
 
 
 def asset(c, layer):
@@ -71,7 +71,7 @@ def cloud_field(name, where):
     for i, (c, x, y, w, layer) in enumerate(FIELDS[name]):
         h = w * ART[c]["h"] / ART[c]["w"]
         motion, dur = MOTION[layer if c == "band" else "mid"]   # single clouds always swirl
-        dur += (i * 2.3) % 5          # slightly different speed per cloud
+        dur += (i * 1.3) % 3          # slightly different speed per cloud
         delay = -((i * 7.1) % dur)    # and a different starting point
         way = "alternate-reverse" if i % 2 else "alternate"
         spans.append(
