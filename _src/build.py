@@ -1030,14 +1030,14 @@ def five_element():
 </dl></div>
 {img}</div></section>""")
     what = f"""<section><div class="wrap">{g_head("What is it?", "A way to choose, and a way to pace", "Chinese medicine describes nature, and the skin, through five elements. Here they give each session a clear purpose.")}
-<ul class="g-cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<ul class="g-cards g-two">
 <li class="g-card"><h3>A language for skin, not a diagnosis</h3><p>Wood, Fire, Earth, Metal and Water are names for what your skin is doing right now: congested, flushed, tired, tight or thirsty. Your own assessment decides which one leads.</p></li>
 <li class="g-card"><h3>Earth is the center</h3><p>Everyone receives an Earth formula as the base, and one other element is chosen as the modifier. That keeps it simple: two products per session, matched to you.</p></li>
 <li class="g-card"><h3>Five sessions, five focuses</h3><p>The journey walks through all five, one element per session, several weeks apart, so your skin has time to renew in between. Each element has its own colour, its own serum and its own tea.</p></li>
 <li class="g-card"><h3>Two ways to deliver it</h3><p>With microneedling, purified water-soluble boosters go in with the treatment. With nanoneedling, botanical serums work at the surface, with no downtime. Red light therapy is part of both.</p></li>
 </ul></div></section>"""
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
-        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element, each with its own painted colour and its own signature serum. Book all five and the fifth is free.",
+        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element and its own signature serum. Book all five and the fifth is free.",
         ["5 sessions", "One for each element", "Red light therapy included", "Fifth session free"],
         "")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
