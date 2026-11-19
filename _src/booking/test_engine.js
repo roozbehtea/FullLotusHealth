@@ -103,4 +103,10 @@ ok('daylight saving change does not shift clinic times (Nov 1 2026 fall back)', 
   const n2 = Utilities.parseDate('2026-10-28 12:00', TZ, 'yyyy-MM-dd HH:mm').getTime();
   apptDays_([], 60, cfg, n2).forEach(d => d.slots.forEach(s => assert(/:(00|30) /.test(Utilities.formatDate(new Date(s.start), TZ, 'h:mm a')))));
 });
+ok('an all-day event takes the day off the calendar entirely', () => {
+  const key = '2026-11-27', off = { s: at_(key, 0), e: at_(addDays_(key, 1), 0), full: true, dayOff: true };
+  const days = apptDays_([off], 60, cfg, now);
+  assert(!days.some(d => d.date === key), 'Nov 27 should not be listed');
+  assert(days.some(d => d.date === '2026-11-25'), 'other days still listed');
+});
 console.log(`\n${n} checks passed`);

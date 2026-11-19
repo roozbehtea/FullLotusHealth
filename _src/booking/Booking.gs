@@ -105,7 +105,7 @@ function apptBusy_(fromMs, toMs, cfg) {
     try { if (ev.getMyStatus() === CalendarApp.GuestStatus.NO) return; } catch (x) {}                       // declined
     var title = ev.getTitle() || '';
     var full = ev.isAllDayEvent() || /\bhold\b/i.test(title) || title.toLowerCase().indexOf(cfg_().match) !== -1;   // all-day, "hold", tea sits
-    items.push({ s: ev.getStartTime().getTime(), e: ev.getEndTime().getTime(), full: full });
+    items.push({ s: ev.getStartTime().getTime(), e: ev.getEndTime().getTime(), full: full, dayOff: ev.isAllDayEvent() });
   });
   var fresh = Date.now() - APPT_HOLD_MINUTES * 60000;
   apptRows_().forEach(function (r) {
@@ -176,6 +176,8 @@ function apptDays_(items, minutes, cfg, nowMs) {
     var isCore = cfg.core.indexOf(dw) !== -1;
     var isExtra = cfg.openExtra && cfg.extra.indexOf(dw) !== -1 && !coreHasRoom(weekStart_(key));
     if (!isCore && !isExtra) continue;
+    var noon = at_(key, 720);
+    if (items.some(function (it) { return it.dayOff && it.s <= noon && it.e > noon; })) continue;   // all-day event: day off, not shown at all
 
     var free = freeStarts_(items, key, minutes, cfg, nowMs);
     var dayStart = at_(key, 0), dayEnd = at_(key, 1439);
