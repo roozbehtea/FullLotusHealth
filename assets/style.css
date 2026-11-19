@@ -129,7 +129,7 @@ img, svg { max-width: 100%; }
   padding: 1.9rem clamp(1.25rem, 4vw, 2.4rem) 1.4rem;
 }
 .hh-panel .band { position: absolute; inset: 0 0 auto; }
-.home-hero h1 { font-size: clamp(2.5rem, 4.6vw, 3.7rem); line-height: 1.06; letter-spacing: -0.01em; max-width: 12ch; margin-top: 0.15em; }
+.home-hero h1 { font-size: clamp(2.8rem, 5.4vw, 4.4rem); line-height: 1.02; letter-spacing: -0.015em; max-width: 11ch; margin-top: 0.15em; }
 .home-hero .lede { font-size: 1.125rem; color: var(--ink-muted); max-width: 44ch; }
 .home-hero .actions { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 1.5rem; align-items: center; }
 @media (min-width: 40rem) and (max-width: 55.99rem) { .hh-panel { margin-inline: auto; } }
