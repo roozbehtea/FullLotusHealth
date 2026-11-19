@@ -627,7 +627,6 @@ def home():
       <h1 id="home-h1">The calmest hour of your week</h1>
       <p class="lede">Acupuncture and skin treatments in Burbank: unhurried visits with one licensed acupuncturist, often ending with tea.</p>
       <div class="actions">{book_btn("Book a visit")}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
-      {('<p class="fine" style="margin-top:1rem"><strong>First visit?</strong> <a href="' + e(INTAKE) + '" rel="noopener">Start with the new patient form</a></p>') if INTAKE else ""}
     </div>
   </div>
 </section>
