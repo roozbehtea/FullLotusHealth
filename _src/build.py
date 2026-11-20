@@ -406,13 +406,6 @@ def visit_section(heading_id="visit-h"):
 
 
 def chat_widget():
-    chips = (
-        ("prices", "Prices"), ("book", "Book"), ("where", "Location"), ("hours", "Hours"),
-        ("cancel", "Cancellation"), ("intake", "New patients"), ("series", "Five Elements"), ("tea", "Tea"),
-    )
-    chip_html = "".join(
-        f'<button type="button" class="flh-chip" data-id="{i}">{e(label)}</button>' for i, label in chips
-    )
     return f"""<div class="flh-chat" id="flh-chat" data-endpoint="{e(CHAT)}">
   <button type="button" class="flh-chat-launch" aria-expanded="false" aria-controls="flh-chat-panel" aria-label="Ask the virtual assistant">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.2a1.5 1.5 0 0 1-1.5 1.5H10l-4.2 3.1a.6.6 0 0 1-.9-.5v-2.6H5A1.5 1.5 0 0 1 3.5 15.2V7A1.5 1.5 0 0 1 5 5.5z"/></svg>
@@ -426,8 +419,6 @@ def chat_widget():
     </div>
     <p class="flh-chat-note">Please don't share health details here. This assistant can't give medical advice.</p>
     <div class="flh-chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
-    <button type="button" class="flh-topics" hidden aria-expanded="false" aria-controls="flh-chat-chips">Topics</button>
-    <div class="flh-chat-chips" id="flh-chat-chips" role="group" aria-label="Common questions">{chip_html}</div>
     <form class="flh-chat-form">
       <label class="sr" for="flh-chat-q">Your question</label>
       <input id="flh-chat-q" class="flh-chat-input" maxlength="400" autocomplete="off" placeholder="Ask about fees, parking, booking">

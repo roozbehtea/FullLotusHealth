@@ -15,7 +15,7 @@
  */
 
 var FACTS_URL = 'https://www.fulllotushealth.com/llms.txt';
-var HOUR_CAP = 40;
+var HOUR_CAP = 120;
 
 function prop_(key) {
   return PropertiesService.getScriptProperties().getProperty(key) || '';
@@ -90,11 +90,12 @@ function factsText_() {
 }
 
 function ask_(key, facts, q) {
-  var model = prop_('GEMINI_MODEL') || 'gemini-2.0-flash';
+  var model = prop_('GEMINI_MODEL') || 'gemini-3.5-flash-lite';
   var system = [
     'You are the virtual assistant on the Full Lotus Health website, a small acupuncture clinic in Burbank.',
     'Answer in two or three short sentences, plain prose, no markdown, no bullet list.',
-    'Use ONLY the facts below. If they do not contain the answer, say you do not know and give the phone number from the facts.',
+    'For fees, hours, address, parking, policies, booking and the services offered, use ONLY the facts below, and never guess them. If the facts do not contain the answer, say you do not know and give the phone number from the facts.',
+    'For a general question about what acupuncture, microneedling, nanoneedling, Chinese herbs or a tea ceremony is, or what a visit feels like, you may answer in plain, modest terms from well-established general knowledge. Make no claim about results, and never say a treatment will help a condition.',
     'Never give medical advice, diagnose, or say a treatment will help a condition. For a health question, say Roozbeh can discuss it at a visit.',
     'The facts include blog posts, with a title and a short summary each. They are general reading. You may name a relevant post. Do not use a post to diagnose or to say a treatment will help.',
     'Do not invent offers, discounts, free consultations, guarantees, or testimonials.',
@@ -109,7 +110,7 @@ function ask_(key, facts, q) {
   var payload = {
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: [{ text: q }] }],
-    generationConfig: { maxOutputTokens: 220, temperature: 0.2 }
+    generationConfig: { maxOutputTokens: 1024, temperature: 0.3 }
   };
   var res = UrlFetchApp.fetch(url, {
     method: 'post',
@@ -117,7 +118,10 @@ function ask_(key, facts, q) {
     muteHttpExceptions: true,
     payload: JSON.stringify(payload)
   });
-  if (res.getResponseCode() !== 200) return '';
+  if (res.getResponseCode() !== 200) {
+    console.error('Gemini ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 300));
+    return '';
+  }
   var data = JSON.parse(res.getContentText());
   var parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
   if (!parts || !parts.length) return '';

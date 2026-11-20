@@ -420,7 +420,7 @@
     var facts = null;
     var factsP = null;
     var greeted = false;
-    var aiLeft = 6;
+    var aiLeft = 20;
     var busy = false;
 
     function loadFacts() {
@@ -467,18 +467,18 @@
       if (!ans) { localFallback(); return; }
       addMsg("bot", ans.text, ans.links);
     }
-    function askAI(text) {
+    function askAI(text, local) {
       aiLeft -= 1;
       busy = true;
       var pending = addMsg("bot", "One moment…", []);
       var url = endpoint + (endpoint.indexOf("?") >= 0 ? "&" : "?") + "action=chat&q=" + encodeURIComponent(text);
       var ctrl = typeof AbortController === "function" ? new AbortController() : null;
-      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
       fetch(url, { redirect: "follow", signal: ctrl ? ctrl.signal : undefined }).then(function (r) { return r.json(); }).then(function (data) {
         clearTimeout(timer);
         if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
         busy = false;
-        if (!data || data.fallback || !data.answer) { localFallback(); return; }
+        if (!data || data.fallback || !data.answer) { if (local) showAnswer(local); else localFallback(); return; }
         var answer = String(data.answer).replace(/\s+/g, " ").trim().slice(0, 700);
         if (!answer || /\b(this will help|yes, it will help|guaranteed to|cure your)\b/i.test(answer)) {
           showAnswer(medical(facts));
@@ -489,43 +489,26 @@
         clearTimeout(timer);
         if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
         busy = false;
-        localFallback();
+        if (local) showAnswer(local); else localFallback();
       });
     }
-    var topicsBtn = rootEl.querySelector(".flh-topics");
-    var chips = rootEl.querySelector(".flh-chat-chips");
     function revealEnd() {
       var go = function () { log.scrollTop = log.scrollHeight; };
       go();
       if (window.requestAnimationFrame) requestAnimationFrame(go);
     }
-    function collapseTopics() {
-      if (!topicsBtn || !chips || rootEl.classList.contains("is-asked")) return;
-      rootEl.classList.add("is-asked");
-      topicsBtn.hidden = false;
-      chips.hidden = true;
-      topicsBtn.setAttribute("aria-expanded", "false");
-      revealEnd();
-    }
-    if (topicsBtn && chips) {
-      topicsBtn.addEventListener("click", function () {
-        var open = chips.hidden;
-        chips.hidden = !open;
-        topicsBtn.setAttribute("aria-expanded", open ? "true" : "false");
-        if (!open) revealEnd();
-      });
-    }
-    function onQuestion(text, chipId) {
+    function onQuestion(text) {
       var trimmed = String(text || "").replace(/\s+/g, " ").trim();
       if (!trimmed || busy) return;
-      collapseTopics();
       addMsg("user", trimmed, []);
-      if (!chipId) input.value = "";
+      input.value = "";
       loadFacts().then(function () {
-        var ans = chipId ? replyById(facts, chipId) : reply(facts, trimmed);
-        if (ans) { showAnswer(ans); return; }
+        var local = reply(facts, trimmed);
+        /* Greetings and health-looking questions are always answered here and never sent to the service. */
+        if (local && (local.id === "hello" || local.id === "medical")) { showAnswer(local); return; }
         var words = trimmed.split(" ").length;
-        if (endpoint && aiLeft > 0 && trimmed.length >= 12 && trimmed.length <= 400 && words >= 2) askAI(trimmed);
+        if (endpoint && aiLeft > 0 && trimmed.length >= 8 && trimmed.length <= 400 && words >= 2) askAI(trimmed, local);
+        else if (local) showAnswer(local);
         else localFallback();
       }).catch(function () { showFail(); });
     }
@@ -549,12 +532,9 @@
     document.addEventListener("keydown", function (ev) {
       if (ev.key === "Escape" && !panel.hidden) { ev.preventDefault(); close(); }
     });
-    Array.prototype.forEach.call(rootEl.querySelectorAll(".flh-chip"), function (btn) {
-      btn.addEventListener("click", function () { onQuestion(btn.textContent, btn.getAttribute("data-id")); });
-    });
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
-      onQuestion(input.value, null);
+      onQuestion(input.value);
     });
     if (window.visualViewport) {
       var lift = function () {
