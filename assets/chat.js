@@ -559,6 +559,9 @@
     }
     window.addEventListener("resize", sizeSheet);
     sizeSheet();
+    var compact = function () { rootEl.classList.toggle("is-compact", (window.pageYOffset || 0) > 120); };
+    window.addEventListener("scroll", compact, { passive: true });
+    compact();
     if (window.requestIdleCallback) requestIdleCallback(function () { loadFacts().catch(function () {}); });
   }
 
