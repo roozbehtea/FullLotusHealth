@@ -486,7 +486,7 @@
         }
         var money = /\b(price|prices|cost|costs|fee|fees|how much|charge|rates?)\b/i.test(text);
         if (!money) answer = answer.replace(/\s*Everything can be seen and booked[^.]*\.?\s*$/i, "").trim();
-        addMsg("bot", answer, [{ href: "/book-online", label: money ? "See prices and book" : "Book a visit", primary: true }]);
+        addMsg("bot", answer, money ? [{ href: "/book-online", label: "See prices and book", primary: true }] : []);
       }).catch(function () {
         clearTimeout(timer);
         if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
