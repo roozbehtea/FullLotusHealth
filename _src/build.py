@@ -44,6 +44,7 @@ SKIN_INTAKE = CFG.get("skin_intake_url", "").strip()   # Skin Treatment Intake &
 SKIN_SLUGS = {"full-lotus-lift", "medical-microneedling-session", "facial-nano-needling"}
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
 TEASITS = CFG.get("teasits_url", "").strip() # optional: Apps Script web app for tea sit reservations (_src/teasits)
+SLOTS = CFG.get("slots_url", "").strip()   # optional: static copy of the open times (written by Booking.gs to the "slots" branch); the booking page reads it first and falls back to BOOKAPI
 BOOKAPI = (CFG.get("booking_api_url", "") or TEASITS).strip()   # optional: same web app also runs appointment booking (_src/booking); when set, /book/<service> is the on-site scheduler
 CHAT = CFG.get("chat_url", "").strip()   # optional: Apps Script for typed questions the guided chat does not recognize (_src/chat). Empty means guided chat only.
 missing = [k for k, v in (("booking_url or booking_urls", BOOK or BOOKS), ("intake_url", INTAKE)) if not v]
@@ -439,16 +440,23 @@ def chat_widget():
 
 
 def booking_head(slug):
-    """Start the open-times request before fonts and CSS, and remember a recent answer for the next visit."""
+    """Start the open-times request before fonts and CSS, and remember a recent answer for the next visit.
+    The saved file on GitHub is tried first (fast, no Apps Script); the Apps Script answer is the fallback."""
     if not BOOKAPI:
         return ""
     boot = json.dumps({
         "endpoint": BOOKAPI,
+        "slots": SLOTS,
         "slug": slug,
         "key": "fl-appt-slots-v1:" + slug,
         "ttl": 180000,
+        "maxAge": 5400000,   # the saved file is rewritten at least hourly; older than 90 minutes means the refresh stopped, so ask the calendar
     }, separators=(",", ":")).replace("<", "\\u003c")
-    return """<link rel="dns-prefetch" href="https://script.google.com">
+    hosts = ""
+    if SLOTS:
+        origin = "/".join(SLOTS.split("/")[:3])
+        hosts = f'<link rel="preconnect" href="{e(origin)}" crossorigin>\n'
+    return hosts + """<link rel="dns-prefetch" href="https://script.google.com">
 <link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <link rel="preconnect" href="https://script.google.com">
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
@@ -464,7 +472,18 @@ def booking_head(slug):
         window.__flAppt.cache = c.data;
     }
   } catch (e) {}
-  window.__flAppt.pending = fetch(boot.endpoint + "?action=appt_slots&service=" + encodeURIComponent(boot.slug) + "&span=soon", { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+  function live() {
+    return fetch(boot.endpoint + "?action=appt_slots&service=" + encodeURIComponent(boot.slug) + "&span=soon", { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+  }
+  function saved() {
+    if (!boot.slots) return Promise.reject(new Error("off"));
+    return fetch(boot.slots, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("none"); return r.json(); }).then(function (f) {
+      var p = f && f.services && f.services[boot.slug], age = Date.now() - ((f && f.generated) || 0);
+      if (!p || !p.days || !p.days.length || p.partial || age < -300000 || age > boot.maxAge) throw new Error("stale");
+      return p;
+    });
+  }
+  window.__flAppt.pending = saved().catch(live);
 })();
 </script>
 """.replace("__BOOT__", boot)

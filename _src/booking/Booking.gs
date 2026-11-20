@@ -22,9 +22,13 @@
  *   APPT_MAX_VISIBLE=3          openings shown per day, however much is free
  *   APPT_ROTATE=true            vary which free windows are shown from day to day
  *   APPT_NOTICE_HOURS=24  APPT_WINDOW_DAYS=21  APPT_CAPACITY=2 (treatment rooms)
- *   Open times are cached for 5 minutes so the page can answer quickly. The cache is never used to
+ *   Open times are cached so the page can answer quickly. The cache is never used to
  *   decide a booking: apptBook_ always rereads the calendar. Run apptInstallCache once to refresh
  *   that cache every 5 minutes. A hold, a payment, a release, or an expiry clears it.
+ *   GITHUB_TOKEN               optional. A GitHub token (Contents: read and write, this repository only). With it, every refresh
+ *                              also saves the open times as a small file on GitHub that the website reads first, so the page does
+ *                              not wait on Apps Script at all. Without it, nothing changes. GITHUB_REPO, SLOTS_BRANCH and
+ *                              SLOTS_PATH can override roozbehtea/fulllotushealth, slots and slots/slots.json.
  *   INTAKE_URL                  new patient form link
  *   INTAKE_SHEET_ID, SKIN_INTAKE_SHEET_ID   responses sheets checked to recognize returning patients
  *   SKIN_INTAKE_URL             Skin Treatment Intake & Consent link (skin services, in addition to the new patient form)
@@ -287,7 +291,7 @@ function apptDays_(items, minutes, cfg, nowMs, untilKey) {
 }
 
 // Display cache only. A booking never reads this: apptBook_ rereads the calendar inside a lock.
-var APPT_CACHE_SECS = 300;
+var APPT_CACHE_SECS = 600;      // longer than the 5-minute refresh, so the saved copy never lapses between refreshes
 var APPT_CACHE_GEN = 'appt-cache-gen';
 
 function apptCacheKey_(slug, today) { return 'appt-v1-' + slug + '-' + today; }
@@ -383,7 +387,7 @@ function apptSlots_(slug, span, after) {
   return apptSlotsCompute_(slug);
 }
 
-/** Every 5 minutes, from apptInstallCache: one calendar read, then a cached answer for every service. */
+/** Every 5 minutes, from apptInstallCache: one calendar read, then a cached answer for every service, and a static copy on GitHub. */
 function apptWarm() {
   var slugs = [], slug;
   for (slug in APPT_SERVICES) if (APPT_SERVICES.hasOwnProperty(slug)) slugs.push(slug);
@@ -391,13 +395,69 @@ function apptWarm() {
   var cfg = apptCfg_(), now = Date.now(), gen = apptCacheGen_();
   var today = dayKey_(now);
   var from = at_(today, 0), to = at_(addDays_(today, cfg.windowDays + 8), 0);
-  var items = apptBusy_(from, to, cfg), i;
+  var items = apptBusy_(from, to, cfg), i, payloads = {};
   for (i = 0; i < slugs.length; i++) {
     slug = slugs[i];
     try {
-      apptCacheWrite_(apptCacheKey_(slug, today), apptPayload_(slug, APPT_SERVICES[slug], apptDays_(items, APPT_SERVICES[slug].minutes, cfg, now), cfg, now), gen);
+      var payload = apptPayload_(slug, APPT_SERVICES[slug], apptDays_(items, APPT_SERVICES[slug].minutes, cfg, now), cfg, now);
+      apptCacheWrite_(apptCacheKey_(slug, today), payload, gen);
+      payloads[slug] = apptPublic_(payload);
     } catch (err) { console.error('warm ' + slug + ': ' + err); }
   }
+  try { apptPublish_(payloads, now); } catch (err) { console.error('publish: ' + err); }
+}
+
+// ---- Static copy of the open times. The website reads this small file first, so a visitor never waits on Apps Script.
+// Display only, like the cache: apptBook_ rereads the live calendar before any payment, so a stale copy can never double-book a time.
+var SLOTS_HEARTBEAT_MS = 55 * 60 * 1000;   // rewrite an unchanged file about hourly, so the page can tell the refresh is still running
+
+/** Saves every service's open times to GitHub when they changed (or about hourly). Returns 'off', 'busy', 'same', 'saved' or 'failed'. */
+function apptPublish_(payloads, now) {
+  var token = prop_('GITHUB_TOKEN', '');
+  if (!token) return 'off';
+  var n = 0, k;
+  for (k in payloads) if (payloads.hasOwnProperty(k)) n++;
+  if (!n) return 'failed';
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(3000)) return 'busy';
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var digest = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(payloads)));
+    var last = Number(props.getProperty('SLOTS_AT') || 0);
+    if (props.getProperty('SLOTS_DIGEST') === digest && now - last >= 0 && now - last < SLOTS_HEARTBEAT_MS) return 'same';
+    if (!apptGithubPut_(token, JSON.stringify({ generated: now, services: payloads }))) return 'failed';
+    props.setProperty('SLOTS_DIGEST', digest);
+    props.setProperty('SLOTS_AT', String(now));
+    return 'saved';
+  } finally { lock.releaseLock(); }
+}
+
+/** Creates or replaces one file through GitHub's contents API. Replacing needs the file's current sha; a wrong one is looked up again once. */
+function apptGithubPut_(token, text) {
+  var repo = prop_('GITHUB_REPO', 'roozbehtea/fulllotushealth'), branch = prop_('SLOTS_BRANCH', 'slots'), path = prop_('SLOTS_PATH', 'slots/slots.json');
+  var url = 'https://api.github.com/repos/' + repo + '/contents/' + path;
+  var headers = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  var props = PropertiesService.getScriptProperties();
+  var content = Utilities.base64Encode(Utilities.newBlob(text).getBytes());
+  for (var attempt = 0; attempt < 2; attempt++) {
+    var sha = attempt === 0 ? props.getProperty('SLOTS_SHA') : '';
+    if (!sha) {
+      var g = UrlFetchApp.fetch(url + '?ref=' + encodeURIComponent(branch), { headers: headers, muteHttpExceptions: true });
+      sha = g.getResponseCode() === 200 ? JSON.parse(g.getContentText()).sha : '';
+    }
+    var body = { message: 'Open times', content: content, branch: branch };
+    if (sha) body.sha = sha;
+    var r = UrlFetchApp.fetch(url, { method: 'put', contentType: 'application/json', headers: headers, payload: JSON.stringify(body), muteHttpExceptions: true });
+    var code = r.getResponseCode();
+    if (code === 200 || code === 201) {
+      try { props.setProperty('SLOTS_SHA', JSON.parse(r.getContentText()).content.sha); } catch (e) { props.deleteProperty('SLOTS_SHA'); }
+      return true;
+    }
+    props.deleteProperty('SLOTS_SHA');
+    if (code !== 409 && code !== 422) { console.error('github ' + code + ': ' + String(r.getContentText()).slice(0, 200)); return false; }
+  }
+  console.error('github: could not replace the open-times file');
+  return false;
 }
 
 /** Run once from the Apps Script editor after pasting this file. Safe to run again. */
@@ -407,7 +467,7 @@ function apptInstallCache() {
   });
   ScriptApp.newTrigger('apptWarm').timeBased().everyMinutes(5).create();
   apptWarm();
-  console.log('Open times are cached for 5 minutes and refreshed in the background.');
+  console.log('Open times are refreshed in the background every 5 minutes.' + (prop_('GITHUB_TOKEN', '') ? ' A copy is saved on GitHub for the website.' : ' Add GITHUB_TOKEN to also save a copy on GitHub for the website.'));
 }
 
 // ------------------------------------------------------------------ sheet
