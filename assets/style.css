@@ -132,6 +132,10 @@ img, svg { max-width: 100%; }
 .home-hero h1 { font-size: clamp(2.5rem, 4.6vw, 3.7rem); line-height: 1.06; letter-spacing: -0.01em; max-width: 12ch; margin-top: 0.15em; }
 .home-hero .lede { font-size: 1.125rem; color: var(--ink-muted); max-width: 44ch; }
 .home-hero .actions { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 1.5rem; align-items: center; }
+/* Phones: the card runs full width so the photo ends in one clean straight edge, not strips on either side. */
+@media (max-width: 39.99rem) {
+  .hh-panel { max-width: none; margin-inline: 0; padding-inline: var(--gutter); }
+}
 @media (min-width: 40rem) and (max-width: 55.99rem) { .hh-panel { margin-inline: auto; } }
 @media (min-width: 56rem) {
   .home-hero { padding-block: 0; }  /* the photo sits directly on the trust bar */
@@ -880,6 +884,9 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .flh-chat-fail { margin: 0; padding: 0 0.95rem 0.8rem; font-size: 0.875rem; }
 @media (max-width: 52rem) {
   body.has-sticky .flh-chat { bottom: calc(7.4rem + env(safe-area-inset-bottom)); }
+  /* After the first scroll the Ask pill shrinks to a round icon so it covers less of the page. */
+  .flh-chat.is-compact:not(.is-open) .flh-chat-launch { width: 3rem; height: 3rem; min-height: 0; padding: 0; justify-content: center; }
+  .flh-chat.is-compact:not(.is-open) .flh-chat-launch span { display: none; }
   /* Phones: a full-screen sheet that follows the visible area (set by chat.js), so the keyboard never hides it. */
   .flh-chat.is-open { z-index: 1000; }
   .flh-chat.is-open .flh-chat-launch { display: none; }
