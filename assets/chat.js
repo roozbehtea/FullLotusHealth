@@ -272,7 +272,7 @@
   }
 
   var BY_ID = {
-    hello: hello, prices: prices, services: prices, book: book, where: where, hours: hours,
+    hello: hello, prices: prices, price: prices, services: prices, book: book, where: where, hours: hours,
     cancel: cancel, pay: pay, intake: intake, series: series, tea: tea, contact: contact,
     who: who, also: also, insurance: insurance, offer: offer, scope: scope, medical: medical
   };
@@ -479,12 +479,13 @@
         if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
         busy = false;
         if (!data || data.fallback || !data.answer) { if (local) showAnswer(local); else localFallback(); return; }
-        var answer = String(data.answer).replace(/\s+/g, " ").trim().slice(0, 700);
+        var answer = String(data.answer).replace(/\b(at|on|via|from)\s+https?:\/\/www\.fulllotushealth\.com\/book-online\/?/gi, "on the booking page").replace(/https?:\/\/www\.fulllotushealth\.com\/book-online\/?/gi, "the booking page").replace(/\s+/g, " ").trim().slice(0, 1000);
         if (!answer || /\b(this will help|yes, it will help|guaranteed to|cure your)\b/i.test(answer)) {
           showAnswer(medical(facts));
           return;
         }
-        addMsg("bot", answer, [{ href: "/book-online", label: "Book a visit", primary: true }]);
+        var money = /\b(price|prices|cost|costs|fee|fees|how much|charge|rates?)\b/i.test(text);
+        addMsg("bot", answer, [{ href: "/book-online", label: money ? "See prices and book" : "Book a visit", primary: true }]);
       }).catch(function () {
         clearTimeout(timer);
         if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
