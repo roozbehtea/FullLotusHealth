@@ -90,6 +90,7 @@ const S={view:"points",ch:"LU",q:"",cat:"",safePreg:false,open:null,plan:newPlan
 function loadState(){
   const raw=safeGet("pf-state");
   if(raw){ try{ const d=JSON.parse(raw); if(d.plan){S.plan=Object.assign(newPlan(),d.plan); S.plan.items=S.plan.items.filter(i=>PT[i.code]);} S.ch=d.ch||"LU"; S.caseText=d.caseText||""; return; }catch(e){} }
+  if(EHR) return; // inside the EHR, start empty so an example is never saved to a patient
   S.example=true;
   S.plan=Object.assign(newPlan(),{name:"Example: insomnia with liver constraint",items:[
     {code:"LI4",side:"B",tech:"even"},{code:"LR3",side:"B",tech:"reduce"},{code:"HT7",side:"B",tech:"even"},{code:"SP6",side:"B",tech:"tonify"},{code:"Yintang",side:"M",tech:"even"},{code:"Anmian",side:"B",tech:"even"}]});
@@ -382,6 +383,7 @@ document.addEventListener("click",e=>{
     case "combo-add": { const c=COMBOS.find(x=>x.name===id); let n=0; c.points.forEach(p=>{ if(addPoint(p)) n++; }); toast(n?`Added ${n} point${n===1?"":"s"} from ${c.name}`:"Already in the plan"); afterPlan(); break; }
     case "pick-point": addPoint(id); $("#plan-add").value=""; afterPlan(); setTimeout(()=>$("#plan-add")?.focus(),0); break;
     case "plan-copy": copyText(planText(),"Plan"); break;
+    case "ehr-save": ehrSavePlan(); break;
     case "plan-save": savePlan(); break;
     case "plan-new": S.plan=newPlan(); S.example=false; S.suggest=null; afterPlan(); toast("New empty plan"); break;
     case "clear-example": S.plan=newPlan(); S.example=false; afterPlan(); break;
@@ -433,8 +435,28 @@ function renderAdd(v){
 window.addEventListener("hashchange",()=>setView(location.hash.slice(1)));
 WIDE.addEventListener?.("change",()=>setView(location.hash.slice(1)||S.view));
 
+
+// ───────────────────────── EHR link (opened from the clinic EHR's Clinic Tools menu)
+const EHR = /[?&]ehr=1(&|$)/.test(location.search) && window.parent !== window;
+function ehrPost(payload){ try{ window.parent.postMessage({source:"fl-clinic-tools", v:1, payload}, "*"); return true; }catch(e){ return false; } }
+window.addEventListener("message", e=>{
+  const d=e.data; if(!EHR || !d || d.source!=="fl-ehr" || e.source!==window.parent) return;
+  if(d.type==="saved") toast(d.message||"Saved to the chart");
+  if(d.type==="error") toast(d.message||"The chart could not be updated.");
+});
+
+const MODALITY = {even:"Acupuncture",tonify:"Acupuncture",reduce:"Acupuncture",electro:"Electroacupuncture",bleed:"Bloodletting",moxa:"Moxibustion",cup:"Cupping"};
+function ehrPlan(){
+  const r=planRecord();
+  return {kind:"points", name:r.name, notes:r.notes, needles:r.needles,
+    checks:planChecks().map(w=>({level:w.sev, text:w.html.replace(/<[^>]+>/g,"")})),
+    points:S.plan.items.map(i=>({code:EHR_CODES[i.code]||PT[i.code].label, pinyin:PT[i.code].py, hanzi:PT[i.code].cn, side:SIDES[i.side], technique:TECH[i.tech], modality:MODALITY[i.tech]||"Acupuncture", tung:PT[i.code].tung}))};
+}
+function ehrSavePlan(){ if(!S.plan.items.length){ toast("Add points before saving to the chart"); return; } if(ehrPost(ehrPlan())) toast("Choose the patient and visit above, then confirm"); }
+
 // ───────────────────────── Boot
 $("#p-cat").innerHTML=CAT_FILTERS.map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
 $("#plan-status").innerHTML=Object.entries(STATUSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
 $("#stat-line").textContent=`${POINTS.filter(p=>p.ch!=="EX"&&!p.tung).length} channel points · ${POINTS.filter(p=>p.ch==="EX").length} extra · ${POINTS.filter(p=>p.tung).length} Tung`;
+if(EHR){ $("#btn-ehr").hidden=false; $("#btn-plan-save").classList.remove("primary"); }
 loadState(); updateCount(); renderPlan(); setView(location.hash.slice(1)||"points");

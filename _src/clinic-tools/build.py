@@ -9,7 +9,7 @@ OUT = ROOT / "clinic-tools"
 
 APPS = {
     "formula-maker": {"css": ["style.css"], "data": ["herbs.js", "formulas.js", "patterns.js"]},
-    "point-finder": {"css": ["base.css", "points.css"], "data": ["pts1.js", "pts2.js", "pts3.js", "tung.js"]},
+    "point-finder": {"css": ["base.css", "points.css"], "data": ["pts1.js", "pts2.js", "pts3.js", "tung.js", "ehr-codes.js"]},
 }
 
 HEAD = """<!doctype html>

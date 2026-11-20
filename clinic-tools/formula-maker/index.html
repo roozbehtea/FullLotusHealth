@@ -393,6 +393,7 @@ table.lines tr.over input{border-color:var(--amber);color:var(--amber)}
     </div>
   </div>
   <div class="rx-actions">
+    <button class="btn primary" id="btn-ehr" data-act="ehr-save" hidden>Save to chart</button>
     <button class="btn primary" id="btn-save" data-act="save">Save to library</button>
     <button class="btn" data-act="copy-text">Copy order</button>
     <button class="btn" data-act="copy-json">Copy JSON</button>
@@ -1516,6 +1517,7 @@ const S = { view:"diagnose", signs:new Set(), signQ:"", example:false, intake:""
 function loadState(){
   const raw = safeGet("fm-state");
   if(raw){ try{ const d=JSON.parse(raw); S.signs=new Set((d.signs||[]).filter(s=>SIGNS[s])); if(d.rx){ S.rx=Object.assign(newRx(),d.rx); S.rx.items=S.rx.items.filter(i=>H[i.id]); } S.intake=d.intake||""; return; }catch(e){} }
+  if(EHR) return; // inside the EHR, start empty so an example is never saved to a patient
   // Example case for a first visit
   S.example = true;
   ["fatigue","heat_sens","sp_sweat","thirst_warm","poor_appetite","loose_stool","t_pale","t_teeth","p_big_weak"].forEach(s=>S.signs.add(s));
@@ -2017,6 +2019,7 @@ document.addEventListener("click", e=>{
     case "rx-form": S.rx.form=b.dataset.v; afterRx(); break;
     case "pick-herb": addHerb(id); $("#rx-add").value=""; afterRx(); setTimeout(()=>$("#rx-add")?.focus(),0); break;
     case "copy-text": copyText(orderText(),"Order text"); break;
+    case "ehr-save": ehrSaveFormula(); break;
     case "copy-json": copyText(JSON.stringify(rxRecord(),null,2),"JSON"); break;
     case "save": saveRx(); break;
     case "new-rx": S.rx=newRx(); S.review=null; afterRx(); toast("New empty slip"); break;
@@ -2077,12 +2080,41 @@ document.addEventListener("focusout", e=>{ if(e.target.id==="rx-add") setTimeout
 window.addEventListener("hashchange",()=>setView(location.hash.slice(1)));
 WIDE.addEventListener?.("change",()=>setView(location.hash.slice(1)||S.view));
 
+
+// ───────────────────────── EHR link (opened from the clinic EHR's Clinic Tools menu)
+const EHR = /[?&]ehr=1(&|$)/.test(location.search) && window.parent !== window;
+function ehrPost(payload){ try{ window.parent.postMessage({source:"fl-clinic-tools", v:1, payload}, "*"); return true; }catch(e){ return false; } }
+window.addEventListener("message", e=>{
+  const d=e.data; if(!EHR || !d || d.source!=="fl-ehr" || e.source!==window.parent) return;
+  if(d.type==="saved") toast(d.message||"Saved to the chart");
+  if(d.type==="error") toast(d.message||"The chart could not be updated.");
+});
+
+const EHR_HERB = {bei_sha_shen:"Bei Sha Shen"};
+function prepNoteFor(id){ const n=(H[id].note||"").toLowerCase(), out=[];
+  if(/cook first|cook 30/.test(n)) out.push("Cook first"); if(/add (at|near) the end|add late|add near/.test(n)) out.push("Add near the end");
+  if(/wrap/.test(n)) out.push("Wrap in cloth"); if(/dissolve|melt/.test(n)) out.push("Dissolve in the strained decoction"); if(/cook separately/.test(n)) out.push("Cook separately");
+  return out.join("; "); }
+function ehrFormula(){
+  const r=rxRecord(), d=diff(), base=S.rx.baseId?F[S.rx.baseId]:null;
+  const parts=[];
+  if(d.added.length) parts.push("added "+d.added.map(id=>`${H[id].py} ${fmt(S.rx.items[itemIndex(id)].dose)} g`).join(", "));
+  if(d.removed.length) parts.push("removed "+d.removed.map(id=>H[id].py).join(", "));
+  if(d.changed.length) parts.push("changed "+d.changed.map(id=>`${H[id].py} ${fmt(S.rx.baseHerbs[id])} to ${fmt(S.rx.items[itemIndex(id)].dose)} g`).join(", "));
+  return {kind:"formula", name:r.name, baseFormula:base?base.py:"", modifications:base?(parts.join("; ")||"unmodified"):"", form:r.form, bags:r.bags,
+    granuleRatio:r.granuleRatio, totalPerBag:r.totalPerBag, granulePerDay:r.granulePerDay, notes:r.notes, patterns:r.patterns,
+    checks:warnings().map(w=>({level:w.sev, text:w.html.replace(/<[^>]+>/g,"")})),
+    herbs:r.herbs.map(h=>({herb:EHR_HERB[h.id]||h.pinyin, hanzi:h.hanzi, grams:h.dose, granuleGrams:h.granuleDose, note:prepNoteFor(h.id)}))};
+}
+function ehrSaveFormula(){ if(!S.rx.items.length){ toast("Add herbs before saving to the chart"); return; } if(ehrPost(ehrFormula())) toast("Choose the patient above, then confirm"); }
+
 // ───────────────────────── Boot
 function boot(){
   $("#h-ch").innerHTML = `<option value="">Any channel</option>`+Object.entries(CHANNELS).map(([k,v])=>`<option value="${k}">${v} (${k})</option>`).join("");
   $("#h-cat").innerHTML = `<option value="">Any category</option>`+Object.entries(HERB_CATS).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
   $("#rx-status").innerHTML = Object.entries(STATUSES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   $("#stat-line").textContent = `${HERBS.length} herbs · ${FORMULAS.length} formulas · ${PATTERNS.length} patterns`;
+  if(EHR){ $("#btn-ehr").hidden=false; $("#btn-save").classList.remove("primary"); }
   loadState(); updateRxCount(); renderRx();
   setView(location.hash.slice(1)||"diagnose");
 }
