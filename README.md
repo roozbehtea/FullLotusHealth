@@ -24,3 +24,5 @@ The SVGs are auto-traced from the design-system files. Have a designer redraw th
 `/clinic-tools/` holds Formula Maker and Point Finder, private working tools for the clinic. They are not linked from any page, not in the sitemap, and every page carries `noindex, nofollow`. Anyone with the address can still open them, and the source is public in this repo. Saved formulas and plans stay in the visitor's browser only.
 
 Sources are in `_src/clinic-tools/`. Rebuild with `python3 _src/clinic-tools/build.py` (separate from the main site build).
+
+`_src/clinic-tools/cli/rx.js` runs the same data and checks from the command line (`node _src/clinic-tools/cli/rx.js` for help). Claude uses it to work a case from notes and produce rows for the clinic EHR Sheet. It holds no patient data.
