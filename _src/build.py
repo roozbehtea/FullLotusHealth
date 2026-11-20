@@ -437,7 +437,39 @@ def chat_widget():
 <script src="/assets/chat.js" defer></script>"""
 
 
-def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True):
+def booking_head(slug):
+    """Start the open-times request before fonts and CSS, and remember a recent answer for the next visit."""
+    if not BOOKAPI:
+        return ""
+    boot = json.dumps({
+        "endpoint": BOOKAPI,
+        "slug": slug,
+        "key": "fl-appt-slots-v1:" + slug,
+        "ttl": 180000,
+    }, separators=(",", ":")).replace("<", "\\u003c")
+    return """<link rel="dns-prefetch" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<script>
+(function () {
+  var boot = __BOOT__;
+  window.__flAppt = { slug: boot.slug, cache: null, pending: null };
+  try {
+    var raw = localStorage.getItem(boot.key);
+    if (raw) {
+      var c = JSON.parse(raw);
+      if (c && c.t && (Date.now() - c.t) < boot.ttl && c.data && c.data.days && c.data.days.length && c.data.service && c.data.service.slug === boot.slug && !c.data.partial)
+        window.__flAppt.cache = c.data;
+    }
+  } catch (e) {}
+  window.__flAppt.pending = fetch(boot.endpoint + "?action=appt_slots&service=" + encodeURIComponent(boot.slug) + "&span=soon", { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+})();
+</script>
+""".replace("__BOOT__", boot)
+
+
+def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True, head_extra=""):
     canon = canonical or (SITE + (path if path != "/" else "/"))
     current = current or path   # pages that don't name a menu item still light up their own link
     nav_items = []
@@ -494,7 +526,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <meta name="theme-color" content="#f4ecdf">
 <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+{head_extra}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
@@ -1083,7 +1115,7 @@ def confirm_pages():
 {series}
 <div id="sched" class="sch" data-endpoint="{e(BOOKAPI)}" data-service="{e(s["slug"])}"{gl}>
   <p class="sch-status notice" role="status" aria-live="polite" hidden></p>
-  <div class="sch-cal"><p class="fine">Loading times&hellip;</p></div>
+  <div class="sch-cal" aria-busy="true"><p class="sch-finding" role="status">Finding open times…</p><div class="sch-grid" aria-hidden="true">{"".join(f'<span class="sch-dow">{d}</span>' for d in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))}{"".join('<span class="sch-day sk"></span>' for _ in range(35))}</div></div>
   <div class="sch-times"></div>
   <div class="sch-details"></div>
   <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
@@ -1092,7 +1124,7 @@ def confirm_pages():
 {new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section><script src="/assets/booking.js" defer></script>'''
-            OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
+            OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True, head_extra=booking_head(s["slug"]))
             continue
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
         opt2 = ""

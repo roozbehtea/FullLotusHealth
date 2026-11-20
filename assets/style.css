@@ -787,6 +787,9 @@ p, li, dd, blockquote { text-wrap: pretty; }
 /* online booking: day grid, times, details (assets/booking.js) */
 .sch { max-width: 44rem; margin-top: var(--space-3); }
 .sch-cal, .sch-times, .sch-details { margin-bottom: var(--space-3); }
+.sch-finding { margin: 0 0 0.9rem; font-weight: 500; color: var(--ink); }
+.sch-day.sk { background: var(--surface-200); border-color: transparent; color: var(--ink-muted); }
+.sch-day.pend { background: var(--surface-200); color: var(--ink-muted); }
 .sch-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .sch-dow { text-align: center; font-size: 0.8125rem; font-weight: 600; color: var(--ink-muted); letter-spacing: 0.04em; text-transform: uppercase; }
 .sch-day { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; min-height: 2.75rem; padding: 0.25rem; font: inherit; font-size: 0.9375rem; font-variant-numeric: lining-nums tabular-nums; color: var(--ink); background: transparent; border: 2px solid transparent; border-radius: var(--radius-sm); }
@@ -815,7 +818,7 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .sch-fields .sch-check input { width: 1.25rem; height: 1.25rem; padding: 0; margin: 0; accent-color: var(--lapis); flex: none; }
 .linkish { font: inherit; padding: 0; color: var(--cinnabar); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px; cursor: pointer; }
 .linkish:hover { color: var(--cinnabar-deep); text-decoration-thickness: 2px; }
-@media (prefers-reduced-motion: reduce) { .sch * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .sch * { transition: none !important; animation: none !important; } }
 
 /* Clinic map: homepage Visit section, new-patients page, and the footer elsewhere. */
 .visit-map { margin: 0; background: var(--surface-200); border-radius: var(--radius-md); overflow: hidden; }
