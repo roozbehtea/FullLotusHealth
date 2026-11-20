@@ -420,7 +420,7 @@
     var facts = null;
     var factsP = null;
     var greeted = false;
-    var aiLeft = 20;
+    var aiLeft = 50;
     var busy = false;
 
     function loadFacts() {

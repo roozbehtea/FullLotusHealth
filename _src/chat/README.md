@@ -37,7 +37,7 @@ Google AI Studio's free tier covers the short answers a low-traffic site produce
 
 Guards if traffic is higher than expected:
 
-- The page sends at most 20 typed questions per visit, then uses the guided reply.
+- The page sends at most 50 typed questions per visit, then uses the guided reply.
 - The script stops at 120 model calls per hour, then uses the guided reply.
 - A missing key, a model error, or a failed read of `llms.txt` uses the guided reply.
 
