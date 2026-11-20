@@ -22,6 +22,9 @@
  *   APPT_MAX_VISIBLE=3          openings shown per day, however much is free
  *   APPT_ROTATE=true            vary which free windows are shown from day to day
  *   APPT_NOTICE_HOURS=24  APPT_WINDOW_DAYS=21  APPT_CAPACITY=2 (treatment rooms)
+ *   Open times are cached for 5 minutes so the page can answer quickly. The cache is never used to
+ *   decide a booking: apptBook_ always rereads the calendar. Run apptInstallCache once to refresh
+ *   that cache every 5 minutes. A hold, a payment, a release, or an expiry clears it.
  *   INTAKE_URL                  new patient form link
  *   INTAKE_SHEET_ID, SKIN_INTAKE_SHEET_ID   responses sheets checked to recognize returning patients
  *   SKIN_INTAKE_URL             Skin Treatment Intake & Consent link (skin services, in addition to the new patient form)
@@ -141,7 +144,7 @@ function apptFormsNote_(slug, svc, email, phone, ticked) {
 
 // ------------------------------------------------------------------ entry points (called from Code.gs)
 function apptGet_(p) {
-  if (p.action === 'appt_slots') return apptSlots_(String(p.service || ''));
+  if (p.action === 'appt_slots') return apptSlots_(String(p.service || ''), String(p.span || ''), String(p.after || ''));
   if (p.action === 'appt_confirm') return apptConfirm_(String(p.session || ''));
   if (p.action === 'appt_release') return apptRelease_(String(p.session || ''));
   return { error: 'bad_request' };
@@ -234,8 +237,8 @@ function freeStarts_(items, key, minutes, cfg, nowMs) {
  *  - A day with nothing to show comes back with no slots, and the page offers the waitlist.
  * `items` are the busy items from apptBusy_, `minutes` the service length.
  */
-function apptDays_(items, minutes, cfg, nowMs) {
-  var today = dayKey_(nowMs), last = addDays_(today, cfg.windowDays), days = [];
+function apptDays_(items, minutes, cfg, nowMs, untilKey) {
+  var today = dayKey_(nowMs), last = untilKey || addDays_(today, cfg.windowDays), days = [];
   var weekFull = {};   // week start -> true when no core day that week has any opening left
   function coreHasRoom(wk) {
     if (weekFull[wk] !== undefined) return !weekFull[wk];
@@ -283,16 +286,128 @@ function apptDays_(items, minutes, cfg, nowMs) {
   return days;
 }
 
-function apptSlots_(slug) {
+// Display cache only. A booking never reads this: apptBook_ rereads the calendar inside a lock.
+var APPT_CACHE_SECS = 300;
+var APPT_CACHE_GEN = 'appt-cache-gen';
+
+function apptCacheKey_(slug, today) { return 'appt-v1-' + slug + '-' + today; }
+function apptSoonKey_(slug, today) { return 'appt-soon-v1-' + slug + '-' + today; }
+function apptCacheGen_() {
+  try { return CacheService.getScriptCache().get(APPT_CACHE_GEN) || '0'; }
+  catch (e) { return '0'; }
+}
+function apptCacheBump_() {
+  try { CacheService.getScriptCache().put(APPT_CACHE_GEN, String(Date.now()), 21600); }
+  catch (e) { console.error('appt cache bump: ' + e); }
+}
+function apptCacheRead_(key, gen) {
+  try {
+    var raw = CacheService.getScriptCache().get(key);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (!parsed || !parsed.days || String(parsed.gen) !== String(gen)) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+function apptCacheWrite_(key, payload, gen) {
+  if (apptCacheGen_() !== gen) return;                         // a booking landed while we were computing: do not put the stale copy back
+  try {
+    payload.gen = gen;
+    CacheService.getScriptCache().put(key, JSON.stringify(payload), APPT_CACHE_SECS);
+  } catch (e) { console.error('appt cache put: ' + e); }
+}
+function apptPublic_(payload) {
+  if (!payload) return payload;
+  var out = {};
+  for (var k in payload) if (payload.hasOwnProperty(k) && k !== 'gen') out[k] = payload[k];
+  return out;
+}
+function apptService_(slug, svc) {
+  return { slug: slug, name: svc.name, minutes: svc.minutes, price: svc.price, intake: !!svc.intake, series: !!svc.series, online: !!svc.online };
+}
+/** Sunday of the week that contains the day a week from today, so the first answer covers the next open days and a whole week of the extra-day rule. */
+function apptSoonThrough_(today) {
+  var horizon = addDays_(today, 6);
+  return addDays_(horizon, 7 - dow_(at_(horizon, 720)));
+}
+function apptPayload_(slug, svc, days, cfg, now, extra) {
+  var out = { service: apptService_(slug, svc), today: dayKey_(now), windowDays: cfg.windowDays, days: days };
+  if (extra) for (var k in extra) if (extra.hasOwnProperty(k)) out[k] = extra[k];
+  return out;
+}
+function apptSlotsCompute_(slug, items) {
   var svc = APPT_SERVICES[slug];
   if (!svc) return { error: 'service' };
-  var cfg = apptCfg_(), now = Date.now();
-  var from = at_(dayKey_(now), 0), to = at_(addDays_(dayKey_(now), cfg.windowDays + 8), 0);
-  var days = apptDays_(apptBusy_(from, to, cfg), svc.minutes, cfg, now);
-  return {
-    service: { slug: slug, name: svc.name, minutes: svc.minutes, price: svc.price, intake: svc.intake, series: svc.series, online: svc.online },
-    today: dayKey_(now), windowDays: cfg.windowDays, days: days
-  };
+  var cfg = apptCfg_(), now = Date.now(), gen = apptCacheGen_();
+  var today = dayKey_(now);
+  var from = at_(today, 0), to = at_(addDays_(today, cfg.windowDays + 8), 0);
+  var days = apptDays_(items || apptBusy_(from, to, cfg), svc.minutes, cfg, now);
+  var payload = apptPayload_(slug, svc, days, cfg, now);
+  apptCacheWrite_(apptCacheKey_(slug, today), payload, gen);
+  return apptPublic_(payload);
+}
+function apptSlotsSoon_(slug) {
+  var svc = APPT_SERVICES[slug];
+  if (!svc) return { error: 'service' };
+  var cfg = apptCfg_(), now = Date.now(), gen = apptCacheGen_();
+  var today = dayKey_(now), through = apptSoonThrough_(today);
+  var hit = apptCacheRead_(apptSoonKey_(slug, today), gen);
+  if (hit) return apptPublic_(hit);
+  var from = at_(weekStart_(today), 0), to = at_(addDays_(through, 1), 0);
+  var days = apptDays_(apptBusy_(from, to, cfg), svc.minutes, cfg, now, through);
+  var payload = apptPayload_(slug, svc, days, cfg, now, { partial: true, through: through });
+  apptCacheWrite_(apptSoonKey_(slug, today), payload, gen);
+  return apptPublic_(payload);
+}
+function apptSliceRest_(full, after) {
+  var days = [], out = apptPublic_(full), i;
+  for (i = 0; i < full.days.length; i++) if (!after || full.days[i].date > after) days.push(full.days[i]);
+  out.days = days;
+  out.partial = false;
+  return out;
+}
+/**
+ * span=soon returns the next open days first (a short calendar read) when nothing is cached.
+ * A warm cache returns the whole window in that same request, so the page does not make a second round trip.
+ * span=rest returns the days after `after`. Anything else returns the whole window.
+ */
+function apptSlots_(slug, span, after) {
+  var svc = APPT_SERVICES[slug];
+  if (!svc) return { error: 'service' };
+  if (after && !/^\d{4}-\d{2}-\d{2}$/.test(after)) after = '';
+  var today = dayKey_(Date.now()), gen = apptCacheGen_();
+  var full = apptCacheRead_(apptCacheKey_(slug, today), gen);
+  if (span === 'rest') return apptSliceRest_(full || apptSlotsCompute_(slug), after || '');
+  if (full) return apptPublic_(full);
+  if (span === 'soon') return apptSlotsSoon_(slug);
+  return apptSlotsCompute_(slug);
+}
+
+/** Every 5 minutes, from apptInstallCache: one calendar read, then a cached answer for every service. */
+function apptWarm() {
+  var slugs = [], slug;
+  for (slug in APPT_SERVICES) if (APPT_SERVICES.hasOwnProperty(slug)) slugs.push(slug);
+  if (!slugs.length) return;
+  var cfg = apptCfg_(), now = Date.now(), gen = apptCacheGen_();
+  var today = dayKey_(now);
+  var from = at_(today, 0), to = at_(addDays_(today, cfg.windowDays + 8), 0);
+  var items = apptBusy_(from, to, cfg), i;
+  for (i = 0; i < slugs.length; i++) {
+    slug = slugs[i];
+    try {
+      apptCacheWrite_(apptCacheKey_(slug, today), apptPayload_(slug, APPT_SERVICES[slug], apptDays_(items, APPT_SERVICES[slug].minutes, cfg, now), cfg, now), gen);
+    } catch (err) { console.error('warm ' + slug + ': ' + err); }
+  }
+}
+
+/** Run once from the Apps Script editor after pasting this file. Safe to run again. */
+function apptInstallCache() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'apptWarm') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('apptWarm').timeBased().everyMinutes(5).create();
+  apptWarm();
+  console.log('Open times are cached for 5 minutes and refreshed in the background.');
 }
 
 // ------------------------------------------------------------------ sheet
@@ -337,11 +452,12 @@ function apptBook_(b) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
+    // Live calendar, never the display cache. A slot shown from cache is accepted only if it is still offered here.
     var now = Date.now();
     var from = at_(dayKey_(now), 0), to = at_(addDays_(dayKey_(now), cfg.windowDays + 8), 0);
     var days = apptDays_(apptBusy_(from, to, cfg), svc.minutes, cfg, now);
     var offered = days.some(function (d) { return d.slots.some(function (s) { return Date.parse(s.start) === startMs; }); });
-    if (!offered) return { error: 'taken' };                              // someone else got it, or it is no longer offered
+    if (!offered) { apptCacheBump_(); return { error: 'taken' }; }       // someone else got it, or it is no longer offered
 
     var endMs = startMs + svc.minutes * 60000;
     var when = whenLabel_(startMs, endMs);
@@ -364,6 +480,7 @@ function apptBook_(b) {
     });
     apptSheet_(APPT_SHEET, APPT_HEADERS).appendRow([new Date(), Utilities.getUuid().slice(0, 8), String(b.service), svc.name,
       new Date(startMs), new Date(endMs), when, name, email, phone, note, 'pending', session.id, '', '', '', '']);
+    apptCacheBump_();                                                    // the hold takes the slot; the next page load must not offer it
     return { ok: true, url: session.url, session: session.id };
   } finally {
     lock.releaseLock();
@@ -379,13 +496,15 @@ function apptConfirm_(session) {
   try {
     found = apptFind_(session);
     if (!found) return { error: 'not_found' };
-    if (found.row[AC.status - 1] !== 'paid') {
+    var wasPaid = found.row[AC.status - 1] === 'paid', hadEvent = !!found.row[AC.eventId - 1];
+    if (!wasPaid) {
       var s = stripe_('get', '/v1/checkout/sessions/' + session);
       if (!paidOk_(s)) return { ok: false, status: s.status };
       apptSet_(found.index, { status: 'paid', amount: (s.amount_total || 0) / 100, paidAt: new Date() });
     }
     apptFinish_(session);                       // calendar event, then emails; inside the lock so two confirms can't both run
     found = apptFind_(session);
+    if (!wasPaid || (!hadEvent && found.row[AC.eventId - 1])) apptCacheBump_();
   } finally {
     lock.releaseLock();
   }
@@ -406,6 +525,7 @@ function apptRelease_(session) {
     if (paidOk_(s)) return { ok: true };
     if (s.status === 'open') stripe_('post', '/v1/checkout/sessions/' + session + '/expire', {});
     apptSet_(found.index, { status: 'cancelled' });
+    apptCacheBump_();                               // the hold is gone, so the time can show again
     return { ok: true };
   } finally {
     lock.releaseLock();
@@ -416,13 +536,17 @@ function apptRelease_(session) {
 function apptReconcile_() {
   var cutoff = Date.now() - APPT_HOLD_MINUTES * 60000;
   var rs = apptRows_();
+  var freed = false;
   for (var i = 0; i < rs.length; i++) {
     var r = rs[i], session = r[AC.session - 1], st = r[AC.status - 1];
     try {
       if (st === 'pending') {
         var s = stripe_('get', '/v1/checkout/sessions/' + session);
-        if (paidOk_(s)) apptConfirm_(session);
-        else if (s.status === 'expired' || new Date(r[AC.created - 1]).getTime() < cutoff) apptSet_(i + 2, { status: 'expired' });
+        if (paidOk_(s)) apptConfirm_(session);             // confirm clears the cache itself when the calendar changes
+        else if (s.status === 'expired' || new Date(r[AC.created - 1]).getTime() < cutoff) {
+          apptSet_(i + 2, { status: 'expired' });
+          freed = true;
+        }
       } else if (st === 'paid' && (!r[AC.eventId - 1] || !r[AC.emailed - 1])) {
         apptConfirm_(session);
       }
@@ -430,6 +554,7 @@ function apptReconcile_() {
       console.error('appt reconcile ' + session + ': ' + err);
     }
   }
+  if (freed) apptCacheBump_();
 }
 
 /** Create the calendar event and send the emails. Safe to run twice: each step is skipped once done. */

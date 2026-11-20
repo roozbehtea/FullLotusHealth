@@ -31,8 +31,8 @@ const SpreadsheetApp = { openById(id) { const t = sheets[id]; if (!t) throw new 
     getRange: (r, c, nr, nc) => ({ getValues: () => t.slice(r - 1, r - 1 + nr).map(row => row.slice(c - 1, c - 1 + nc)) }) }] }; } };
 const ctx = { Utilities, SpreadsheetApp, console, TZ, prop_: (k, d) => d, cfg_: () => ({ match: 'tea sit' }), Date, Math, JSON, String, parseInt, parseFloat, isNaN, Array, Object };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname, 'Booking.gs'), 'utf8') + '\nthis.__api={AC,apptFormsNote_,apptFormList_,apptCfg_,apptDays_,apptCfg_,slotFree_,at_,addDays_,dayKey_,dow_,APPT_SERVICES};', ctx);
-const { AC, apptFormsNote_, apptFormList_, apptDays_, apptCfg_, at_, addDays_, dayKey_, dow_, APPT_SERVICES } = ctx.__api;
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'Booking.gs'), 'utf8') + '\nthis.__api={AC,apptFormsNote_,apptFormList_,apptCfg_,apptDays_,apptCfg_,slotFree_,at_,addDays_,dayKey_,dow_,apptSoonThrough_,APPT_SERVICES};', ctx);
+const { AC, apptFormsNote_, apptFormList_, apptDays_, apptCfg_, at_, addDays_, dayKey_, dow_, apptSoonThrough_, APPT_SERVICES } = ctx.__api;
 
 let n = 0; const ok = (name, fn) => { fn(); n++; console.log('ok  ' + name); };
 const cfg = apptCfg_();
@@ -106,6 +106,17 @@ ok('a long treatment cannot end after closing', () => {
 ok('daylight saving change does not shift clinic times (Nov 1 2026 fall back)', () => {
   const n2 = Utilities.parseDate('2026-10-28 12:00', TZ, 'yyyy-MM-dd HH:mm').getTime();
   apptDays_([], 60, cfg, n2).forEach(d => d.slots.forEach(s => assert(/:(00|30) /.test(Utilities.formatDate(new Date(s.start), TZ, 'h:mm a')))));
+});
+ok('a short window stops at untilKey and still offers a day inside it', () => {
+  const days = apptDays_([], 60, cfg, now, '2026-11-25');
+  assert(days.some(d => d.date === '2026-11-20' && d.slots.length === 3));
+  assert(days[days.length - 1].date <= '2026-11-25');
+  assert(!days.some(d => d.date > '2026-11-25'));
+});
+ok('the first answer reaches the Sunday of the week a week ahead', () => {
+  assert.strictEqual(apptSoonThrough_('2026-11-18'), '2026-11-29');
+  assert.strictEqual(apptSoonThrough_('2026-11-19'), '2026-11-29');
+  assert.strictEqual(apptSoonThrough_('2026-11-23'), '2026-11-29');
 });
 ok('an all-day event takes the day off the calendar entirely', () => {
   const key = '2026-11-27', off = { s: at_(key, 0), e: at_(addDays_(key, 1), 0), full: true, dayOff: true };

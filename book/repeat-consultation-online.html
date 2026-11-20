@@ -25,6 +25,25 @@
 <meta name="theme-color" content="#f4ecdf">
 <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="dns-prefetch" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<script>
+(function () {
+  var boot = {"endpoint":"https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec","slug":"repeat-consultation-online","key":"fl-appt-slots-v1:repeat-consultation-online","ttl":180000};
+  window.__flAppt = { slug: boot.slug, cache: null, pending: null };
+  try {
+    var raw = localStorage.getItem(boot.key);
+    if (raw) {
+      var c = JSON.parse(raw);
+      if (c && c.t && (Date.now() - c.t) < boot.ttl && c.data && c.data.days && c.data.days.length && c.data.service && c.data.service.slug === boot.slug && !c.data.partial)
+        window.__flAppt.cache = c.data;
+    }
+  } catch (e) {}
+  window.__flAppt.pending = fetch(boot.endpoint + "?action=appt_slots&service=" + encodeURIComponent(boot.slug) + "&span=soon", { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -59,7 +78,7 @@
 
 <div id="sched" class="sch" data-endpoint="https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec" data-service="repeat-consultation-online" data-fallback="https://calendar.google.com/calendar/appointments/schedules/AcZssZ27eGf4Fm4VpAZRQfekoeYIqFLGQuI_RD_nPM9OlpX6Fn8b0oQ-LV93bhWy1Dm7c5zhlHbNm4zj">
   <p class="sch-status notice" role="status" aria-live="polite" hidden></p>
-  <div class="sch-cal"><p class="fine">Loading times&hellip;</p></div>
+  <div class="sch-cal" aria-busy="true"><p class="sch-finding" role="status">Finding open times…</p><div class="sch-grid" aria-hidden="true"><span class="sch-dow">Mon</span><span class="sch-dow">Tue</span><span class="sch-dow">Wed</span><span class="sch-dow">Thu</span><span class="sch-dow">Fri</span><span class="sch-dow">Sat</span><span class="sch-dow">Sun</span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span></div></div>
   <div class="sch-times"></div>
   <div class="sch-details"></div>
   <noscript><p class="notice">To book, text <a href="sms:+18182539307">(818) 253-9307</a> or email <a href="mailto:info@fulllotushealth.com">info@fulllotushealth.com</a>.</p></noscript>

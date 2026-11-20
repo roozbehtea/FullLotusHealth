@@ -1,5 +1,8 @@
 /* Online booking: pick a day, pick a time, give your details, pay with Stripe. Nothing is booked until payment succeeds.
    Talks to the Apps Script web app in _src/teasits + _src/booking (URL set as teasits_url in _src/config.json).
+   The page asks for open times from a tiny script in the head, shows a saved answer from the last few minutes
+   immediately, then refreshes it. Stripe is not loaded here: payment is a redirect, and only after the server
+   has checked the chosen time against the live calendar. A saved answer is never trusted for payment.
    Collects name, email and phone, plus an "I've already completed the forms" box. The server also recognizes returning patients and leaves out forms they already did. No health details. */
 (function () {
   var root = document.getElementById("sched");
@@ -28,8 +31,110 @@
   function dow(k) { return (d(k).getUTCDay() + 6) % 7; }                 // 0 = Monday
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var CACHE_KEY = "fl-appt-slots-v1:" + SLUG, CACHE_TTL = 180000, wave = 0;
 
-  function getJSON(qs) { return fetch(API + qs, { redirect: "follow" }).then(function (r) { return r.json(); }); }
+  function cacheOk(c) {
+    return !!(c && c.days && c.days.length && c.service && c.service.slug === SLUG && !c.partial && c.today && c.windowDays &&
+      c.days.every(function (d) { return d && d.date && d.slots; }));
+  }
+  function readCache() {
+    var early = window.__flAppt && window.__flAppt.cache;
+    if (cacheOk(early)) return early;
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      var p = JSON.parse(raw);
+      if (p && p.t && (Date.now() - p.t) < CACHE_TTL && cacheOk(p.data)) return p.data;
+    } catch (e) {}
+    return null;
+  }
+  function saveCache(r) {
+    if (!r || r.partial || !cacheOk(r)) return;
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: { service: r.service, today: r.today, windowDays: r.windowDays, days: r.days } }));
+    } catch (e) {}
+  }
+  function daysKey(r) {
+    if (!r || !r.days) return "";
+    return (r.partial ? "p:" : "f:") + (r.today || "") + ":" + r.days.map(function (d) {
+      return d.date + "=" + (d.slots || []).map(function (s) { return s.start; }).join(",");
+    }).join("|");
+  }
+  function findDay(k) { return data && data.days.filter(function (x) { return x.date === k; })[0]; }
+  function mergeDays(base, extra, through) {
+    var map = {};
+    (base || []).forEach(function (d) { if (!(through && d.date <= through)) map[d.date] = d; });
+    (extra || []).forEach(function (d) { map[d.date] = d; });
+    return Object.keys(map).sort().map(function (k) { return map[k]; });
+  }
+  function paintSkeleton() {
+    var cells = cal.querySelectorAll(".sch-day.sk");
+    if (!cells.length) return;
+    var parts = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" })
+      .formatToParts(new Date()).forEach(function (p) { parts[p.type] = p.value; });
+    var today = new Date(Date.UTC(+parts.year, +parts.month - 1, +parts.day));
+    var start = new Date(today.getTime() - ((today.getUTCDay() + 6) % 7) * 864e5);
+    for (var i = 0; i < cells.length; i++) {
+      var dt = new Date(start.getTime() + i * 864e5), n = dt.getUTCDate();
+      cells[i].innerHTML = (n === 1 ? '<span class="sch-mo">' + MON[dt.getUTCMonth()] + "</span>" : "") + n;
+    }
+  }
+  function stamp(state) {
+    cal.setAttribute("data-ready", state);
+    cal.setAttribute("aria-busy", state === "partial" ? "true" : "false");
+  }
+  // Show days without wiping a form the patient is already filling in. A saved answer is replaced quietly.
+  function present(r, state) {
+    var same = data && daysKey(data) === daysKey(r);
+    var slot = pickedSlot, dayKeyPicked = pickedDay;
+    var form = details.querySelector("form") || times.querySelector("form");
+    data = r;
+    stamp(state);
+    if (same) return;
+    if (slot) {
+      var day = findDay(slot.day.date);
+      var still = day && day.slots.some(function (s) { return s.start === slot.start; });
+      if (!still) {
+        pickedDay = null; pickedSlot = null;
+        times.innerHTML = ""; details.innerHTML = "";
+        renderCal();
+        say("Sorry, that time was just taken. Here are the times that are open now.", true);
+        root.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      pickedSlot.day = day;
+      renderCal();
+      return;
+    }
+    if (form && dayKeyPicked && findDay(dayKeyPicked)) { renderCal(); return; }
+    var keep = dayKeyPicked && findDay(dayKeyPicked);
+    pickedDay = keep ? dayKeyPicked : null;
+    pickedSlot = null;
+    times.innerHTML = ""; details.innerHTML = "";
+    renderCal();
+    if (keep) { if (keep.slots.length) renderTimes(keep); else renderWait(keep); }
+  }
+  function apply(r, base, merge) {
+    if (!r || !r.days) throw new Error("bad");
+    var covered = base && !base.partial && base.today === r.today;
+    var days = r.partial ? mergeDays(base && base.days, r.days, r.through) : (merge ? mergeDays(base && base.days, r.days) : r.days.slice());
+    var partial = !!r.partial && !covered;
+    if (merge && !r.partial) partial = false;
+    var view = {
+      service: r.service || (base && base.service),
+      today: r.today || (base && base.today),
+      windowDays: r.windowDays || (base && base.windowDays) || 21,
+      days: days,
+      partial: partial,
+      through: r.through || (base && base.through) || ""
+    };
+    present(view, partial ? "partial" : "live");
+    if (!partial) saveCache(view);
+    return view;
+  }
+
+  function getJSON(qs) { return fetch(API + qs, { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); }); }
   function post(body) {
     return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow", body: JSON.stringify(body) })
       .then(function (r) { return r.json(); });
@@ -91,12 +196,15 @@
         cells += '<button type="button" class="sch-day open' + (k === pickedDay ? " on" : "") + '" data-day="' + k + '" aria-pressed="' + (k === pickedDay) + '" aria-label="' + label + ', ' + day.slots.length + ' times">' + num + "</button>";
       } else if (day) {
         cells += '<button type="button" class="sch-day wait' + (k === pickedDay ? " on" : "") + '" data-day="' + k + '" aria-pressed="' + (k === pickedDay) + '" aria-label="' + label + ', no times, join the waitlist">' + num + "</button>";
+      } else if (data.partial && inWindow && data.through && k > data.through) {
+        cells += '<span class="sch-day pend" aria-hidden="true">' + num + "</span>";
       } else {
         cells += '<span class="sch-day off' + (inWindow ? "" : " out") + '" aria-hidden="true">' + num + "</span>";
       }
     }
     cal.innerHTML = '<div class="sch-grid" role="group" aria-label="Choose a day">' + head + cells + "</div>" +
       '<p class="fine sch-key"><span class="sch-sw open"></span> times available <span class="sch-sw wait"></span> join the waitlist</p>' +
+      (data.partial ? '<p class="sch-finding" role="status">Finding more open times…</p>' : "") +
       '<p class="fine">Need a date further out? <button type="button" class="linkish" data-request>Request a date</button>.</p>';
     Array.prototype.forEach.call(cal.querySelectorAll("button[data-day]"), function (b) {
       b.addEventListener("click", function () { pickDay(b.getAttribute("data-day")); });
@@ -151,16 +259,16 @@
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
-      btn.disabled = true; msg.className = "gmsg"; msg.textContent = "Holding your time...";
+      btn.disabled = true; msg.className = "gmsg"; msg.textContent = "Checking that time is still open…";
       post({ action: "appt_book", service: SLUG, start: s.start, name: form.elements.name.value, email: form.elements.email.value,
         phone: form.elements.phone.value, returning: !!(form.elements.returning && form.elements.returning.checked), website: form.elements.website.value })
         .then(function (r) {
           if (r.ok && r.url) { store(KEY, r.session); location.href = r.url; return; }
           btn.disabled = false; msg.className = "gmsg err";
           if (r.error === "taken" || r.error === "closed") {
-            details.innerHTML = ""; pickedSlot = null;
+            details.innerHTML = ""; times.innerHTML = ""; pickedSlot = null; pickedDay = null;
             say("Sorry, that time was just taken. Here are the times that are open now.", true);
-            load(); return;
+            reload(); return;
           }
           msg.innerHTML = r.error === "email" ? "Please check your email address." :
             r.error === "name" ? "Please add your name." :
@@ -209,15 +317,52 @@
     });
   }
 
+  function fetchSoon() {
+    var early = window.__flAppt && window.__flAppt.pending;
+    if (window.__flAppt) window.__flAppt.pending = null;
+    function plain() { return getJSON("?action=appt_slots&service=" + encodeURIComponent(SLUG) + "&span=soon"); }
+    var p = early && early.then ? early.catch(plain) : plain();
+    return p.then(function (r) { return r && r.days ? r : plain(); });
+  }
   function load() {
-    return getJSON("?action=appt_slots&service=" + encodeURIComponent(SLUG)).then(function (r) {
-      if (!r.days) throw new Error("bad");
-      data = r; pickedDay = null; pickedSlot = null;
-      times.innerHTML = ""; details.innerHTML = "";
-      renderCal();
+    var mine = ++wave;
+    var base = data;
+    return fetchSoon().then(function (r) {
+      if (mine !== wave) return;
+      base = apply(r, base, false);
+      if (!r.partial) return;
+      return getJSON("?action=appt_slots&service=" + encodeURIComponent(SLUG) + "&span=rest&after=" + encodeURIComponent(r.through || "")).then(function (rest) {
+        if (mine !== wave || !rest || !rest.days) return;
+        apply(rest, base, true);
+      }).catch(function () {
+        if (mine !== wave) return;
+        if (data && data.partial) say("More days could not load just now. The days already shown are ready to book, or refresh the page for the rest.", true);
+      });
     }).catch(function () {
+      if (mine !== wave) return;
+      if (data && data.days && data.days.length) {
+        say("Showing times from a few minutes ago. We check the time again before any payment is taken.");
+        return;
+      }
+      cal.removeAttribute("data-ready");
+      cal.setAttribute("aria-busy", "false");
       cal.innerHTML = '<p class="notice">The calendar could not load just now. ' + FALLBACK + "</p>";
     });
+  }
+  function reload() {
+    var mine = ++wave;
+    return getJSON("?action=appt_slots&service=" + encodeURIComponent(SLUG)).then(function (r) {
+      if (mine !== wave) return;
+      apply(r, null, false);
+    }).catch(function () {
+      if (mine !== wave || (data && data.days)) return;
+      cal.innerHTML = '<p class="notice">The calendar could not load just now. ' + FALLBACK + "</p>";
+    });
+  }
+  if (!paid && !cancelled) {
+    var cached = readCache();
+    if (cached) present(cached, "cache");
+    else paintSkeleton();
   }
   before.then(function (finished) { if (!finished) load(); });
 })();
