@@ -85,7 +85,8 @@ var free = chat.reply(facts, "do you offer a free consult or a discount?");
 assert(free.id === "offer", "offer question");
 assert(/isn't a free consultation/i.test(free.text), "no free consult");
 assert(free.text.indexOf("20% off your first") < 0, "no invented first-visit discount");
-assert(/fifth is free/i.test(free.text), "only the published series note");
+assert(!/fifth is free|sessions for free/i.test(free.text), "series is not described as free");
+assert(/\$2,000/.test(blob(chat.replyById(facts, "series"))), "series chip states the package price");
 
 assert(chat.reply(facts, "do you have wifi in the tea room?") === null, "unknown stays unknown for the optional AI path");
 
@@ -115,6 +116,23 @@ assert(!/\b(it will help|this will help)\b/i.test(healthPost.text), "health post
 
 var stillPrice = chat.reply(facts, "how much is nanoneedling?");
 assert(has(stillPrice, "$350") && stillPrice.id !== "post", "a price question stays a price");
+assert(/5 sessions for \$1,400/.test(stillPrice.text), "nanoneedling package price");
+assert(!/\bfree\b/i.test(stillPrice.text), "nanoneedling price does not say free");
+assert(has(stillPrice, "/post/nanoneedling-burbank-what-to-expect"), "nanoneedling price may link that post");
+
+var acuPrice = chat.reply(facts, "How much is acupuncture?");
+assert(acuPrice && has(acuPrice, "$180") && has(acuPrice, "$120"), "both acupuncture fees");
+assert(!/Read more:/.test(blob(acuPrice)), "generic acupuncture price attaches no post");
+assert(!/\bfree\b/i.test(acuPrice.text), "acupuncture price does not say free");
+
+var migraine = chat.reply(facts, "Can acupuncture cure my migraines?");
+assert(migraine && migraine.id === "medical", "migraine question is refused");
+assert(!/Read more:/.test(blob(migraine)), "migraine refusal attaches no unrelated post");
+assert(has(migraine, "/book/acupuncture-initial-treatment"), "migraine refusal still offers booking");
+
+var microSeries = chat.reply(facts, "how much is microneedling?");
+assert(/5 sessions for \$2,000/.test(microSeries.text), "microneedling package price stated plainly");
+assert(!/\bfree\b/i.test(microSeries.text), "microneedling answer has no free wording");
 
 ["prices", "book", "where", "hours", "cancel", "intake", "series", "tea"].forEach(function (id) {
   var r = chat.replyById(facts, id);
