@@ -515,6 +515,9 @@
     }
     function open() {
       panel.hidden = false;
+      rootEl.classList.add("is-open");
+      document.documentElement.classList.add("flh-chat-lock");
+      sizeSheet();
       launch.setAttribute("aria-expanded", "true");
       loadFacts().then(function () {
         if (!greeted) { greeted = true; showAnswer(hello()); }
@@ -523,6 +526,8 @@
     }
     function close() {
       panel.hidden = true;
+      rootEl.classList.remove("is-open");
+      document.documentElement.classList.remove("flh-chat-lock");
       launch.setAttribute("aria-expanded", "false");
       launch.focus();
     }
@@ -537,15 +542,22 @@
       ev.preventDefault();
       onQuestion(input.value);
     });
+    /* On phones the panel is a full-screen sheet sized to the visible area, so the keyboard never covers
+       the input or squeezes the window. No transform on the container (it would break fixed positioning). */
+    var sizeSheet = function () {
+      var vv = window.visualViewport;
+      var h = vv ? vv.height : window.innerHeight;
+      var top = vv ? vv.offsetTop : 0;
+      rootEl.style.setProperty("--flh-vh", h + "px");
+      rootEl.style.setProperty("--flh-top", top + "px");
+      revealEnd();
+    };
     if (window.visualViewport) {
-      var lift = function () {
-        var vv = window.visualViewport;
-        var overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-        rootEl.style.transform = overlap ? "translateY(" + (-overlap) + "px)" : "";
-      };
-      window.visualViewport.addEventListener("resize", lift);
-      window.visualViewport.addEventListener("scroll", lift);
+      window.visualViewport.addEventListener("resize", sizeSheet);
+      window.visualViewport.addEventListener("scroll", sizeSheet);
     }
+    window.addEventListener("resize", sizeSheet);
+    sizeSheet();
     if (window.requestIdleCallback) requestIdleCallback(function () { loadFacts().catch(function () {}); });
   }
 

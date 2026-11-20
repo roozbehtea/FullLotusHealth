@@ -880,16 +880,19 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .flh-chat-fail { margin: 0; padding: 0 0.95rem 0.8rem; font-size: 0.875rem; }
 @media (max-width: 52rem) {
   body.has-sticky .flh-chat { bottom: calc(7.4rem + env(safe-area-inset-bottom)); }
-  /* Fixed to the screen, not to the small Ask button, so a narrow window cannot clip it. */
+  /* Phones: a full-screen sheet that follows the visible area (set by chat.js), so the keyboard never hides it. */
+  .flh-chat.is-open { z-index: 1000; }
+  .flh-chat.is-open .flh-chat-launch { display: none; }
   .flh-chat-panel {
     position: fixed;
-    left: 0.7rem;
-    right: 0.7rem;
-    width: auto;
-    height: min(62dvh, 28rem);
-    bottom: 4.8rem;
+    left: 0; right: 0; width: auto; bottom: auto;
+    top: var(--flh-top, 0px);
+    height: var(--flh-vh, 100dvh);
+    border: 0; border-radius: 0;
+    box-shadow: none;
   }
-  body.has-sticky .flh-chat-panel { bottom: calc(11.2rem + env(safe-area-inset-bottom)); }
+  .flh-chat-form { padding-bottom: calc(0.7rem + env(safe-area-inset-bottom)); }
+  html.flh-chat-lock, html.flh-chat-lock body { overflow: hidden; overscroll-behavior: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .flh-chat-launch, .flh-chat-close { transition: none; }
