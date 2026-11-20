@@ -425,7 +425,8 @@ def chat_widget():
     </div>
     <p class="flh-chat-note">Please don't share health details here. This assistant can't give medical advice.</p>
     <div class="flh-chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
-    <div class="flh-chat-chips" role="group" aria-label="Common questions">{chip_html}</div>
+    <button type="button" class="flh-topics" hidden aria-expanded="false" aria-controls="flh-chat-chips">Topics</button>
+    <div class="flh-chat-chips" id="flh-chat-chips" role="group" aria-label="Common questions">{chip_html}</div>
     <form class="flh-chat-form">
       <label class="sr" for="flh-chat-q">Your question</label>
       <input id="flh-chat-q" class="flh-chat-input" maxlength="400" autocomplete="off" placeholder="Ask about fees, parking, booking">
@@ -2032,8 +2033,7 @@ def chat_facts():
             "href": "/five-element-rejuvenation",
             "summary": (
                 f"{SERIES} is a five-session journey through Wood, Fire, Earth, Metal, and Water, "
-                "with red light therapy included. You can take it as cosmetic acupuncture, nanoneedling, or microneedling. "
-                "Book all five and the fifth is free."
+                "with red light therapy included. You can take it as cosmetic acupuncture, nanoneedling, or microneedling."
             ),
             "packages": [
                 {"slug": slug, "name": BY_SLUG[slug]["name"], "price": p["price"], "sessions": 5}

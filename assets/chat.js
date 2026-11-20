@@ -90,8 +90,8 @@
     if (!cautious && s.short) bits.push(s.short);
     bits.push(placeLine(facts, s));
     var pkg = pkgFor(facts, s.slug);
-    if (pkg) bits.push("As a " + facts.series.name + " series of " + pkg.sessions + ", it is " + money(pkg.price) + ". Book all five and the fifth is free.");
-    else if (JOURNEY[s.slug] && facts.series) bits.push("It can be part of " + facts.series.name + ". Book all five and the fifth is free. A separate series price is not listed for this visit.");
+    if (pkg) bits.push(packageLine(facts.series.name, pkg));
+    else if (JOURNEY[s.slug] && facts.series) bits.push("It can be part of the " + facts.series.name + " series. A package price for this visit is not listed separately.");
     if (s.group === "tea") bits.push("Tea ceremonies are booked by text, not online.");
     if (cautious) bits.push("I can't say whether it is the right visit for you. Roozbeh can discuss that with you. Please don't share health details here.");
     bits.push(facts.payment);
@@ -110,9 +110,8 @@
       rows.forEach(function (s) { lines.push(s.name + ": " + money(s.price) + minutes(s) + "."); });
     });
     if (facts.series && facts.series.packages && facts.series.packages.length) {
-      lines.push(facts.series.name + ": book all five and the fifth is free.");
       facts.series.packages.forEach(function (p) {
-        lines.push(p.name + " series of " + p.sessions + ": " + money(p.price) + ".");
+        lines.push(packageLine(facts.series.name, p, p.name));
       });
     }
     lines.push("Tea ceremonies are booked by text. " + facts.payment);
@@ -164,7 +163,7 @@
     var s = facts.series;
     var lines = [s.summary];
     (s.packages || []).forEach(function (p) {
-      lines.push(p.name + ", " + p.sessions + " sessions: " + money(p.price) + ".");
+      lines.push(packageLine(s.name, p, p.name));
     });
     var links = [
       { href: s.href, label: "About the series", primary: true },
@@ -308,6 +307,22 @@
     return fn ? fn(facts) : null;
   }
 
+  function packageLine(seriesName, pkg, which) {
+    var name = seriesName + " series" + (which ? ", " + which : "");
+    return name + ": " + pkg.sessions + " sessions for " + money(pkg.price) + ".";
+  }
+  var WEAK_POST_WORDS = { acupuncture: 1, visit: 1, expect: 1, works: 1, years: 1, ten: 1, first: 1, session: 1, treatment: 1 };
+  var STRONG_POST_PHRASES = { "first visit": 1, "first acupuncture": 1, "ten years": 1, "cosmetic acupuncture": 1 };
+
+  function keywordIsStrong(keyword) {
+    if (keyword.indexOf(" ") >= 0) {
+      if (STRONG_POST_PHRASES[keyword]) return true;
+      var parts = keyword.split(" ");
+      for (var i = 0; i < parts.length; i++) if (!WEAK_POST_WORDS[parts[i]]) return true;
+      return false;
+    }
+    return !WEAK_POST_WORDS[keyword];
+  }
   function hasKeyword(text, keyword) {
     var esc = String(keyword).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp("\\b" + esc + "\\b").test(text);
@@ -315,15 +330,21 @@
   function bestPost(facts, text) {
     var posts = facts.posts || [];
     var best = null;
-    var bestScore = 1;
+    var bestScore = 0;
+    var bestStrong = false;
     posts.forEach(function (p) {
       var score = 0;
+      var strong = false;
       (p.keywords || []).forEach(function (k) {
         if (!hasKeyword(text, k)) return;
         score += k.indexOf(" ") >= 0 ? 3 : (k.length >= 8 ? 2 : 1);
+        if (keywordIsStrong(k)) strong = true;
       });
-      if (score > bestScore) { best = p; bestScore = score; }
+      if (score > bestScore || (score === bestScore && strong && !bestStrong)) {
+        best = p; bestScore = score; bestStrong = strong;
+      }
     });
+    if (!bestStrong || bestScore < 2) return null;
     return best;
   }
   function readMore(post) {
@@ -432,9 +453,8 @@
         if (/^https?:/.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
         item.appendChild(a);
       });
-      var start = log.scrollHeight;
       log.appendChild(item);
-      log.scrollTop = start;
+      revealEnd();
       return item;
     }
     function localFallback() {
@@ -472,9 +492,33 @@
         localFallback();
       });
     }
+    var topicsBtn = rootEl.querySelector(".flh-topics");
+    var chips = rootEl.querySelector(".flh-chat-chips");
+    function revealEnd() {
+      var go = function () { log.scrollTop = log.scrollHeight; };
+      go();
+      if (window.requestAnimationFrame) requestAnimationFrame(go);
+    }
+    function collapseTopics() {
+      if (!topicsBtn || !chips || rootEl.classList.contains("is-asked")) return;
+      rootEl.classList.add("is-asked");
+      topicsBtn.hidden = false;
+      chips.hidden = true;
+      topicsBtn.setAttribute("aria-expanded", "false");
+      revealEnd();
+    }
+    if (topicsBtn && chips) {
+      topicsBtn.addEventListener("click", function () {
+        var open = chips.hidden;
+        chips.hidden = !open;
+        topicsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        if (!open) revealEnd();
+      });
+    }
     function onQuestion(text, chipId) {
       var trimmed = String(text || "").replace(/\s+/g, " ").trim();
       if (!trimmed || busy) return;
+      collapseTopics();
       addMsg("user", trimmed, []);
       if (!chipId) input.value = "";
       loadFacts().then(function () {
