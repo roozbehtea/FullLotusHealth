@@ -1096,8 +1096,10 @@ def book_online():
     fallback = ""
     if not BOOK and not BOOKS:
         fallback = f'<div class="notice"><p><strong>Online booking is being set up.</strong> To book now, call or text <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Book your visit.", "Choose what you need, then pick a time. Not sure which? Text us and we will help you choose.", tone="l", cta_html=f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>') + rating_strip() + f"""
+    main = f"""
 <section><div class="wrap">
+  <h1 class="sr-only">Book your visit</h1>
+  <p class="lede">Choose what you need, then pick a time. Not sure which? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> and we will help you choose.</p>
   {fallback}
   {''.join(blocks)}
   <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
