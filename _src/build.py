@@ -1099,10 +1099,10 @@ def book_online():
     main = f"""
 <section><div class="wrap">
   <h1 class="sr-only">Book your visit</h1>
-  <p class="lede">Choose what you need, then pick a time. Not sure which? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> and we will help you choose.</p>
   {fallback}
   {''.join(blocks)}
   <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
+  <div class="bk-new" style="margin-top:1rem"><div><h2 class="h3">Not sure which to choose?</h2><p>Text us and we will help you choose.</p></div><a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
   <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}.</p>
   {faq_block([
     ("Where are visits?", f"In person at {ADDR_LINE}. {PARKING} {HOURS} Online consultations are by video."),
