@@ -19,6 +19,7 @@
 // plan spec:  {"name":"","notes":"","retentionMin":25,"points":[{"code":"LI4","side":"B","tech":"even"},"LR3","22.05"]}
 //   side B L R M; tech even tonify reduce electro bleed moxa cup
 // save.json:  {"patientId":"P-…","visitId":"V-…"|"new"|"","formula":<build ehr>,"plan":<plan ehr>,
+//              "status":"Suggested" (default; the EHR keeps Suggested rows out of signing, redrafts and history),
 //              "rawNotes":"case notes (written to a new visit)","headers":{"Formulas":[…],"FormulaItems":[…],"Requests":[…],"Treatments":[…],"Visits":[…]},"now":"2026-11-20 14:05"}
 "use strict";
 const fs = require("fs"), path = require("path"), vm = require("vm");
@@ -195,7 +196,7 @@ const num = n => { const v = Number(n); if (!isFinite(v) || v < 0 || v > 1000) d
 const txt = (s, max) => String(s == null ? "" : s).slice(0, max || 500);
 const cell = v => v == null ? "" : typeof v === "string" && /^[=+\-@]/.test(v) ? "'" + v : v; // the Sheet reads input as typed
 function rows(save) {
-  const hd = save.headers || {}, now = save.now || new Date().toLocaleString("sv-SE", { timeZone: "America/Los_Angeles" }).slice(0, 16), out = {}, ids = {};
+  const status = save.status || "Suggested", hd = save.headers || {}, now = save.now || new Date().toLocaleString("sv-SE", { timeZone: "America/Los_Angeles" }).slice(0, 16), out = {}, ids = {};
   const put = (tab, rec) => { const h = hd[tab]; if (!h || !h.length) die(`headers.${tab} is missing. Read row 1 of the ${tab} tab first.`);
     const miss = Object.keys(rec).filter(k => !h.includes(k)); if (miss.length) die(`${tab} has no column ${miss.join(", ")}.`);
     (out[tab] = out[tab] || []).push(h.map(k => cell(rec[k]))); };
@@ -209,11 +210,11 @@ function rows(save) {
     const herbs = p.herbs.map(h => ({ herb: txt(h.herb, 60), grams: num(h.grams), gran: gran ? num(h.granuleGrams != null ? h.granuleGrams : h.grams / ratio) : null, note: txt(h.note, 200) }));
     const bags = Math.max(1, Math.min(180, parseInt(p.bags, 10) || 7)), raw = herbs.reduce((a, h) => a + h.grams, 0), gt = gran ? herbs.reduce((a, h) => a + h.gran, 0) : 0;
     const id = "F-" + hex8(); ids.formula = id;
-    const reason = [p.baseFormula ? `Built with Formula Maker by Claude from ${txt(p.baseFormula, 80)}${p.modifications ? ": " + txt(p.modifications, 600) : ""}.` : "Built with Formula Maker by Claude."];
+    const reason = [p.baseFormula ? `Suggested by Claude with Formula Maker from ${txt(p.baseFormula, 80)}${p.modifications ? ": " + txt(p.modifications, 600) : ""}.` : "Suggested by Claude with Formula Maker."];
     if (p.patterns?.length) reason.push("Patterns: " + p.patterns.join(", ") + "."); if (p.notes) reason.push(txt(p.notes, 1500));
     put("Formulas", { FormulaID: id, PatientID: save.patientId, VisitID: visitId, DatePrescribed: now, Name: txt(p.name, 120) || txt(p.baseFormula, 80) || "Custom formula", BaseFormula: txt(p.baseFormula, 80),
       Form: gran ? "Granules" : "Raw decoction", IngredientsText: herbs.map(h => gran ? `${h.herb} ${h.gran} g (${h.grams} g raw)` : `${h.herb} ${h.grams} g`).join(", "),
-      TotalGrams: Math.round((gran ? gt : raw) * 10) / 10, DailyDose: gran ? `${Math.round(gt * 10) / 10} g granules a day (${ratio}:1)` : "1 bag a day", DaysSupplied: bags, ReasonForChange: reason.join(" "), Status: "Draft" });
+      TotalGrams: Math.round((gran ? gt : raw) * 10) / 10, DailyDose: gran ? `${Math.round(gt * 10) / 10} g granules a day (${ratio}:1)` : "1 bag a day", DaysSupplied: bags, ReasonForChange: reason.join(" "), Status: status });
     herbs.forEach(h => put("FormulaItems", { ItemID: "FI-" + hex8(), FormulaID: id, Herb: h.herb, Grams: gran ? h.gran : h.grams, Notes: [gran ? h.grams + " g raw equivalent" : "", h.note].filter(String).join("; ") }));
     const q = "Q-" + hex8(); ids.checkRequest = q;
     put("Requests", { RequestID: q, CreatedAt: now, Action: "check_formula", PatientID: save.patientId, VisitID: visitId, RecordID: id, Status: "Queued" });
@@ -221,10 +222,10 @@ function rows(save) {
   if (save.plan) { const p = save.plan; if (p.kind !== "points" || !p.points?.length) die("plan is not a plan ehr object.");
     const groups = {}, order = [];
     p.points.forEach(pt => { const k = [pt.modality, pt.side, pt.technique].join("|"); if (!groups[k]) { groups[k] = { m: pt.modality, s: pt.side, t: pt.technique, codes: [] }; order.push(k); } groups[k].codes.push(txt(pt.code, 40)); });
-    const notes = [p.name ? "From Point Finder by Claude: " + txt(p.name, 120) : "From Point Finder by Claude", txt(p.notes, 1000)].filter(String).join(". ");
+    const notes = [p.name ? "Suggested by Claude with Point Finder: " + txt(p.name, 120) : "Suggested by Claude with Point Finder", txt(p.notes, 1000)].filter(String).join(". ");
     ids.treatments = [];
     order.forEach((k, n) => { const g = groups[k], tid = "T-" + hex8(); ids.treatments.push(tid);
-      put("Treatments", { TreatmentID: tid, VisitID: visitId, PatientID: save.patientId, Modality: g.m, Points: g.codes.join(", "), Side: g.s, Technique: g.t, RetentionMin: /Acupuncture/.test(g.m) ? (p.retentionMin || "") : "", Notes: n === 0 ? notes : "", Status: "Draft" }); });
+      put("Treatments", { TreatmentID: tid, VisitID: visitId, PatientID: save.patientId, Modality: g.m, Points: g.codes.join(", "), Side: g.s, Technique: g.t, RetentionMin: /Acupuncture/.test(g.m) ? (p.retentionMin || "") : "", Notes: n === 0 ? notes : "", Status: status }); });
   }
   return { visitId, ids, append: Object.entries(out).map(([tab, values]) => ({ range: tab + "!A1", values })) };
 }
