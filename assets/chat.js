@@ -51,8 +51,8 @@
     ["price", /\b(price|prices|cost|costs|fee|fees|how much|charge)\b/],
     ["services", /\b(services|treatments|what do you offer|menu of|options)\b/]
   ];
-  var MEDICAL = /\b(diagnos\w*|cure|cures|guarantee|prognosis|prescription|medication|medications|pregnant|pregnancy|side effect|is it safe|safe for me|will (it|this|that|they|acupuncture|microneedling|nanoneedling|needling|herbs) help|can (it|this|that|they|you|acupuncture) (help|treat|cure|fix)|should i|i have|i've got|i feel|i'm having|i am having|my (pain|ache|skin|acne|eczema|psoriasis|rosacea|rash|scar|back|neck|shoulder|knee|head|migraine|anxiety|sleep|insomnia|digestion)|help with my|treat my|fix my|good for my|work for my|right for me)\b/;
-  var CONDITION = /\b(eczema|psoriasis|rosacea|acne|cancer|tumor|depression|anxiety|insomnia|migraine|arthritis|fertility|pregnant|pregnancy)\b/;
+  var MEDICAL = /\b(diagnos\w*|cure|cures|guarantee|prognosis|prescription|side effect|will (it|this|that|they|acupuncture|microneedling|nanoneedling|needling|herbs) help|can (it|this|that|they|you|acupuncture) (help|treat|cure|fix)|should i|i have|i've got|i feel|i'm having|i am having|my (pain|ache|skin|acne|eczema|psoriasis|rosacea|rash|scar|back|neck|shoulder|knee|head|migraine|anxiety|sleep|insomnia|digestion)|help with my|treat my|fix my|good for my|work for my|right for me)\b/;
+  var CONDITION = /\b(eczema|psoriasis|rosacea|acne|cancer|tumor|depression|anxiety|insomnia|migraine|arthritis|fertility)\b/;
 
   function money(n) {
     return "$" + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
