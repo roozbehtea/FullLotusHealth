@@ -404,7 +404,7 @@ function apptWarm() {
       payloads[slug] = apptPublic_(payload);
     } catch (err) { console.error('warm ' + slug + ': ' + err); }
   }
-  try { apptPublish_(payloads, now); } catch (err) { console.error('publish: ' + err); }
+  try { console.log('GitHub copy of open times: ' + apptPublish_(payloads, now)); } catch (err) { console.error('publish: ' + err); }   // off = no GITHUB_TOKEN set, same = nothing changed, saved, busy, failed
 }
 
 // ---- Static copy of the open times. The website reads this small file first, so a visitor never waits on Apps Script.
