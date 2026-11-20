@@ -18,3 +18,9 @@ Copy lives in `_src/build.py`; styling in `assets/style.css` (colours, type and 
 A chat bubble on every page answers from the same prices and clinic facts as the build (`assets/chat-facts.json`). It needs no API key. Typed questions it does not recognize can optionally go through `_src/chat` (see that folder's README). The clinic map is on the homepage Visit section, the new-patients page, and the footer of other pages. Parking and hours live next to the address constants at the top of `_src/build.py`.
 Logos in `assets/`: `logo-horizontal.svg` (header), `logo-badge.svg` (home hero), `logo-ring.svg` (spare), `logo-seal.svg` / `logo-seal.png` (footer, social image, structured data), `favicon-64.png`, `apple-touch-icon.png`.
 The SVGs are auto-traced from the design-system files. Have a designer redraw them before any trademark filing.
+
+## Clinic tools (unlisted)
+
+`/clinic-tools/` holds Formula Maker and Point Finder, private working tools for the clinic. They are not linked from any page, not in the sitemap, and every page carries `noindex, nofollow`. Anyone with the address can still open them, and the source is public in this repo. Saved formulas and plans stay in the visitor's browser only.
+
+Sources are in `_src/clinic-tools/`. Rebuild with `python3 _src/clinic-tools/build.py` (separate from the main site build).

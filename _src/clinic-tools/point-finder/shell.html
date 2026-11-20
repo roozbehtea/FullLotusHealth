@@ -1,0 +1,95 @@
+<title>Point Finder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@500;700&family=Young+Serif&display=swap">
+<style>
+/*STYLE*/
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="seal" aria-hidden="true">穴</span><span class="word">Point Finder</span></div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#points" data-view="points">Points</a>
+      <a href="#special" data-view="special">Special</a>
+      <a href="#combos" data-view="combos">Combinations</a>
+      <a href="#saved" data-view="saved">Saved <span class="count" id="saved-count"></span></a>
+      <a href="#plan" data-view="plan" class="tab-rx">Plan <span class="count plan-n">0</span></a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+<main>
+  <section class="view" id="v-points" hidden>
+    <div class="view-head"><div><h2>Acupuncture points</h2>
+      <p>Browse by channel or Tung zone, or search by code, name or symptom. Open a point for its location, needling and uses.</p></div>
+      <span class="muted" style="font-size:.82rem" id="stat-line"></span></div>
+    <div class="p-filters">
+      <div class="field f-q"><label for="p-q">Search</label><input type="search" id="p-q" placeholder="LI4, Hegu, 合谷, 22.05, insomnia, frozen shoulder"></div>
+      <div class="field"><label for="p-cat">Category</label><select id="p-cat"></select></div>
+      <label class="check"><input type="checkbox" id="p-safe"> Hide pregnancy cautions</label>
+    </div>
+    <div class="ch-bar"><div class="ch-row" id="ch-main"></div><div class="ch-row" id="ch-tung"></div></div>
+    <div class="ch-head" id="ch-head"></div>
+    <div class="p-list" id="p-list"></div>
+    <p class="muted" style="font-size:.8rem">Tung points follow Young Wei-Chieh's numbering as commonly taught. Sources differ on some numbers and locations, so check against your own reference.</p>
+  </section>
+
+  <section class="view" id="v-special" hidden>
+    <div class="view-head"><div><h2>Special points</h2>
+      <p>Five shu points with their elements, source, connecting and cleft points, and the front-mu, back-shu and lower he-sea of each organ. Select a code to open the point.</p></div></div>
+    <div class="tbl-wrap" id="sp-table"></div>
+    <div class="cards" id="sp-lists"></div>
+  </section>
+
+  <section class="view" id="v-combos" hidden>
+    <div class="view-head"><div><h2>Combinations</h2>
+      <p>Classical pairings and Master Tung dao ma groups. Add a whole group to your plan in one step.</p></div></div>
+    <h3>Classical</h3>
+    <div class="cards" id="combo-classical"></div>
+    <h3>Master Tung</h3>
+    <div class="cards" id="combo-tung"></div>
+  </section>
+
+  <section class="view" id="v-saved" hidden>
+    <div class="view-head"><div><h2>Saved plans</h2><p>Your treatment plans. Open one to keep working on it, or duplicate it for a follow-up visit.</p></div></div>
+    <div class="saved-list" id="saved-list"></div>
+  </section>
+</main>
+
+<aside class="rx" aria-label="Treatment plan">
+  <div class="rx-head">
+    <div class="rx-title"><span class="seal" aria-hidden="true">穴</span><input type="text" id="plan-name" class="rx-name" placeholder="Name this treatment" aria-label="Treatment name"></div>
+    <div class="banner" id="plan-ex" hidden><span>Example plan. Clear it to start your own.</span><button class="btn sm" data-act="clear-example">Clear</button></div>
+  </div>
+  <div id="plan-body"></div>
+  <div class="rx-sec needs-claude" hidden>
+    <h4>Ask Claude for points</h4>
+    <textarea id="case-text" placeholder="e.g. Insomnia with racing thoughts, irritability before menses, tight shoulders. Tongue red at the sides, pulse wiry."></textarea>
+    <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:.78rem">Leave out names and other identifiers.</span><button class="btn sm primary" data-act="suggest">Suggest points</button></div>
+  </div>
+  <div class="rx-sec">
+    <div class="rx-grid">
+      <div class="field" style="grid-column:span 2"><label for="plan-case">Case code</label><input type="text" id="plan-case" placeholder="e.g. AC-2611 (no names)"></div>
+      <div class="field"><label for="plan-status">Status</label><select id="plan-status"></select></div>
+      <div class="field" style="grid-column:1/-1"><label for="plan-notes">Notes</label><textarea id="plan-notes" placeholder="Retention time, e-stim settings, moxa, follow-up"></textarea></div>
+    </div>
+  </div>
+  <div class="rx-actions">
+    <button class="btn primary" id="btn-plan-save" data-act="plan-save">Save plan</button>
+    <button class="btn" data-act="plan-copy">Copy plan</button>
+    <button class="btn ghost" data-act="plan-new">New</button>
+    <div class="save-state" id="plan-save-state" aria-live="polite"></div>
+    <textarea id="copy-fallback" hidden aria-label="Text to copy" style="min-height:140px;font-family:var(--f-mono);font-size:.8rem"></textarea>
+  </div>
+</aside>
+</div>
+
+<script>
+/*DATA*/
+</script>
+<script>
+/*APP*/
+</script>

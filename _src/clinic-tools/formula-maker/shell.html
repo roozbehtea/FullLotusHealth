@@ -1,0 +1,127 @@
+<title>Formula Maker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@500;700&family=Young+Serif&display=swap">
+<style>
+/*STYLE*/
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="seal" aria-hidden="true">方</span><span class="word">Formula Maker</span></div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#diagnose" data-view="diagnose">Patterns</a>
+      <a href="#herbs" data-view="herbs">Herbs</a>
+      <a href="#formulas" data-view="formulas">Formulas</a>
+      <a href="#saved" data-view="saved">Saved <span class="count" id="saved-count"></span></a>
+      <a href="#rx" data-view="rx" class="tab-rx">Rx <span class="count rx-count">0</span></a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+<main>
+  <!-- Pattern identification -->
+  <section class="view" id="v-diagnose" hidden>
+    <div class="view-head">
+      <div><h2>Pattern identification</h2>
+        <p>Select the signs you see, including tongue and pulse. Patterns are ranked by weighted fit; cardinal signs count most.</p></div>
+      <span class="muted" style="font-size:.82rem" id="stat-line"></span>
+    </div>
+    <div class="panel claude-box needs-claude" hidden>
+      <label class="eyebrow" for="intake">Describe the case</label>
+      <textarea id="intake" placeholder="e.g. Tired all afternoon, feels warm and sweaty after small exertion, thirsty for warm water, poor appetite, soft stools. Tongue pale and scalloped, pulse big but empty."></textarea>
+      <div class="row" style="justify-content:space-between">
+        <span class="muted" style="font-size:.8rem">Leave out names, birth dates and other identifiers.</span>
+        <button class="btn primary sm" id="btn-intake" data-act="intake-go">Find signs with Claude</button>
+      </div>
+      <div class="claude-out" id="intake-out" aria-live="polite"></div>
+    </div>
+    <div class="diag">
+      <div class="picker" style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <div class="picked" id="picked"></div>
+        <input type="search" id="sign-q" class="sign-search" placeholder="Filter signs" aria-label="Filter signs">
+        <div class="groups" id="sign-groups"></div>
+      </div>
+      <div class="results" id="pattern-results" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Herb finder -->
+  <section class="view" id="v-herbs" hidden>
+    <div class="view-head"><div><h2>Herbs by function</h2>
+      <p>Pick treatment actions to find herbs that perform them, then narrow by temperature, channel or category.</p></div></div>
+    <div id="h-from"></div>
+    <div class="filters">
+      <div class="field f-q"><label for="h-q">Search</label><input type="search" id="h-q" placeholder="Pinyin, 中文, Latin or action"></div>
+      <div class="field"><label>Temperature</label>
+        <div class="seg" id="h-temp" role="group" aria-label="Temperature">
+          <button data-act="h-temp" data-v="any">Any</button><button data-act="h-temp" data-v="warm">Warm</button><button data-act="h-temp" data-v="neutral">Neutral</button><button data-act="h-temp" data-v="cool">Cool</button>
+        </div></div>
+      <div class="field"><label for="h-ch">Channel</label><select id="h-ch"></select></div>
+      <div class="field"><label for="h-cat">Category</label><select id="h-cat"></select></div>
+    </div>
+    <details class="fn" open><summary id="fn-sum">Functions</summary><div class="fn-groups" id="fn-groups"></div></details>
+    <div class="count-line" id="h-count"></div>
+    <div class="herb-list" id="herb-list"></div>
+  </section>
+
+  <!-- Formula library -->
+  <section class="view" id="v-formulas" hidden>
+    <div class="view-head"><div><h2>Base formulas</h2>
+      <p>Open a formula to see its composition and standard modifications. Load it as the base of your prescription, or merge it into what you have.</p></div></div>
+    <div class="field" style="max-width:420px"><label for="f-q">Search</label><input type="search" id="f-q" placeholder="Name, indication or herb"></div>
+    <div class="chips" id="f-cats"></div>
+    <div class="count-line" id="f-count"></div>
+    <div class="f-list" id="f-list"></div>
+  </section>
+
+  <!-- Saved -->
+  <section class="view" id="v-saved" hidden>
+    <div class="view-head"><div><h2>Saved formulas</h2>
+      <p>Your library. Mark a formula <b>Ready to order</b> when it should be entered and ordered; the order record keeps pinyin, Latin names and grams.</p></div></div>
+    <div class="saved-list" id="saved-list"></div>
+  </section>
+</main>
+
+<aside class="rx" aria-label="Prescription">
+  <div class="rx-head">
+    <div class="rx-title"><span class="seal" aria-hidden="true">方</span><input type="text" id="rx-name" class="rx-name" placeholder="Name this formula" aria-label="Formula name"></div>
+    <div class="rx-base" id="rx-base"></div>
+  </div>
+  <div class="rx-sec">
+    <div class="rx-grid">
+      <div class="field" style="grid-column:1/-1"><label>Form</label>
+        <div class="seg" id="rx-form" role="group" aria-label="Form"><button data-act="rx-form" data-v="raw">Raw decoction</button><button data-act="rx-form" data-v="granule">Granules</button></div></div>
+      <div class="field"><label for="rx-days">Days (bags)</label><input type="number" id="rx-days" min="1" max="180" step="1" inputmode="numeric"></div>
+      <div class="field" id="rx-ratio-wrap"><label for="rx-ratio">Granule ratio</label><input type="number" id="rx-ratio" min="1" max="20" step="0.5" inputmode="decimal"></div>
+    </div>
+    <div class="muted" style="font-size:.76rem">Doses are grams of raw herb per day. In granule mode the second column shows granule grams.</div>
+  </div>
+  <div id="rx-body"></div>
+  <div class="rx-sec">
+    <div class="rx-grid">
+      <div class="field" style="grid-column:span 2"><label for="rx-case">Case code</label><input type="text" id="rx-case" placeholder="e.g. RX-2611 (no names)"></div>
+      <div class="field"><label for="rx-status">Status</label><select id="rx-status"></select></div>
+      <div class="field" style="grid-column:1/-1"><label for="rx-notes">Notes and instructions</label><textarea id="rx-notes" placeholder="Pattern reasoning, cooking or dosing instructions for the pharmacy"></textarea></div>
+    </div>
+  </div>
+  <div class="rx-actions">
+    <button class="btn primary" id="btn-save" data-act="save">Save to library</button>
+    <button class="btn" data-act="copy-text">Copy order</button>
+    <button class="btn" data-act="copy-json">Copy JSON</button>
+    <button class="btn needs-claude" data-act="review" hidden>Review with Claude</button>
+    <button class="btn ghost" data-act="new-rx">New</button>
+    <div class="save-state" id="save-state" aria-live="polite"></div>
+    <textarea id="copy-fallback" hidden aria-label="Text to copy" style="min-height:140px;font-family:var(--f-mono);font-size:.8rem"></textarea>
+  </div>
+</aside>
+</div>
+
+<script>
+/*DATA*/
+</script>
+<script>
+/*APP*/
+</script>
