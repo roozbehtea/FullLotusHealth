@@ -1,6 +1,7 @@
 /* Online booking: pick a day, pick a time, give your details, pay with Stripe. Nothing is booked until payment succeeds.
    Talks to the Apps Script web app in _src/teasits + _src/booking (URL set as teasits_url in _src/config.json).
-   The page asks for open times from a tiny script in the head, shows a saved answer from the last few minutes
+   The page asks for open times from a tiny script in the head (the saved file on GitHub first, which Booking.gs
+   refreshes every 5 minutes; Apps Script only if that file is missing or old), shows a saved answer from the last few minutes
    immediately, then refreshes it. Stripe is not loaded here: payment is a redirect, and only after the server
    has checked the chosen time against the live calendar. A saved answer is never trusted for payment.
    Collects name, email and phone, plus an "I've already completed the forms" box. The server also recognizes returning patients and leaves out forms they already did. No health details. */

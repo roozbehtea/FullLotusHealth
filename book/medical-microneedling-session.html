@@ -25,13 +25,14 @@
 <meta name="theme-color" content="#f4ecdf">
 <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
 <link rel="dns-prefetch" href="https://script.google.com">
 <link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <link rel="preconnect" href="https://script.google.com">
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <script>
 (function () {
-  var boot = {"endpoint":"https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec","slug":"medical-microneedling-session","key":"fl-appt-slots-v1:medical-microneedling-session","ttl":180000};
+  var boot = {"endpoint":"https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec","slots":"https://raw.githubusercontent.com/roozbehtea/fulllotushealth/slots/slots/slots.json","slug":"medical-microneedling-session","key":"fl-appt-slots-v1:medical-microneedling-session","ttl":180000,"maxAge":5400000};
   window.__flAppt = { slug: boot.slug, cache: null, pending: null };
   try {
     var raw = localStorage.getItem(boot.key);
@@ -41,7 +42,18 @@
         window.__flAppt.cache = c.data;
     }
   } catch (e) {}
-  window.__flAppt.pending = fetch(boot.endpoint + "?action=appt_slots&service=" + encodeURIComponent(boot.slug) + "&span=soon", { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+  function live() {
+    return fetch(boot.endpoint + "?action=appt_slots&service=" + encodeURIComponent(boot.slug) + "&span=soon", { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+  }
+  function saved() {
+    if (!boot.slots) return Promise.reject(new Error("off"));
+    return fetch(boot.slots, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("none"); return r.json(); }).then(function (f) {
+      var p = f && f.services && f.services[boot.slug], age = Date.now() - ((f && f.generated) || 0);
+      if (!p || !p.days || !p.days.length || p.partial || age < -300000 || age > boot.maxAge) throw new Error("stale");
+      return p;
+    });
+  }
+  window.__flAppt.pending = saved().catch(live);
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
