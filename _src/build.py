@@ -1861,14 +1861,11 @@ def landing_pages():
            h1="Cosmetic acupuncture in Burbank, CA",
            lede="The Full Lotus Lift: facial acupuncture that calms the mind, balances the body, and brings out your natural glow.",
            body=f"""
-{photo("cosmetic-acupuncture", "A woman resting on a treatment table during a facial acupuncture session", lazy=False)}
 <h2>Whatever resides in the heart is expressed in the face</h2>
 <p>In Chinese medicine the mind is represented by the heart, and it opens to the face. In this cosmetic acupuncture treatment, we calm the mind, balance the body, and focus on specific tension-releasing and lifting points on the face. Red light therapy is included.</p>
 <h2>What the treatment is</h2>
 <p>The Full Lotus Lift is a holistic, personalized beauty treatment designed to bring out your natural, radiant glow. It uses premium organic products and gentle techniques to nourish the skin while promoting a profound sense of inner calm.</p>
-{photo("cosmetic-acupuncture-calm", "A man resting with eyes closed, a fine acupuncture needle at his brow")}
 <h2>Who gives it</h2>
-{photo("roozbeh", "Roozbeh Ghobadpour, L.Ac., in the clinic")}
 <p>Roozbeh Ghobadpour, L.Ac., is a licensed acupuncturist with over 10 years of clinical experience. Your first session includes a detailed intake and treatment plan. Then you relax and enjoy. It is best done as a series.</p>
 {faq_block([
   ("What is cosmetic acupuncture?", "Facial acupuncture at tension-releasing and lifting points, combined with constitutional body points and red light therapy."),
