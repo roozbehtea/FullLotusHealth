@@ -194,4 +194,10 @@ if (fails) {
   console.error(fails + " failed, " + passes + " passed");
   process.exit(1);
 }
+
+["how much are your fees?", "what are your prices", "what do you charge", "how much does it cost"].forEach(function (q) {
+  var r = chat.reply(facts, q);
+  assert(r && r.id === "prices" && has(r, "$180") && has(r, "/book/"), "generic price question gives the price list: " + q);
+});
+
 console.log(passes + " checks passed");

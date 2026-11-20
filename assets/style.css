@@ -851,18 +851,19 @@ button.sch-day:hover { background: var(--lapis-wash); }
   width: min(23rem, calc(100vw - 1.5rem));
   height: min(34rem, calc(100dvh - 6.5rem));
   display: flex; flex-direction: column;
-  background-color: var(--surface-100); background-image: var(--grain); background-size: 320px 320px;
-  border: 1px solid var(--surface-300); border-radius: var(--radius-md); overflow: hidden;
+  background: #fffdf9;
+  border: 1px solid rgba(30, 27, 24, 0.22); border-radius: var(--radius-md); overflow: hidden;
+  box-shadow: 0 20px 60px rgba(30, 27, 24, 0.3), 0 2px 8px rgba(30, 27, 24, 0.14);
 }
 .flh-chat-panel[hidden] { display: none; }
-.flh-chat-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.85rem 0.9rem 0.2rem; }
-.flh-chat-head .eyebrow { margin: 0; }
+.flh-chat-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.7rem 0.9rem; background: var(--night); color: var(--on-night); }
+.flh-chat-head .eyebrow { margin: 0; color: var(--gold-light); }
 .flh-chat-close {
-  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--ink);
-  background: transparent; border: 1px solid var(--surface-300); border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--on-night);
+  background: transparent; border: 1px solid rgba(244, 236, 223, 0.45); border-radius: var(--radius-pill);
   min-height: 2.4rem; padding: 0.35rem 0.8rem; cursor: pointer;
 }
-.flh-chat-note { margin: 0; padding: 0.15rem 0.95rem 0.55rem; font-size: 0.8125rem; color: var(--ink-muted); max-width: none; }
+.flh-chat-note { margin: 0; padding: 0.6rem 0.95rem 0.45rem; font-size: 0.8125rem; color: var(--ink-muted); max-width: none; }
 .flh-chat-log { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0.2rem 0.85rem 0.6rem; display: flex; flex-direction: column; gap: 0.55rem; }
 .flh-msg { max-width: 92%; }
 .flh-msg p { margin: 0; max-width: none; white-space: pre-wrap; font-size: 0.9375rem; }
@@ -870,23 +871,7 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .flh-msg.user { align-self: flex-end; background: var(--cinnabar-wash); border-radius: var(--radius-md); padding: 0.55rem 0.75rem; }
 .flh-msg a { display: inline-block; margin: 0.45rem 0.7rem 0 0; font-size: 0.875rem; }
 .flh-msg a.btn { margin-top: 0.55rem; }
-.flh-topics {
-  display: none; align-self: flex-start; margin: 0.35rem 0.85rem 0; min-height: 2.15rem;
-  font: inherit; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
-  color: var(--ink); background: transparent; border: 1px solid var(--surface-300); border-radius: var(--radius-pill);
-  padding: 0.2rem 0.75rem; cursor: pointer;
-}
-.flh-chat.is-asked .flh-topics { display: inline-flex; align-items: center; }
-.flh-topics[aria-expanded="true"] { border-color: var(--cinnabar); color: var(--cinnabar); }
-.flh-chat-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.45rem 0.85rem; border-top: 1px solid var(--surface-300); }
-.flh-chat .flh-chat-chips[hidden] { display: none; }
-.flh-chat.is-asked .flh-chat-chips { border-top: 0; padding-top: 0.35rem; }
-.flh-chip {
-  font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--cinnabar); background: transparent;
-  border: 1px solid var(--cinnabar); border-radius: var(--radius-pill); min-height: 2.15rem; padding: 0.25rem 0.7rem; cursor: pointer;
-}
-.flh-chip:hover { background: var(--cinnabar); color: var(--on-cinnabar); }
-.flh-chat-form { display: flex; gap: 0.4rem; padding: 0 0.85rem 0.85rem; }
+.flh-chat-form { display: flex; gap: 0.4rem; padding: 0.6rem 0.85rem 0.85rem; border-top: 1px solid var(--surface-300); }
 .flh-chat-input {
   flex: 1; min-width: 0; font: inherit; font-size: 1rem; color: var(--ink);
   background: #fffaf1; border: 1px solid var(--surface-300); border-radius: var(--radius-pill);
@@ -905,15 +890,9 @@ button.sch-day:hover { background: var(--lapis-wash); }
     bottom: 4.8rem;
   }
   body.has-sticky .flh-chat-panel { bottom: calc(11.2rem + env(safe-area-inset-bottom)); }
-  .flh-chat.is-asked .flh-chat-panel {
-    height: calc(100dvh - 6.4rem - env(safe-area-inset-bottom));
-  }
-  body.has-sticky .flh-chat.is-asked .flh-chat-panel {
-    height: calc(100dvh - 12.2rem - env(safe-area-inset-bottom));
-  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .flh-chat-launch, .flh-chip, .flh-chat-close { transition: none; }
+  .flh-chat-launch, .flh-chat-close { transition: none; }
 }
 
 /* ---------- menu groups: accordion on phones, drop-down panel on desktop ---------- */
