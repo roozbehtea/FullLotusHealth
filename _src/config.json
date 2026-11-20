@@ -4,7 +4,7 @@
   "skin_intake_url": "https://docs.google.com/forms/d/e/1FAIpQLSdNzCi2CoU4WeAVBHHNp1IrKtoAUavYBMhe7aeQzBGxJSuMiw/viewform",
   "signup_url": "",
   "teasits_url": "https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec",
-  "chat_url": "",
+  "chat_url": "https://script.google.com/macros/s/AKfycbxTi_570AClQeEdLPxY73k8qs4tNiiZy9EMwbiS7N1JQrysrteOdB52dnwXl2xr-5uH/exec",
   "slots_url": "https://raw.githubusercontent.com/roozbehtea/fulllotushealth/slots/slots/slots.json",
   "booking_urls": {
     "acupuncture-initial-treatment": "https://calendar.google.com/calendar/appointments/schedules/AcZssZ2HARSUqWoSfp_SoY70_HAIdr7ErWBGx1mn0u-47RACp0bYs1TYFxar1K6Ee340uO87BSEbyzPK",
