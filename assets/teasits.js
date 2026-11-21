@@ -49,11 +49,12 @@
     if (!sits.length) { list.innerHTML = '<p class="notice">No tea sits are open for booking right now. ' + FALLBACK.replace("to reserve", "to hear about the next one") + "</p>"; return; }
     list.innerHTML = sits.map(function (s) {
       var full = s.left < 1;
-      var leftText = full ? "Full" : s.left + " of " + s.seats + (s.seats == 1 ? " seat" : " seats") + " left";
+      // Show a count only when it helps: nothing while a sit is wide open, "Only N left" at 2 or fewer, "Full" when booked.
+      var leftText = full ? "Full" : s.left <= 2 ? "Only " + s.left + (s.left == 1 ? " seat" : " seats") + " left" : "";
       var title = /^tea sit$/i.test(s.title) ? "" : '<span class="ts-title">' + esc(s.title) + "</span>";
       return '<li class="ts-sit' + (full ? " full" : "") + '" data-id="' + esc(s.id) + '">' +
         '<div class="ts-when"><span class="ts-date">' + esc(s.label) + "</span>" + title + "</div>" +
-        '<div class="ts-seats">' + seatDots(s.left, s.seats) + '<span class="ts-left">' + leftText + "</span></div>" +
+        '<div class="ts-seats">' + (leftText ? '<span class="ts-left">' + leftText + "</span>" : "") + "</div>" +
         '<div class="ts-price">' + (s.price > 0 ? money(s.price) : "Free") + "</div>" +
         (full ? '<span class="btn small ghost" aria-disabled="true">Full</span>'
               : '<button class="btn small" type="button" aria-expanded="false">Reserve</button>') +
