@@ -1064,7 +1064,7 @@ def tea_sits():
     else:
         body = f'<div class="notice"><p><strong>Online reservations open soon.</strong> To save a seat now, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
     main = hero("Weekly tea sits.",
-        "An hour of tea in the clinic's tea space, in the tradition of Wu De. We drink together, mostly in silence, and let the mind settle. Five seats per sit, so reserve ahead.", tone="n",
+        "A tea sit is an opportunity to still and energize the mind in a beautiful setting drinking old growth, organic, and aged teas which are tonics for the mind and body. Each sit is an hour, in the tradition of Wu De, with five seats, so reserve ahead.", tone="n",
         cta_html=('<a class="btn" href="#teasits">See dates and reserve</a>' if TEASITS else f'<a class="btn" href="sms:{PHONE_TEL}">Text to reserve a seat</a>')) + f"""
 <section><div class="wrap">
   {body}
