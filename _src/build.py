@@ -40,6 +40,7 @@ MAPS_APPLE = "https://maps.apple.com/?ll=34.1929,-118.3247&q=Full%20Lotus%20Heal
 BOOK = CFG.get("booking_url", "").strip()
 BOOKS = {k: v.strip() for k, v in CFG.get("booking_urls", {}).items() if v.strip()}   # per-service Google Calendar booking pages, by service slug
 INTAKE = CFG.get("intake_url", "").strip()
+GA_ID = CFG.get("ga_id", "").strip()   # Google Analytics 4 measurement ID (G-...); leave empty to turn analytics off. The clinic tools are built separately and never get it.
 SKIN_INTAKE = CFG.get("skin_intake_url", "").strip()   # Skin Treatment Intake & Consent (Google Form), for the skin services below
 SKIN_SLUGS = {"full-lotus-lift", "medical-microneedling-session", "facial-nano-needling"}
 SIGNUP = CFG.get("signup_url", "").strip()   # optional: Apps Script web app that saves signup emails
@@ -480,6 +481,21 @@ def booking_head(slug):
 """.replace("__BOOT__", boot)
 
 
+def ga_tag():
+    """Google Analytics 4. The Stripe return codes (?paid=, ?cancelled=) are left out of the page address it records."""
+    if not GA_ID:
+        return ""
+    return f"""<script async src="https://www.googletagmanager.com/gtag/js?id={e(GA_ID)}"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){{dataLayer.push(arguments);}}
+gtag('js', new Date());
+var gaUrl = new URL(location.href); gaUrl.searchParams.delete('paid'); gaUrl.searchParams.delete('cancelled');
+gtag('config', '{e(GA_ID)}', {{ page_location: gaUrl.href }});
+</script>
+"""
+
+
 def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True, head_extra=""):
     canon = canonical or (SITE + (path if path != "/" else "/"))
     current = current or path   # pages that don't name a menu item still light up their own link
@@ -516,7 +532,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{e(title)}</title>
+{ga_tag()}<title>{e(title)}</title>
 <meta name="description" content="{e(meta)}">
 {robots}<link rel="canonical" href="{canon}">
 <meta property="og:site_name" content="{NAME}">
