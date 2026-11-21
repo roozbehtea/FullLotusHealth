@@ -1064,7 +1064,7 @@ def tea_sits():
     else:
         body = f'<div class="notice"><p><strong>Online reservations open soon.</strong> To save a seat now, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
     main = hero("Weekly tea sits.",
-        "A tea sit is an opportunity to still and energize the mind in a beautiful setting drinking old growth, organic, and aged teas which are tonics for the mind and body. Each sit is an hour, in the tradition of Wu De, with five seats, so reserve ahead.", tone="n",
+        "A tea sit is an opportunity to still and energize the mind in a beautiful setting drinking old growth, organic, and aged teas which are tonics for the mind and body. Each sit is an hour, with five seats, so reserve ahead.", tone="n",
         cta_html=('<a class="btn" href="#teasits">See dates and reserve</a>' if TEASITS else f'<a class="btn" href="sms:{PHONE_TEL}">Text to reserve a seat</a>')) + f"""
 <section><div class="wrap">
   {body}
@@ -1079,7 +1079,7 @@ def tea_sits():
 ], "Before you come")}
 </div></section>""" + cta("Prefer a private ceremony?", "Gong fu and bowl tea ceremonies for you and up to five guests.", "Book a ceremony", tone="g")
     OUT["tea-sits.html"] = page("/tea-sits", "Weekly Tea Sits in Burbank | Full Lotus Health",
-        "Weekly tea sits in Burbank: an hour of tea, mostly in silence, in the tradition of Wu De. Five seats per sit. See dates, seats left, and reserve online.",
+        "Weekly tea sits in Burbank: an hour of old growth, organic, and aged tea, mostly in silence. Five seats per sit. See dates, seats left, and reserve online.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-sits")
 
 
