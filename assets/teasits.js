@@ -81,7 +81,7 @@
       '<label>Seats<select name="seats">' + opts + "</select></label></div>" +
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">' + (s.price > 0 ? "Continue to payment, " + money(s.price) : "Reserve") + '</button></p>' +
-      '<p class="fine">' + (s.price > 0 ? "You'll pay securely with Stripe. Seats are held for 30 minutes while you pay." : "") + ' To cancel later, reply to your confirmation email.</p>' +
+      '<p class="fine">' + (s.price > 0 ? "You'll pay securely with Stripe. Have a coupon code? Enter it on the payment page. Seats are held for 30 minutes while you pay." : "") + ' To cancel later, reply to your confirmation email.</p>' +
       '<p class="gmsg" role="status" aria-live="polite"></p></form>';
     li.after(f);
     li.querySelector("button").setAttribute("aria-expanded", "true");
