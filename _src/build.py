@@ -197,6 +197,9 @@ if BOOKAPI:
             sys.exit(f"_src/booking/Booking.gs does not match SERVICES for {_slug}: fix the price or minutes in one of them")
 # One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
 CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
+# Search only: these old service pages also point Google to their Burbank page, but the site's own links still open the
+# service page, since it shows the fee. Move a treatment up to CANON_PAGE once its Burbank page shows its price.
+SEARCH_CANON = {"facial-nano-needling": "/nanoneedling-burbank", "full-lotus-lift": "/cosmetic-acupuncture-burbank"}
 # Visits the chat may deep-link to /book/<slug>. Tea ceremonies are text-only, on purpose.
 BOOK_SLUGS = (
     "acupuncture-initial-treatment", "acupuncture-repeat-treatment",
@@ -1549,7 +1552,7 @@ def service_pages():
     <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
   </div>
 </div></section>"""
-        canon_to = CANON_PAGE.get(s["slug"])
+        canon_to = CANON_PAGE.get(s["slug"]) or SEARCH_CANON.get(s["slug"])
         OUT[f"service-page/{s['slug']}.html"] = page(f"/service-page/{s['slug']}", s["title"], s["meta"], main,
             ld=[business_ld(), service_ld(s), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online"), (s["name"], f"/service-page/{s['slug']}")])],
             canonical=(SITE + canon_to) if canon_to else None, book_slug=s["slug"] if canon_to else None)
@@ -2143,7 +2146,7 @@ def chat_post(p):
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
