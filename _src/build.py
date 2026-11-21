@@ -1041,7 +1041,7 @@ def tea():
 </div>{cloud_field("a", "bottom")}</section>
 <section><div class="wrap">
   <h2>Weekly tea sits</h2>
-  <p>Once a week we sit together in the tea space and drink tea, mostly in silence. Six seats per sit. <a href="/tea-sits">See dates and seats left</a>.</p>
+  <p>Every Tuesday, Wednesday and Thursday morning and Friday afternoon we sit together in the tea space and drink tea, mostly in silence. Five seats per sit. <a href="/tea-sits">See dates and seats left</a>.</p>
   <h2 style="margin-top:2.4rem">Join the circle</h2>
   <p>To hear about special community tea sits, events, and unique tea offerings, email <a href="mailto:{EMAIL}?subject=Tea%20circle">{EMAIL}</a> and ask to be added.</p>
 </div></section>
@@ -1053,16 +1053,18 @@ def tea():
 
 def tea_sits():
     if TEASITS:
-        body = f"""<div id="teasits" data-endpoint="{e(TEASITS)}">
+        body = f"""<p>Tea sits run every week on <strong>Tuesday, Wednesday and Thursday mornings at 8:30</strong> and <strong>Friday afternoons at 3:00</strong>. Pick a date below to save your seat.</p>
+<div id="teasits" data-endpoint="{e(TEASITS)}">
   <p class="ts-status" role="status" aria-live="polite" hidden></p>
   <ul class="ts-list"><li class="fine" style="padding:1rem 0">Loading dates&hellip;</li></ul>
   <noscript><p class="notice">To reserve a seat, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
 </div>
+<p style="margin-top:var(--space-3)">None of these times work for you? Just text me at <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we'll find a time.</p>
 <script src="/assets/teasits.js" defer></script>"""
     else:
         body = f'<div class="notice"><p><strong>Online reservations open soon.</strong> To save a seat now, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
     main = hero("Weekly tea sits.",
-        "An hour of tea in the clinic's tea space, in the tradition of Wu De. We drink together, mostly in silence, and let the mind settle. Six seats per sit, so reserve ahead.", tone="n",
+        "An hour of tea in the clinic's tea space, in the tradition of Wu De. We drink together, mostly in silence, and let the mind settle. Five seats per sit, so reserve ahead.", tone="n",
         cta_html=('<a class="btn" href="#teasits">See dates and reserve</a>' if TEASITS else f'<a class="btn" href="sms:{PHONE_TEL}">Text to reserve a seat</a>')) + f"""
 <section><div class="wrap">
   {body}
@@ -1077,7 +1079,7 @@ def tea_sits():
 ], "Before you come")}
 </div></section>""" + cta("Prefer a private ceremony?", "Gong fu and bowl tea ceremonies for you and up to five guests.", "Book a ceremony", tone="g")
     OUT["tea-sits.html"] = page("/tea-sits", "Weekly Tea Sits in Burbank | Full Lotus Health",
-        "Weekly tea sits in Burbank: an hour of tea, mostly in silence, in the tradition of Wu De. Six seats per sit. See dates, seats left, and reserve online.",
+        "Weekly tea sits in Burbank: an hour of tea, mostly in silence, in the tradition of Wu De. Five seats per sit. See dates, seats left, and reserve online.",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-sits")
 
 
@@ -2088,7 +2090,7 @@ def chat_facts():
         "intakeHref": INTAKE or "/new-patients",
         "bookOnline": "/book-online",
         "teaSitsHref": "/tea-sits",
-        "teaSitsBlurb": "Weekly tea sits are an hour of tea, mostly in silence, with six seats. Dates are on the tea sits page.",
+        "teaSitsBlurb": "Weekly tea sits are an hour of tea, mostly in silence, with five seats: Tuesday, Wednesday and Thursday at 8:30 AM and Friday at 3 PM. Dates are on the tea sits page, or text to find another time.",
         "mapsGoogle": MAPS,
         "mapsApple": MAPS_APPLE,
         "series": {
