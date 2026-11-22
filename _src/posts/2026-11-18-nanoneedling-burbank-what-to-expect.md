@@ -42,7 +42,7 @@ A nanoneedling session at Full Lotus Health is 60 minutes, in a quiet private ro
 
 Nanoneedling works well as a single visit, for example before a wedding, a trip or a big day at work. It also works as a regular series, where your skin gets steady attention and results build gently from one visit to the next.
 
-If you'd like a series with more shape to it, my [Five Element Rejuvenation series](/five-element-rejuvenation) is five sessions, each with its own focus and its own serum, and you can build it around nanoneedling. Book all five and the fifth session is free.
+If you'd like a series with more shape to it, my [Five Element Rejuvenation series](/five-element-rejuvenation) is five sessions, each with its own focus and its own serum, and you can build it around nanoneedling. Five Element Rejuvenation™ series: 5 nanoneedling sessions for $1,400 ($350 less than five single sessions).
 
 ## Why see an acupuncturist for your skin?
 
