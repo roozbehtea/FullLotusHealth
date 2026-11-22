@@ -1859,11 +1859,9 @@ MICRO_PAGE_REVIEWS = [
 # The organic pages still say "42" or "40+" and were left as they are.
 ADS_GOOGLE_RATING = "5.0"
 ADS_GOOGLE_REVIEW_COUNT = 41
-# OWNER TODO: confirm before this page is used in ads.
-# The nanoneedling and microneedling pages pop up "20% off your first {service}" and do not
-# state a dollar amount. Twenty percent off the $500 session would be $400.
-# This string is the only place the ads page states a discounted amount. It is a placeholder.
-ADS_FIRST_VISIT_OFFER = "$100 off your first session, $400"
+# Owner confirmed 2026-11-22. Matches the site popup ("20% off your first session").
+# The dollar amounts live only in this string. The badge repeats "20% off", as the popup does.
+ADS_FIRST_VISIT_OFFER = "20% off the first session ($400, regularly $500)"
 ADS_MICRO_PATH = "/microneedling-burbank-offer"
 # Cosmetic wording for chat-facts.json and llms.txt, which the ads page chat can repeat.
 # Organic page copy is left unchanged.
@@ -2019,9 +2017,8 @@ def ads_micro_page():
 ])}
 {faq_block(faqs)}
 </div></section>"""
-    offer_block = f"""<!-- OWNER TODO: ADS_FIRST_VISIT_OFFER in _src/build.py is a placeholder. Confirm the amount before ads go live. -->
-<div class="ads-offer">
-<div class="g-offer-badge" aria-hidden="true"><span>New</span>visit</div>
+    offer_block = f"""<div class="ads-offer">
+<div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
 <p class="eyebrow">New patients</p>
 <h3>{e(ADS_FIRST_VISIT_OFFER)}</h3>
 <p>For a first-time visitor. The visit is still 90 minutes, with custom plant-based Chinese herbal skincare serums and red light therapy included.</p>
