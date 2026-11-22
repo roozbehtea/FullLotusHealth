@@ -212,7 +212,8 @@ for _slug in BOOK_SLUGS:
 
 # ------------------------------------------------------------------ Five Element Rejuvenation series
 # First-pass copy. Roozbeh will rewrite the element text in his own words.
-# Series price follows the acupuncture pattern ($120 single, five at $100): 20% off five single sessions, so the fifth session is free.
+# A series costs less than five single sessions (microneedling $500 x 5 = $2,500, series $2,000;
+# nanoneedling $350 x 5 = $1,750, series $1,400). State that package price. Never call a session free.
 SERIES = "Five Element Rejuvenation™"
 PACKAGES = {
     "medical-microneedling-session": dict(price=2000, guide="/microneedling-burbank"),
@@ -221,6 +222,37 @@ PACKAGES = {
 for _slug, _p in PACKAGES.items():
     _p["per"] = _p["price"] // 5
     _p["name"] = f'{SERIES} series: {BY_SLUG[_slug]["name"]}'
+
+
+def series_save(slug):
+    """Dollars below five single sessions. Zero or less means there is no savings line."""
+    return BY_SLUG[slug]["price"] * 5 - PACKAGES[slug]["price"]
+
+
+def _series_bit(slug, with_service):
+    sessions = f'5 {BY_SLUG[slug]["name"].lower()} sessions' if with_service else "5 sessions"
+    bit = f'{sessions} for ${PACKAGES[slug]["price"]:,}'
+    save = series_save(slug)
+    if save > 0:
+        bit += f' (${save:,} less than five single sessions)'
+    return bit
+
+
+def series_offer(slug):
+    """One service, for example 'Five Element Rejuvenation™ series: 5 sessions for $2,000 ($500 less than five single sessions)'."""
+    return f'{SERIES} series: {_series_bit(slug, False)}'
+
+
+def series_offers():
+    """Every package, each service named, so a shared page never quotes the wrong price."""
+    bits = [_series_bit(slug, True) for slug in PACKAGES]
+    if len(bits) == 1:
+        body = bits[0]
+    elif len(bits) == 2:
+        body = f"{bits[0]}, or {bits[1]}"
+    else:
+        body = ", ".join(bits[:-1]) + f", or {bits[-1]}"
+    return f"{SERIES} series: {body}"
 
 TESTIMONIALS_HOME = [
     ("Finding Roozbeh was like finding a rare and precious treasure. His insight and knowledge never ceases to amaze me and every treatment I have had from him over the past 5 years has felt in tune with what I needed at the time. His skillful application of needles means that even if in pain or sick, I can go to him for help and feel confident that he will be kind and gentle in his endeavor to help me feel better. After treatment I often stay for tea and meditation in the purpose built tea lounge… all in all Full Lotus Health is wonderful experience for body and mind and spirit.", "Sue"),
@@ -826,7 +858,7 @@ def home():
 
 <section class="series-feature" aria-labelledby="sf-h"><div class="wrap sf-grid">
   <div><p class="eyebrow">New: Full Lotus Skin</p><h2 id="sf-h">{e(SERIES)}</h2>
-  <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. Book all five and the fifth is free.</p>
+  <p>A journey of rejuvenation through the five elements of Chinese medicine: five sessions, each led by one element, with red light therapy included. {e(series_offers())}.</p>
   <p class="g-actions"><a class="btn" href="/five-element-rejuvenation">Explore the journey</a><a class="btn ghost" href="sms:{PHONE_TEL}">Text a question</a></p></div>
   <div class="el-dots" aria-hidden="true">{"".join(f'<img src="/assets/photos/elements/{k}.jpg"{srcset("elements/" + k, "10rem")} alt="" width="300" height="300" loading="lazy">' for k in ("wood", "fire", "earth", "metal", "water"))}</div>
 </div></section>
@@ -1163,7 +1195,7 @@ def confirm_pages():
         opt1 = f'''<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${s["price"]}</p><p class="cf-sub">{e(mins)}</p><p>{book_btn("Choose a time", slug=s["slug"], direct=True)}</p></div>'''
         opt2 = ""
         if pk:
-            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">5 sessions, one free (20% off). Your first session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
+            opt2 = f'''<div class="cf-opt"><p class="cf-name">{e(pk["name"])}</p><p class="cf-price">${pk["price"]:,}</p><p class="cf-sub">{e(_series_bit(s["slug"], False))}. Your first session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">Learn more about the series</a></p></div>'''
         main = f'''<section class="cf"><div class="wrap cf-wrap">
 <p class="crumbs"><a href="/book-online">Book online</a> / {e(s["name"])}</p>
 <h1>{e(s["name"])}</h1>
@@ -1219,7 +1251,7 @@ def five_element():
 </dl></div>
 {img}</div></section>""")
     hero_html = g_hero("c", "Full Lotus Skin", SERIES,
-        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element and its own signature serum. Book all five and the fifth is free.",
+        "A journey of rejuvenation through the five elements of Chinese medicine. Five sessions, each led by one element and its own signature serum. " + series_offers() + ".",
         [],
         "")
     apply_to = f"""<section class="wash-c"><div class="wrap">{g_head("One journey, three ways in", "Choose how deep you want to go", "The five elements guide the whole series. You choose the treatment that carries it.")}
@@ -1237,7 +1269,7 @@ def five_element():
   ("What are the short-term results?", "Most people notice skin that looks fresher and feels more hydrated in the days after a session. Microneedling can leave mild pinkness for a day or so. Nanoneedling has no downtime."),
   ("What are the long-term results?", "Results build as the sessions add up. Skin tends to look firmer, smoother and more even over the course of the series. Individual results vary."),
   ("Why did you create it?", "I wanted a way to bring the thinking of Chinese medicine into skin care that feels calm, personal and unhurried, and to give each visit its own purpose."),
-  ("Do I have to do all five?", "The journey is designed as five sessions, one for each element. Book all five and the fifth session is free, which is 20% off."),
+  ("Do I have to do all five?", "The journey is designed as five sessions, one for each element. " + series_offers() + "."),
   ("Can I try one session first?", "Yes. If you start with a single session and decide to continue, that first session counts toward the series."),
   ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
   ("Where is the clinic?", f"At {ADDR_LINE}."),
@@ -1249,7 +1281,7 @@ def five_element():
 </div></section>"""
     main = hero_html + "".join(sections) + apply_to + qa + ask
     OUT["five-element-rejuvenation.html"] = page("/five-element-rejuvenation", f"{SERIES} | Full Lotus Health",
-        "Five Element Rejuvenation: a five-session journey through Wood, Fire, Earth, Metal and Water, with cosmetic acupuncture, nanoneedling or microneedling in Burbank. The fifth session is free.",
+        "Five Element Rejuvenation: a five-session journey through Wood, Fire, Earth, Metal and Water, with cosmetic acupuncture, nanoneedling or microneedling in Burbank. " + series_offers() + ".",
         main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (SERIES, "/five-element-rejuvenation")])])
 
 
@@ -1534,7 +1566,7 @@ def service_pages():
             series_block = (f'<h2 id="series" style="margin-top:2rem">{e(SERIES)} series</h2>'
                             f'<p>Five sessions, one for each element of Chinese medicine: Wood, Fire, Earth, Metal, and Water. '
                             f'Each session has its own focus and its own signature serum.</p>'
-                            f'<p>Booked as a series, the five sessions are ${pk["price"]:,}, which is 20% off: the fifth session is free. That works out to ${pk["per"]} a session instead of ${s["price"]}. If you start with a single session, it counts toward the series.</p>'
+                            f'<p>{e(series_offer(s["slug"]))}. That works out to ${pk["per"]} a session instead of ${s["price"]}. If you start with a single session, it counts toward the series.</p>'
                             f'<p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>')
         if s["group"] == "beauty":
             main = beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide)
@@ -1720,10 +1752,11 @@ def g_band(items):
     return f'<div class="g-band">{figs}</div>' if figs else ""
 
 
-def g_series_promo(tone="sand"):
+def g_series_promo(tone="sand", slug=None):
+    offer = (f"{SERIES} series: {_series_bit(slug, True)}") if slug else series_offers()
     return f"""<section class="{tone}"><div class="wrap ty-note" style="text-align:center">
 <p class="eyebrow">The series</p><h2>{e(SERIES)}</h2>
-<p>A journey through the five elements: five sessions, each led by one element, with a signature serum for each. Book all five and the fifth session is free.</p>
+<p>A journey through the five elements: five sessions, each led by one element, with a signature serum for each. {e(offer)}.</p>
 <p><a class="btn" href="/five-element-rejuvenation">Learn more about {e(SERIES)}</a></p>
 </div></section>"""
 
@@ -1735,7 +1768,7 @@ def micro_page(where):
     (never "facial"), and nothing about how the serums are made."""
     mn = "medical-microneedling-session"
     mi, pk = BY_SLUG[mn], PACKAGES[mn]
-    price, series, per = mi["price"], pk["price"], pk["per"]
+    price, series = mi["price"], pk["price"]
     rating = (f'<p class="pb-rating g-hero-rating"><span class="stars" role="img" aria-label="Rated 5.0 out of 5">{STAR * 5}</span>'
               f'<a href="{GOOGLE_REVIEWS}" rel="noopener">5.0 on Google &middot; 42 reviews</a></p>')
     hero_html = g_hero("c", "Microneedling · Burbank", "Microneedling in Burbank, CA",
@@ -1786,7 +1819,7 @@ def micro_page(where):
     fees = f"""<section class="wash-c" id="fees"><div class="wrap">{g_head("Fees", "Simple pricing", "Serums and red light therapy are always included.")}
 <div class="cf-opts two">
 <div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${price}</p><p class="cf-sub">90 minutes</p><p>{book_btn("Choose a time", slug=mn)}</p></div>
-<div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">Five sessions, the fifth free (${per} a session). A first single session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">About the series</a></p></div>
+<div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">{e(_series_bit(mn, False))}. A first single session counts toward it.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to book the series</a></p><p><a href="/five-element-rejuvenation">About the series</a></p></div>
 </div>
 <p class="fine">Payment is taken when you book your time. Cancelling is free up to 24 hours ahead; less than 24 hours' notice is charged ${LATE_FEE}.</p>
 </div></section>"""
@@ -1795,7 +1828,7 @@ def micro_page(where):
                            ("heart", "Your whole health", "Trained in Chinese medicine, he looks at your skin as part of your whole health, not in isolation.")])
     compare = f'<section><div class="wrap">{g_head("Which treatment", "Microneedling or nanoneedling?")}{g_compare("micro")}</div></section>'
     faqs = [
-        ("How much does microneedling cost in Burbank?", f"${price} for a 90-minute session, with Full Lotus Skin serums and red light therapy included. The {e(SERIES)} series of five sessions is ${series:,}, so the fifth session is free, and a first single session counts toward it."),
+        ("How much does microneedling cost in Burbank?", f"${price} for a 90-minute session, with Full Lotus Skin serums and red light therapy included. {e(series_offer(mn))}. A first single session counts toward it."),
         ("Does microneedling hurt?", "A numbing cream is applied first, and most people find the treatment comfortable."),
         ("How much downtime is there?", "Expect redness similar to a mild sunburn. It usually settles within a day or two."),
         ("How many sessions will I need?", "Results build over time, and most people do a series of sessions spaced several weeks apart. Your first visit includes a treatment plan."),
@@ -1853,7 +1886,7 @@ def nano_page(where):
   ("Where is the clinic?", where),
 ])}</div></section>"""
     offer = g_offer("nanoneedling facial", "Nourishing serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
-    return (hero_html + how + help_ + g_series_promo("wash-l") + why + table + compare + session + say + faq + offer,
+    return (hero_html + how + help_ + g_series_promo("wash-l", "facial-nano-needling") + why + table + compare + session + say + faq + offer,
             g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
 
 
@@ -1999,7 +2032,7 @@ def llms_txt():
             mins = f", {s['minutes']} min" if s.get("minutes") else ""
             out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {s['short']}")
         return "\n".join(out)
-    series_bits = [f"{BY_SLUG[slug]['name']} series of 5: ${p['price']:,}" for slug, p in PACKAGES.items()]
+    series_line = series_offers()
     intake_link = INTAKE or f"{SITE}/new-patients"
     return f"""# {NAME}
 
@@ -2014,7 +2047,7 @@ def llms_txt():
 - Self-pay clinic. Payment is taken when you book. Nothing is booked until payment goes through. Book online: {SITE}/book-online
 - Cancellation: free up to {NOTICE_HOURS} hours ahead. Less than {NOTICE_HOURS} hours' notice, or a no-show, is charged ${LATE_FEE}. Call or text to cancel.
 - New patients complete the intake form before the first visit: {intake_link}
-- {SERIES}: five sessions through Wood, Fire, Earth, Metal, and Water, with red light therapy included. Book all five and the fifth is free. {". ".join(series_bits)}. {SITE}/five-element-rejuvenation
+- {SERIES}: five sessions through Wood, Fire, Earth, Metal, and Water, with red light therapy included. {series_line}. {SITE}/five-element-rejuvenation
 - Tea ceremonies are booked by text at {PHONE_DISPLAY}. Weekly tea sits: {SITE}/tea-sits
 - Google reviews: {GOOGLE_REVIEWS}
 - In California, microneedling may be performed by physicians and licensed acupuncturists.
