@@ -1859,9 +1859,14 @@ MICRO_PAGE_REVIEWS = [
 # The organic pages still say "42" or "40+" and were left as they are.
 ADS_GOOGLE_RATING = "5.0"
 ADS_GOOGLE_REVIEW_COUNT = 41
-# Owner confirmed 2026-11-22. Matches the site popup ("20% off your first session").
-# The dollar amounts live only in this string. The badge repeats "20% off", as the popup does.
-ADS_FIRST_VISIT_OFFER = "20% off the first session ($400, regularly $500)"
+# Ads-page prices only. Struck amounts must match the listed service prices.
+# Sale amounts and sash labels live here, not on the organic pages.
+ADS_OFFERS = {
+    "single": dict(was=500, now=400, off=20, sash="20% OFF",
+                   note="First-time visitors. 90 minutes, includes herbal serums and red light."),
+    "series": dict(was=2000, now=1800, off=10, sash="10% OFF",
+                   note="5 sessions, 90 minutes each."),
+}
 ADS_MICRO_PATH = "/microneedling-burbank-offer"
 # Cosmetic wording for chat-facts.json and llms.txt, which the ads page chat can repeat.
 # Organic page copy is left unchanged.
@@ -1983,15 +1988,40 @@ def ads_micro_page():
         f'<li>Licensed Acupuncturist (L.Ac.)</li>'
         f'</ul>'
     )
+    lotus = """<svg class="ads-lotus" viewBox="0 0 72 40" width="72" height="40" aria-hidden="true" focusable="false">
+<path d="M36 34c-2-8-1-16 0-22 1 6 2 14 0 22z" fill="none" stroke="#e7cf9c" stroke-width="1.2"/>
+<path d="M36 32c-8-2-16-8-18-16 6 2 12 6 18 16z" fill="none" stroke="#e7cf9c" stroke-width="1.15"/>
+<path d="M36 32c8-2 16-8 18-16-6 2-12 6-18 16z" fill="none" stroke="#e7cf9c" stroke-width="1.15"/>
+<path d="M36 30c-14 0-22-8-24-14 8 1 16 5 24 14z" fill="none" stroke="#f4ecdf" stroke-width="1.05" opacity=".85"/>
+<path d="M36 30c14 0 22-8 24-14-8 1-16 5-24 14z" fill="none" stroke="#f4ecdf" stroke-width="1.05" opacity=".85"/>
+<path d="M14 28c6 1 14 1 22 0M36 28c8 1 16 1 22 0" fill="none" stroke="#a8843e" stroke-width=".8" stroke-linecap="round"/>
+</svg>"""
+    vs_rows = [
+        ("The visit", "90 minutes with one person", "Often a much shorter appointment"),
+        ("Who", "Licensed acupuncturist, in Burbank since 2016", "Varies by clinic"),
+        ("Serums", "Custom Chinese herbal skincare serums", "Often a standard serum"),
+        ("Red light", "Included in the visit", "Often priced separately"),
+    ]
+    vs_body = "".join(
+        f'<tr><th scope="row">{e(label)}</th><td>{e(ours)}</td><td>{e(theirs)}</td></tr>'
+        for label, ours, theirs in vs_rows)
     hero = f"""<div class="hero-band tone-c g-hero"><div class="wrap g-hero-grid">
-<div class="g-hero-text"><div class="band short" aria-hidden="true"></div>
-<h1>Holistic Microneedling in Burbank, CA</h1>
-<p class="lede">Clinical collagen induction paired with custom plant-based Chinese herbal skincare serums and red light therapy, performed by a Licensed Acupuncturist.</p>
+<div class="g-hero-text">{lotus}<div class="band short" aria-hidden="true"></div>
+<h1>Ancient Healing Meets Modern Microneedling</h1>
+<p class="lede">Not a med-spa assembly line: a 90-minute ritual by a licensed acupuncturist, pairing medical-grade microneedling with custom Chinese herbal serums and red light.</p>
 <p class="g-actions">{book_btn("Book Your First Session", slug=mn)}</p>
 <p class="ads-ask"><a href="sms:{PHONE_TEL}">Questions? Text {PHONE_DISPLAY}</a></p>
 {rating}</div>
 <div class="g-hero-art">{hero_fig}</div>
-</div></div>"""
+</div></div>
+<section class="ads-vs-wrap" aria-labelledby="ads-vs-h"><div class="wrap">
+<h2 id="ads-vs-h" class="sr-only">Full Lotus and a typical med-spa visit</h2>
+<div class="ads-vs"><table>
+<caption class="sr-only">Full Lotus and a typical med-spa visit</caption>
+<thead><tr><td></td><th scope="col">Full Lotus</th><th scope="col">A typical med-spa visit</th></tr></thead>
+<tbody>{vs_body}</tbody>
+</table></div>
+</div></section>"""
     different = f"""<section><div class="wrap g-tcm-top">
 <div>{g_head("The visit", "What Makes Full Lotus Microneedling Different", "A med spa appointment is often short. This one is 90 minutes, with one licensed acupuncturist, from topical numbing through red light.")}
 {g_steps([
@@ -2017,19 +2047,29 @@ def ads_micro_page():
 ])}
 {faq_block(faqs)}
 </div></section>"""
-    offer_block = f"""<div class="ads-offer">
-<div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
-<p class="eyebrow">New patients</p>
-<h3>{e(ADS_FIRST_VISIT_OFFER)}</h3>
-<p>For a first-time visitor. The visit is still 90 minutes, with custom plant-based Chinese herbal skincare serums and red light therapy included.</p>
-<div class="g-offer-cta">{book_btn("Book Your First Session", slug=mn)}</div>
+    def ads_card(key, name, action):
+        o = ADS_OFFERS[key]
+        if o["was"] * (100 - o["off"]) != o["now"] * 100:
+            sys.exit(f"ads {key} price does not match its {o['off']}% sash")
+        if not o["sash"].startswith(f"{o['off']}%"):
+            sys.exit(f"ads {key} sash does not match its percent")
+        return f"""<div class="cf-opt ads-price">
+<p class="ads-sash">{e(o["sash"])}</p>
+<p class="cf-name">{name}</p>
+<p class="ads-was"><s><span class="sr">Was </span>${o["was"]:,}</s></p>
+<p class="cf-price"><span class="sr">Now </span>${o["now"]:,}</p>
+<p class="cf-sub">{e(o["note"])}</p>
+<p>{action}</p>
 </div>"""
-    fees = f"""<section id="pricing"><div class="wrap">{g_head("Fees", "Pricing", "Serums and red light therapy are included in the price.")}
+    if ADS_OFFERS["single"]["was"] != price or ADS_OFFERS["series"]["was"] != series:
+        sys.exit("ads strike prices must match the listed microneedling prices")
+    single_card = ads_card("single", "First session", book_btn("Book Your First Session", slug=mn))
+    series_card = ads_card("series", e(SERIES) + " series", f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text about the series</a>')
+    fees = f"""<section id="pricing"><div class="wrap">{g_head("Fees", "Pricing")}
 <div class="cf-opts two">
-<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${price}</p><p class="cf-sub">90 minutes. Includes custom plant-based Chinese herbal skincare serums and red light therapy.</p><p>{book_btn("Book Your First Session", slug=mn)}</p></div>
-<div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">{e(series_offer(mn))}. A first single session counts toward the series.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to ask about the series</a></p></div>
+{single_card}
+{series_card}
 </div>
-{offer_block}
 </div></section>"""
     closing = f"""<section class="cta"><div class="wrap">
 <h2>Ready when you are</h2>
@@ -2046,11 +2086,17 @@ def ads_micro_page():
     ) if _re.search(p, plain, _re.I)]
     if banned:
         sys.exit("ads landing page failed the wording check: " + ", ".join(banned))
-    if main.count(ADS_FIRST_VISIT_OFFER) != 1:
-        sys.exit("the first-visit offer must appear exactly once, from ADS_FIRST_VISIT_OFFER")
-    svc = dict(mi)
-    desc = "A 90-minute microneedling visit in Burbank with plant-based Chinese herbal skincare serums and red light therapy, from a licensed acupuncturist."
-    ld_service = service_ld(svc, url=SITE + ADS_MICRO_PATH, desc=desc, priced=True)
+    if "offer-pop" in main or "$500 less" in main:
+        sys.exit("ads page must not include the percent popup or the old series-savings line")
+    svc = dict(mi, price=ADS_OFFERS["single"]["now"])
+    desc = "A 90-minute microneedling visit in Burbank with a licensed acupuncturist, custom Chinese herbal serums, and red light."
+    ld_service = service_ld(svc, url=SITE + ADS_MICRO_PATH, desc=desc, priced=False)
+    ld_service["offers"] = [
+        {"@type": "Offer", "name": "First microneedling session", "price": money(ADS_OFFERS["single"]["now"]),
+         "priceCurrency": "USD", "url": SITE + ADS_MICRO_PATH},
+        {"@type": "Offer", "name": SERIES + " series: Microneedling (5 sessions)", "price": money(ADS_OFFERS["series"]["now"]),
+         "priceCurrency": "USD", "url": SITE + ADS_MICRO_PATH},
+    ]
     # A short business record so the service provider id resolves. No condition list.
     biz = {
         "@context": "https://schema.org",
@@ -2063,7 +2109,6 @@ def ads_micro_page():
         "address": {"@type": "PostalAddress", "streetAddress": ADDR["street"], "addressLocality": ADDR["city"],
                     "addressRegion": ADDR["region"], "postalCode": ADDR["zip"], "addressCountry": "US"},
     }
-    # Do not publish the unconfirmed first-visit amount as a structured price.
     return main, hero_preload, [biz, faq_ld(faqs), ld_service]
 
 
@@ -2074,10 +2119,10 @@ def offer_landing():
         if ADS_MICRO_PATH in targets:
             sys.exit(f"{ADS_MICRO_PATH} must stay out of the site nav")
     main, preload, ld = ads_micro_page()
-    OUT["microneedling-burbank-offer.html"] = page(
+    built = page(
         ADS_MICRO_PATH,
-        "Holistic Microneedling in Burbank, CA | Full Lotus Health",
-        "A 90-minute microneedling visit in Burbank with plant-based Chinese herbal skincare serums and red light therapy, from a licensed acupuncturist.",
+        "Ancient Healing Meets Modern Microneedling | Full Lotus Health",
+        "A 90-minute microneedling visit in Burbank with a licensed acupuncturist, custom Chinese herbal serums, and red light.",
         main,
         ld=ld,
         noindex=True,
@@ -2086,6 +2131,9 @@ def offer_landing():
         head_extra=preload,
         chrome="ads",
     )
+    if "offer-pop" in built:
+        sys.exit("ads page must not include the site percent popup")
+    OUT["microneedling-burbank-offer.html"] = built
 
 
 def nano_page(where):
