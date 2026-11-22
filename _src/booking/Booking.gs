@@ -42,7 +42,9 @@ var APPT_SERVICES = /*json*/ {
   "medical-microneedling-session": {"name": "Microneedling", "minutes": 90, "price": 500, "intake": true, "series": true, "online": false},
   "facial-nano-needling": {"name": "Nanoneedling", "minutes": 60, "price": 350, "intake": true, "series": true, "online": false},
   "initial-consultation-online": {"name": "Initial Consultation (Online)", "minutes": 60, "price": 180, "intake": true, "series": false, "online": true},
-  "repeat-consultation-online": {"name": "Repeat Consultation (Online)", "minutes": 45, "price": 180, "intake": false, "series": false, "online": true}
+  "repeat-consultation-online": {"name": "Repeat Consultation (Online)", "minutes": 45, "price": 180, "intake": false, "series": false, "online": true},
+  "microneedling-offer-first": {"name": "Microneedling, first visit", "minutes": 90, "price": 400, "intake": true, "series": false, "package": false, "online": false},
+  "microneedling-offer-series": {"name": "Microneedling, Five Element series", "minutes": 90, "price": 1800, "intake": true, "series": false, "package": true, "online": false}
 } /*end*/;
 
 var APPT_SHEET = 'Appointments';
@@ -75,7 +77,7 @@ function apptCfg_() {
 }
 
 // Skin services also need the Skin Treatment Intake & Consent form, on top of the new patient form.
-var APPT_SKIN = { 'full-lotus-lift': true, 'medical-microneedling-session': true, 'facial-nano-needling': true };
+var APPT_SKIN = { 'full-lotus-lift': true, 'medical-microneedling-session': true, 'facial-nano-needling': true, 'microneedling-offer-first': true, 'microneedling-offer-series': true };
 
 // Forms a patient has already done are left out of the confirmation page, email and invite. What we know is kept
 // in the booking's Note column: the patient ticked "I've already completed the forms", or their email or mobile
@@ -493,10 +495,18 @@ function apptSet_(rowIndex, values) {
 }
 
 // ------------------------------------------------------------------ book
+/** Cents to charge. The amount always comes from APPT_SERVICES. A client-sent price that differs is refused. */
+function apptQuotedCents_(slug, clientPrice) {
+  var svc = APPT_SERVICES[String(slug || '')];
+  if (!svc) return { error: 'service' };
+  if (clientPrice != null && clientPrice !== '' && Number(clientPrice) !== svc.price) return { error: 'price' };
+  return { cents: Math.round(svc.price * 100), slug: String(slug), svc: svc };
+}
 function apptBook_(b) {
   if (b.website) return { error: 'bad_request' };                         // trap field: bots fill it
-  var svc = APPT_SERVICES[String(b.service || '')];
-  if (!svc) return { error: 'service' };
+  var quote = apptQuotedCents_(b.service, b.price);
+  if (quote.error) return { error: quote.error };
+  var svc = quote.svc, slug = quote.slug;
   var name = clean_(b.name, 80);
   var email = String(b.email || '').trim().toLowerCase();
   var phone = clean_(b.phone, 30);
@@ -524,21 +534,21 @@ function apptBook_(b) {
     var session = stripe_('post', '/v1/checkout/sessions', {
       'mode': 'payment',
       'customer_email': email,
-      'client_reference_id': String(b.service),
+      'client_reference_id': slug,
       'line_items[0][quantity]': '1',
       'line_items[0][price_data][currency]': 'usd',
-      'line_items[0][price_data][unit_amount]': String(Math.round(svc.price * 100)),
+      'line_items[0][price_data][unit_amount]': String(quote.cents),
       'line_items[0][price_data][product_data][name]': svc.name + ', ' + when,
       'line_items[0][price_data][product_data][description]': 'Full Lotus Health, ' + (svc.online ? 'by video' : c.address),
       'allow_promotion_codes': 'true',
-      'metadata[service]': String(b.service),
+      'metadata[service]': slug,
       'metadata[start]': new Date(startMs).toISOString(),
       'metadata[name]': name,
       'expires_at': String(Math.floor(Date.now() / 1000) + 31 * 60),
-      'success_url': c.site + '/book/' + b.service + '?paid={CHECKOUT_SESSION_ID}',
-      'cancel_url': c.site + '/book/' + b.service + '?cancelled=1'
+      'success_url': c.site + '/book/' + slug + '?paid={CHECKOUT_SESSION_ID}',
+      'cancel_url': c.site + '/book/' + slug + '?cancelled=1'
     });
-    apptSheet_(APPT_SHEET, APPT_HEADERS).appendRow([new Date(), Utilities.getUuid().slice(0, 8), String(b.service), svc.name,
+    apptSheet_(APPT_SHEET, APPT_HEADERS).appendRow([new Date(), Utilities.getUuid().slice(0, 8), slug, svc.name,
       new Date(startMs), new Date(endMs), when, name, email, phone, note, 'pending', session.id, '', '', '', '']);
     apptCacheBump_();                                                    // the hold takes the slot; the next page load must not offer it
     return { ok: true, url: session.url, session: session.id };
@@ -649,7 +659,9 @@ function apptEmails_(r, svc) {
   var intake = forms.map(function (f, k) {
     return k === 0 ? '\nPlease fill in the ' + f.name + ' form before you come: ' + f.url + '\n' : 'And the ' + f.name + ' form: ' + f.url + '\n';
   }).join('');
-  var series = svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '';
+  var series = svc.package
+    ? '\nThis payment covers all 5 sessions. This visit is the first. We will schedule the other four with you after this session.\n'
+    : (svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '');
   MailApp.sendEmail({
     to: email, replyTo: c.notify, name: 'Full Lotus Health',
     subject: 'Your appointment: ' + r[AC.svcName - 1] + ', ' + when.split(' at ')[0],

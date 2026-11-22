@@ -186,6 +186,7 @@ BY_SLUG = {s["slug"]: s for s in SERVICES}
 
 # Services that can be booked on the site (the table in _src/booking/Booking.gs), checked against SERVICES so prices and lengths never drift.
 APPT = {}
+_OFFER_APPT = {}   # booking slugs that are not organic services (the ads prices). Checked against ADS_OFFERS below.
 if BOOKAPI:
     import re as _rx
     _gs = (pathlib.Path(__file__).parent / "booking" / "Booking.gs").read_text()
@@ -193,7 +194,10 @@ if BOOKAPI:
     APPT = json.loads(_m.group(1)) if _m else {}
     for _slug, _a in APPT.items():
         _s = BY_SLUG.get(_slug)
-        if not _s or _s["price"] != _a["price"] or _s["minutes"] != _a["minutes"]:
+        if not _s:
+            _OFFER_APPT[_slug] = _a
+            continue
+        if _s["price"] != _a["price"] or _s["minutes"] != _a["minutes"]:
             sys.exit(f"_src/booking/Booking.gs does not match SERVICES for {_slug}: fix the price or minutes in one of them")
 # One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
 CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
@@ -1867,7 +1871,23 @@ ADS_OFFERS = {
     "series": dict(was=2000, now=1800, off=10, sash="10% OFF",
                    note="5 sessions, 90 minutes each."),
 }
+ADS_BOOK_FIRST = "microneedling-offer-first"
+ADS_BOOK_SERIES = "microneedling-offer-series"
+# False until Booking.gs is deployed as a new version of the existing Apps Script web app.
+# While false, ads Book buttons stay on /book/medical-microneedling-session (which charges $500).
+ADS_OFFER_BOOKING_LIVE = False
 ADS_MICRO_PATH = "/microneedling-burbank-offer"
+if BOOKAPI:
+    _expected_offer = {
+        ADS_BOOK_FIRST: (ADS_OFFERS["single"]["now"], 90),
+        ADS_BOOK_SERIES: (ADS_OFFERS["series"]["now"], 90),
+    }
+    if set(_OFFER_APPT) != set(_expected_offer):
+        sys.exit("Booking.gs services that are not in SERVICES must be exactly the ads offer slugs: " + ", ".join(sorted(_OFFER_APPT)))
+    for _slug, (_price, _minutes) in _expected_offer.items():
+        _a = _OFFER_APPT[_slug]
+        if _a["price"] != _price or _a["minutes"] != _minutes:
+            sys.exit(f"Booking.gs {_slug} is ${_a['price']} / {_a['minutes']} min; the ads offer is ${_price} / {_minutes} min")
 # Cosmetic wording for chat-facts.json and llms.txt, which the ads page chat can repeat.
 # Organic page copy is left unchanged.
 ADS_SAFE_SHORT = {
@@ -1972,6 +1992,7 @@ def micro_page(where):
 def ads_micro_page():
     """Google Ads landing page. No site nav, no nanoneedling link, cosmetic wording only."""
     mn = "medical-microneedling-session"
+    first_book = ADS_BOOK_FIRST if ADS_OFFER_BOOKING_LIVE else mn
     mi, pk = BY_SLUG[mn], PACKAGES[mn]
     price, series = mi["price"], pk["price"]
     hero_fig, hero_preload = webp_figure(
@@ -2009,7 +2030,7 @@ def ads_micro_page():
 <div class="g-hero-text">{lotus}<div class="band short" aria-hidden="true"></div>
 <h1>Ancient Healing Meets Modern Microneedling</h1>
 <p class="lede">Not a med-spa assembly line: a 90-minute ritual by a licensed acupuncturist, pairing medical-grade microneedling with custom Chinese herbal serums and red light.</p>
-<p class="g-actions">{book_btn("Book Your First Session", slug=mn)}</p>
+<p class="g-actions">{book_btn("Book Your First Session", slug=first_book)}</p>
 <p class="ads-ask"><a href="sms:{PHONE_TEL}">Questions? Text {PHONE_DISPLAY}</a></p>
 {rating}</div>
 <div class="g-hero-art">{hero_fig}</div>
@@ -2063,8 +2084,10 @@ def ads_micro_page():
 </div>"""
     if ADS_OFFERS["single"]["was"] != price or ADS_OFFERS["series"]["was"] != series:
         sys.exit("ads strike prices must match the listed microneedling prices")
-    single_card = ads_card("single", "First session", book_btn("Book Your First Session", slug=mn))
-    series_card = ads_card("series", e(SERIES) + " series", f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text about the series</a>')
+    single_card = ads_card("single", "First session", book_btn("Book Your First Session", slug=first_book))
+    series_action = (book_btn("Book the series", slug=ADS_BOOK_SERIES) if ADS_OFFER_BOOKING_LIVE
+                     else f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text about the series</a>')
+    series_card = ads_card("series", e(SERIES) + " series", series_action)
     fees = f"""<section id="pricing"><div class="wrap">{g_head("Fees", "Pricing")}
 <div class="cf-opts two">
 {single_card}
@@ -2074,7 +2097,7 @@ def ads_micro_page():
     closing = f"""<section class="cta"><div class="wrap">
 <h2>Ready when you are</h2>
 <p>Choose a time, or send a short question before you book.</p>
-<p class="g-actions">{book_btn("Book Your First Session", slug=mn)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY} for a quick question before booking</a></p>
+<p class="g-actions">{book_btn("Book Your First Session", slug=first_book)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY} for a quick question before booking</a></p>
 </div></section>"""
     main = hero + different + say + expect + fees + closing
     plain = _re.sub(r"<blockquote>.*?</blockquote>", "", main, flags=_re.S)
@@ -2112,6 +2135,50 @@ def ads_micro_page():
     return main, hero_preload, [biz, faq_ld(faqs), ld_service]
 
 
+def offer_book_pages():
+    """Ads checkout pages. noindex, not in the menu or the sitemap. The server charges APPT_SERVICES, not the page."""
+    if not BOOKAPI:
+        return
+    pages = [
+        dict(slug=ADS_BOOK_FIRST, name="Microneedling, first visit", price=ADS_OFFERS["single"]["now"],
+             lede="First-time visitor price. 90 minutes, with herbal serums and red light.",
+             extra="This visit is 90 minutes. The time you pick is the visit itself."),
+        dict(slug=ADS_BOOK_SERIES, name="Microneedling, Five Element series", price=ADS_OFFERS["series"]["now"],
+             lede="Five sessions, 90 minutes each. This payment covers the series.",
+             extra="The time you pick is the first session. The other four are scheduled with you after this visit."),
+    ]
+    for spec in pages:
+        slug = spec["slug"]
+        if slug in BY_SLUG:
+            sys.exit(f"{slug} must not be an organic service")
+        gl = f' data-skin-intake="{e(SKIN_INTAKE)}"' if SKIN_INTAKE else ""
+        main = f'''<section class="cf"><div class="wrap cf-wrap sch-wrap">
+<p class="crumbs"><a href="{ADS_MICRO_PATH}">Microneedling offer</a> / {e(spec["name"])}</p>
+<h1>{e(spec["name"])}</h1>
+<p class="lede">{e(spec["lede"])}</p>
+<p><strong>90 minutes &middot; ${spec["price"]:,}</strong> &middot; {e(ADDR_LINE)}</p>
+<p>{e(spec["extra"])}</p>
+<div id="sched" class="sch" data-endpoint="{e(BOOKAPI)}" data-service="{e(slug)}"{gl}>
+  <p class="sch-status notice" role="status" aria-live="polite" hidden></p>
+  <div class="sch-cal" aria-busy="true"><p class="sch-finding" role="status">Finding open times…</p><div class="sch-grid" aria-hidden="true">{"".join(f'<span class="sch-dow">{d}</span>' for d in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))}{"".join('<span class="sch-day sk"></span>' for _ in range(35))}</div></div>
+  <div class="sch-times"></div>
+  <div class="sch-details"></div>
+  <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
+</div>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(ADDR_LINE)}</li><li><strong>Payment:</strong> taken when you book your time. Nothing is booked until payment goes through.</li><li><strong>Cancelling:</strong> up to 24 hours ahead, the visit is released. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
+<p class="fine"><a href="{ADS_MICRO_PATH}">Back to the offer</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
+</div></section><script src="/assets/booking.js" defer></script>'''
+        built = page(f"/book/{slug}", f"Book {spec['name']} | {NAME}", f"Book {spec['name']} at Full Lotus Health in Burbank.",
+                     main, noindex=True, focus=True, head_extra=booking_head(slug))
+        if "offer-pop" in built or re_free(built):
+            sys.exit(f"/book/{slug} failed the ads wording check")
+        OUT[f"book/{slug}.html"] = built
+
+
+def re_free(html):
+    return _re.search(r"(?<!-)\bfree\b", html, _re.I)
+
+
 def offer_landing():
     """Dedicated Google Ads page. noindex, not in the sitemap, not in the menu."""
     for href, label in NAV:
@@ -2126,13 +2193,20 @@ def offer_landing():
         main,
         ld=ld,
         noindex=True,
-        book_slug="medical-microneedling-session",
+        book_slug=ADS_BOOK_FIRST if ADS_OFFER_BOOKING_LIVE else "medical-microneedling-session",
         footer_map=False,
         head_extra=preload,
         chrome="ads",
     )
     if "offer-pop" in built:
         sys.exit("ads page must not include the site percent popup")
+    live_first = f'href="/book/{ADS_BOOK_FIRST}"' in built
+    live_series = f'href="/book/{ADS_BOOK_SERIES}"' in built
+    if ADS_OFFER_BOOKING_LIVE:
+        if not live_first or not live_series:
+            sys.exit("ads Book buttons must use the offer booking pages while ADS_OFFER_BOOKING_LIVE is true")
+    elif live_first or live_series:
+        sys.exit("ads Book buttons must stay on the regular links until ADS_OFFER_BOOKING_LIVE is true")
     OUT["microneedling-burbank-offer.html"] = built
 
 
@@ -2472,8 +2546,8 @@ def chat_post(p):
 
 def seo_files():
     urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
-    if ADS_MICRO_PATH in urls:
-        sys.exit(f"{ADS_MICRO_PATH} must stay out of the sitemap")
+    if ADS_MICRO_PATH in urls or any(ADS_BOOK_FIRST in u or ADS_BOOK_SERIES in u for u in urls):
+        sys.exit("the ads landing page and its booking pages must stay out of the sitemap")
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
@@ -2494,7 +2568,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, offer_book_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():
