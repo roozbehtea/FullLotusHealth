@@ -8,7 +8,7 @@ Edit _src/config.json (booking_url, intake_url), re-run, commit, push.
 Output pages are plain .html files in the repo root. GitHub Pages serves
 treatments.html at /treatments, so the old Wix addresses keep working with no redirects.
 """
-import json, sys, html, pathlib, datetime
+import json, sys, html, pathlib, datetime, struct
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import art
 from make_cloud_fields import cloud_field
@@ -263,7 +263,7 @@ TESTIMONIALS_HOME = [
 ]
 TESTIMONIALS_BEAUTY = [
     ("I highly recommend Roozbeh for micro needling. The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing! Way better than any of the numerous creams and peels I have tried over the years. The numbing cream is great and the whole procedure was completely painless.", "Stephany"),
-    ("When Roozbeh mentioned he added microneedling and nano needling services, I was interested but a little hesitant, not sure whether it would hurt or be effective. I took the plunge and am glad I did. The very large bags under my eyes (they are called festoons by doctors) have diminished quite a bit and my skin feels smoother and firmer. (And neither hurt.) I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline and am looking forward to seeing what a few more treatments will do. Even though I am not using Minoxidil, I am seeing promising results.", "Rosa"),
+    ("When Roozbeh mentioned he added microneedling and nano needling services, I was interested but a little hesitant, not sure whether it would hurt or be effective. I took the plunge and am glad I did. The very large bags under my eyes (they are called festoons by doctors) have diminished quite a bit and my skin feels smoother and firmer. (And neither hurt.) I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline and am looking forward to seeing what a few more treatments will do.", "Rosa"),
     ("Rooz is also incredibly easy to talk to. Very down-to-earth, thoughtful, and never rushed. The whole experience is calm and comfortable, and I genuinely look forward to my appointments. He's also started offering microneedling for hair regrowth, which I've been doing, and the results have been very encouraging to say the least. Overall, it's just consistently good care from someone who clearly knows what he's doing and actually cares about the people he's working with. I'm really grateful I found him.", "Chris"),
 ]
 
@@ -516,6 +516,26 @@ def booking_head(slug):
 """.replace("__BOOT__", boot)
 
 
+def ads_click_script():
+    """Book and text clicks on the ads landing page. gtag is a no-op when GA4 is not configured."""
+    return """<script>
+(function () {
+  document.addEventListener("click", function (ev) {
+    var a = ev.target && ev.target.closest ? ev.target.closest("a") : null;
+    if (!a) return;
+    var href = a.getAttribute("href") || "";
+    var name = href.indexOf("/book/") === 0 ? "book_click" : (href.indexOf("sms:") === 0 ? "sms_click" : "");
+    if (!name) return;
+    var params = { link_url: href, link_text: (a.textContent || "").replace(/\\s+/g, " ").trim() };
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: name, link_url: params.link_url, link_text: params.link_text });
+    if (typeof window.gtag === "function") window.gtag("event", name, params);
+  });
+})();
+</script>
+"""
+
+
 def ga_tag():
     """Google Analytics 4. The Stripe return codes (?paid=, ?cancelled=) are left out of the page address it records."""
     if not GA_ID:
@@ -531,7 +551,7 @@ gtag('config', '{e(GA_ID)}', {{ page_location: gaUrl.href }});
 """
 
 
-def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True, head_extra=""):
+def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type="website", og_image=None, focus=False, canonical=None, book_slug=None, footer_map=True, head_extra="", chrome=None):
     canon = canonical or (SITE + (path if path != "/" else "/"))
     current = current or path   # pages that don't name a menu item still light up their own link
     nav_items = []
@@ -557,6 +577,42 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
     sticky = "" if (focus or path in ("/book-online", "/new-patients") or path.startswith("/book/")) else \
         f'<div class="sticky-cta">{book_btn("Book", small=True, slug=book_slug)}<a class="btn ghost small" href="sms:{PHONE_TEL}">Text us</a></div>'
     body_cls = ' class="has-sticky"' if sticky else ""
+    ads = chrome == "ads"
+    nav_script = '<script src="/assets/nav.js" defer></script>\n'
+    foot_brand = f'<a href="/" aria-label="{NAME}, home"><img class="foot-seal" src="/assets/logo-seal-168.png" width="84" height="84" alt="" loading="lazy"></a>'
+    end_script = ""
+    if ads:
+        # Ads landing page: logo back to the top of this page, one book button, no site menu.
+        sticky = (f'<div class="sticky-cta">{book_btn("Book Online", small=True, slug=book_slug)}'
+                  f'<a class="btn ghost small" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>')
+        body_cls = ' id="top" class="ads-lp has-sticky"'
+        nav_script = ""
+        foot_brand = ""
+        end_script = ads_click_script()
+        header_html = f"""<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="{NAME}">
+      <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
+    </a>
+    {book_btn("Book Microneedling", cls="ads-nav-book", slug=book_slug)}
+  </div>
+</header>"""
+    else:
+        header_html = f"""<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/" aria-label="{NAME}, home">
+      <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
+    </a>
+    <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
+    {book_btn("Book", cls="call-mobile", small=True, site_wide=True)}
+    <label for="menu-check" class="menu-toggle">Menu</label>
+    <nav class="nav" aria-label="Main">
+      <ul>
+        {"".join(nav_items)}
+      </ul>
+    </nav>
+  </div>
+</header>"""
     loc_extra = f"<p>{e(PARKING)}</p><p>{e(HOURS)}</p>" + (map_embed() if footer_map else "") + map_links()
     ld_blocks = "".join(f'<script type="application/ld+json">{json.dumps(x, separators=(",", ":"))}</script>\n' for x in (ld or []))
     feed_link = f'<link rel="alternate" type="application/rss+xml" title="{NAME} blog" href="/feed.xml">\n' if POSTS else ""
@@ -592,26 +648,11 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
-<script src="/assets/nav.js" defer></script>
-{feed_link}{ld_blocks}</head>
+{nav_script}{feed_link}{ld_blocks}</head>
 <body{body_cls}>
 <a class="skip" href="#main">Skip to content</a>
 <div class="band" aria-hidden="true"></div>
-<header class="site-header">
-  <div class="wrap bar">
-    <a class="brand" href="/" aria-label="Full Lotus Health, home">
-      <img src="/assets/logo-horizontal.svg" width="260" height="78" alt="{NAME}">
-    </a>
-    <input type="checkbox" id="menu-check" class="menu-check" aria-label="Open menu">
-    {book_btn("Book", cls="call-mobile", small=True, site_wide=True)}
-    <label for="menu-check" class="menu-toggle">Menu</label>
-    <nav class="nav" aria-label="Main">
-      <ul>
-        {"".join(nav_items)}
-      </ul>
-    </nav>
-  </div>
-</header>
+{header_html}
 <main id="main">
 {main}
 </main>
@@ -619,7 +660,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
   <div class="wrap">
     <div class="cols">
       <div>
-        <a href="/" aria-label="Full Lotus Health, home"><img class="foot-seal" src="/assets/logo-seal-168.png" width="84" height="84" alt="" loading="lazy"></a>
+        {foot_brand}
         <p>Roozbeh Ghobadpour, L.Ac.<br>{ADDR["street"]}<br>{ADDR["city"]}, {ADDR["region"]} {ADDR["zip"]}</p>
         {loc_extra}
       </div>
@@ -649,7 +690,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
 </footer>
 {chat_widget()}
 {sticky}
-</body>
+{end_script}</body>
 </html>
 """
 
@@ -717,6 +758,52 @@ def srcset(name, sizes="(min-width: 52rem) 45vw, 100vw"):
     if not found:
         return ""
     return ' srcset="' + ", ".join(f"/assets/photos/{name}-{w}.webp {w}w" for w in sorted(found)) + f'" sizes="{sizes}"'
+
+
+def _webp_size(path):
+    """Width and height from a WebP header. VP8, VP8L, and VP8X."""
+    data = open(path, "rb").read(30)
+    if data[0:4] != b"RIFF" or data[8:12] != b"WEBP":
+        return None
+    fmt = data[12:16]
+    if fmt == b"VP8 ":
+        w, h = struct.unpack_from("<HH", data, 26)
+        return w & 0x3FFF, h & 0x3FFF
+    if fmt == b"VP8L":
+        b0, b1, b2, b3 = data[21:25]
+        return 1 + (((b1 & 0x3F) << 8) | b0), 1 + (((b3 & 0xF) << 10) | (b2 << 2) | ((b1 & 0xC0) >> 6))
+    if fmt == b"VP8X":
+        return 1 + int.from_bytes(data[24:27], "little"), 1 + int.from_bytes(data[27:30], "little")
+    return None
+
+
+def webp_figure(name, alt, lazy=True, sizes="(min-width: 52rem) 46vw, 100vw", priority=False):
+    """A content photo as WebP only: compressed variants from make_images.py, with width and height set."""
+    root = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "assets", "photos")
+    folder = _os.path.join(root, _os.path.dirname(name))
+    base = _os.path.basename(name)
+    widths = []
+    if _os.path.isdir(folder):
+        for fn in _os.listdir(folder):
+            stem, ext = _os.path.splitext(fn)
+            if ext == ".webp" and stem.startswith(base + "-") and stem[len(base) + 1:].isdigit():
+                widths.append(int(stem[len(base) + 1:]))
+    widths = sorted(set(widths))
+    if not widths:
+        return "", ""
+    largest = widths[-1]
+    dims = _webp_size(_os.path.join(root, f"{name}-{largest}.webp")) or (largest, largest)
+    src_w = 1024 if 1024 in widths else largest
+    src = f"/assets/photos/{name}-{src_w}.webp"
+    srcset = ", ".join(f"/assets/photos/{name}-{n}.webp {n}w" for n in widths)
+    extra = ' fetchpriority="high"' if priority else ' loading="lazy" decoding="async"'
+    img = (f'<img src="{src}" srcset="{srcset}" sizes="{sizes}" alt="{e(alt)}" '
+           f'width="{dims[0]}" height="{dims[1]}"{extra}>')
+    fig = f'<figure class="photo">{img}</figure>'
+    preload = ""
+    if priority:
+        preload = f'<link rel="preload" as="image" href="{src}" imagesrcset="{srcset}" imagesizes="{sizes}">\n'
+    return fig, preload
 
 
 
@@ -1761,6 +1848,40 @@ def g_series_promo(tone="sand", slug=None):
 </div></section>"""
 
 
+# The three reviews on /microneedling-burbank, word for word. The ads page reuses this list.
+MICRO_PAGE_REVIEWS = [
+    ("The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing! … The numbing cream is great and the whole procedure was completely painless.", "Stephany"),
+    ("I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.", "Rosa"),
+    ("The whole experience is calm and comfortable, and I genuinely look forward to my appointments. … It's just consistently good care from someone who clearly knows what he's doing.", "Chris"),
+]
+# Public listings that cite this clinic's Google reviews, checked 2026-11-22
+# (localusa.net, Birdeye, HelloRevelle): 5.0 from 41 reviews.
+# The organic pages still say "42" or "40+" and were left as they are.
+ADS_GOOGLE_RATING = "5.0"
+ADS_GOOGLE_REVIEW_COUNT = 41
+# OWNER TODO: confirm before this page is used in ads.
+# The nanoneedling and microneedling pages pop up "20% off your first {service}" and do not
+# state a dollar amount. Twenty percent off the $500 session would be $400.
+# This string is the only place the ads page states a discounted amount. It is a placeholder.
+ADS_FIRST_VISIT_OFFER = "$100 off your first session, $400"
+ADS_MICRO_PATH = "/microneedling-burbank-offer"
+# Cosmetic wording for chat-facts.json and llms.txt, which the ads page chat can repeat.
+# Organic page copy is left unchanged.
+ADS_SAFE_SHORT = {
+    "medical-microneedling-session": (
+        "Collagen induction for the look of fine lines, texture, and the hairline, "
+        "with custom plant-based Chinese herbal skincare serums and red light therapy."
+    ),
+}
+
+
+def without_rx_sentence(text):
+    """Drop only a sentence that names a prescription drug. The rest stays word for word."""
+    parts = _re.split(r"(?<=[.!?])\s+", text.strip())
+    kept = [p for p in parts if p and not _re.search(r"\b(minoxidil|botox|lidocaine)\b", p, _re.I)]
+    return " ".join(kept).strip()
+
+
 def micro_page(where):
     """Microneedling page built to turn a "microneedling burbank" search into a booking: price, reviews and a Book button
     up top, then what a session includes, who it suits, what to expect, fees, and a short FAQ (with FAQ markup).
@@ -1794,9 +1915,7 @@ def micro_page(where):
         "Usually no Chinese medicine assessment, and the same day or two of redness.")
     table = f'<section><div class="wrap">{g_table("What Full Lotus adds to microneedling", "The same core treatment, with Chinese medicine, our own serums and red light therapy built in. Here is how it compares.", us_col, [spa_col, PEELS, LASER, INJECT])}</div></section>'
     say = f"""<section><div class="wrap">{g_head("Patients", "What patients say")}
-{quotes([("The improvement seen in my crows feet as well as the overall tone and brightness of my skin is amazing! … The numbing cream is great and the whole procedure was completely painless.", "Stephany"),
-         ("I have also started microneedling for hair loss. After about 3 treatments, I have new tiny hairs growing around my hairline.", "Rosa"),
-         ("The whole experience is calm and comfortable, and I genuinely look forward to my appointments. … It's just consistently good care from someone who clearly knows what he's doing.", "Chris")])}
+{quotes(MICRO_PAGE_REVIEWS)}
 </div></section>"""
     included = g_session("sand", g_head("What's included", f"Everything in one ${price} session", "Sessions are 90 minutes. Your first visit includes an intake and a treatment plan."),
         [("jar", "Numbing cream", "A numbing cream goes on first, and most people find the treatment comfortable."),
@@ -1845,6 +1964,131 @@ def micro_page(where):
 <div><h2 class="h3">Also see</h2><ul class="checks"><li><a href="/nanoneedling-burbank">Nanoneedling in Burbank</a></li><li><a href="/cosmetic-acupuncture-burbank">Cosmetic acupuncture in Burbank</a></li><li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
     closing = cta("Ready for your first session?", f"Choose a time online, ${price} for 90 minutes, or text a question first.", "Book microneedling", slug=mn)
     return (hero_html + what + tcm + say + included + suits + expect + fees + table + why + compare + faq + offer, related, [faq_ld(faqs)], closing)
+
+
+def ads_micro_page():
+    """Google Ads landing page. No site nav, no nanoneedling link, cosmetic wording only."""
+    mn = "medical-microneedling-session"
+    mi, pk = BY_SLUG[mn], PACKAGES[mn]
+    price, series = mi["price"], pk["price"]
+    hero_fig, hero_preload = webp_figure(
+        "hero", TEA_ALT, priority=True, sizes="(min-width: 52rem) 46vw, 100vw")
+    serum_fig, _ = webp_figure(
+        "serums", "Amber bottles and dried botanicals",
+        sizes="(min-width: 52rem) 42vw, 100vw")
+    reviews = [(without_rx_sentence(t), who) for t, who in MICRO_PAGE_REVIEWS]
+    rating = (
+        f'<ul class="ads-trust">'
+        f'<li><span class="stars" role="img" aria-label="Rated {ADS_GOOGLE_RATING} out of 5">{STAR * 5}</span> '
+        f'<a href="{GOOGLE_REVIEWS}" rel="noopener">{ADS_GOOGLE_RATING} on Google &middot; {ADS_GOOGLE_REVIEW_COUNT} reviews</a></li>'
+        f'<li>Serving Burbank since 2016</li>'
+        f'<li>Licensed Acupuncturist (L.Ac.)</li>'
+        f'</ul>'
+    )
+    hero = f"""<div class="hero-band tone-c g-hero"><div class="wrap g-hero-grid">
+<div class="g-hero-text"><div class="band short" aria-hidden="true"></div>
+<h1>Holistic Microneedling in Burbank, CA</h1>
+<p class="lede">Clinical collagen induction paired with custom plant-based Chinese herbal skincare serums and red light therapy, performed by a Licensed Acupuncturist.</p>
+<p class="g-actions">{book_btn("Book Your First Session", slug=mn)}</p>
+<p class="ads-ask"><a href="sms:{PHONE_TEL}">Questions? Text {PHONE_DISPLAY}</a></p>
+{rating}</div>
+<div class="g-hero-art">{hero_fig}</div>
+</div></div>"""
+    different = f"""<section><div class="wrap g-tcm-top">
+<div>{g_head("The visit", "What Makes Full Lotus Microneedling Different", "A med spa appointment is often short. This one is 90 minutes, with one licensed acupuncturist, from topical numbing through red light.")}
+{g_steps([
+    ("needle", "Medical-grade microneedling", "Fine, sterile needles make tiny channels. Over the following weeks the look of fine lines and texture can soften."),
+    ("bottle", "Custom Full Lotus Skin serums", "Plant-based Chinese herbal skincare serums, chosen for your skin and applied while the channels are open."),
+    ("light", "Post-treatment red light therapy", "Included in every session. Most people rest under the light after the botanical topicals go on."),
+])}</div>
+<div>{serum_fig}</div>
+</div></section>"""
+    say = f"""<section class="wash-g"><div class="wrap">{g_head("Patients", "Testimonials")}
+{quotes(reviews)}
+</div></section>"""
+    faqs = [
+        ("Does it hurt?", "A gentle topical numbing goes on first. Most people find the visit comfortable. You may feel a light scratching sensation."),
+        ("What is the downtime?", "Skin can look flushed, similar to a mild sunburn. Botanical topicals and red light help calm that post-treatment redness. The flush usually settles within a day or two."),
+        ("What if I want zero needles or zero downtime?", "Needle-free nanoneedling is available on request at your visit. It stays at the surface, for glow and hydration, and has no downtime. Ask when you come in."),
+    ]
+    expect = f"""<section class="sand"><div class="wrap">{g_head("Your visit", "What to expect", "The visit is 90 minutes: gentle topical numbing, botanical serum application, then red light.")}
+{g_timeline([
+    ("jar", "Topical numbing", "A gentle topical numbing goes on first, so the microneedling stays comfortable."),
+    ("bottle", "Botanical serums", "Plant-based Chinese herbal skincare serums are applied during the microneedling."),
+    ("light", "Red light", "Red light therapy follows. It is included, not added on."),
+])}
+{faq_block(faqs)}
+</div></section>"""
+    offer_block = f"""<!-- OWNER TODO: ADS_FIRST_VISIT_OFFER in _src/build.py is a placeholder. Confirm the amount before ads go live. -->
+<div class="ads-offer">
+<div class="g-offer-badge" aria-hidden="true"><span>New</span>visit</div>
+<p class="eyebrow">New patients</p>
+<h3>{e(ADS_FIRST_VISIT_OFFER)}</h3>
+<p>For a first-time visitor. The visit is still 90 minutes, with custom plant-based Chinese herbal skincare serums and red light therapy included.</p>
+<div class="g-offer-cta">{book_btn("Book Your First Session", slug=mn)}</div>
+</div>"""
+    fees = f"""<section id="pricing"><div class="wrap">{g_head("Fees", "Pricing", "Serums and red light therapy are included in the price.")}
+<div class="cf-opts two">
+<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${price}</p><p class="cf-sub">90 minutes. Includes custom plant-based Chinese herbal skincare serums and red light therapy.</p><p>{book_btn("Book Your First Session", slug=mn)}</p></div>
+<div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">{e(series_offer(mn))}. A first single session counts toward the series.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to ask about the series</a></p></div>
+</div>
+{offer_block}
+</div></section>"""
+    closing = f"""<section class="cta"><div class="wrap">
+<h2>Ready when you are</h2>
+<p>Choose a time, or send a short question before you book.</p>
+<p class="g-actions">{book_btn("Book Your First Session", slug=mn)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY} for a quick question before booking</a></p>
+</div></section>"""
+    main = hero + different + say + expect + fees + closing
+    plain = _re.sub(r"<blockquote>.*?</blockquote>", "", main, flags=_re.S)
+    plain = _re.sub(r"<!--.*?-->", "", plain, flags=_re.S)
+    banned = [p for p in (
+        r"\bminoxidil\b", r"\bbotox\b", r"\blidocaine\b", r"\brosacea\b", r"\bmelasma\b",
+        r"\bacne\b", r"(?<!-)\bfree\b", r"herbal medicine injection", r"medicinal infusion",
+        r"/nanoneedling",
+    ) if _re.search(p, plain, _re.I)]
+    if banned:
+        sys.exit("ads landing page failed the wording check: " + ", ".join(banned))
+    if main.count(ADS_FIRST_VISIT_OFFER) != 1:
+        sys.exit("the first-visit offer must appear exactly once, from ADS_FIRST_VISIT_OFFER")
+    svc = dict(mi)
+    desc = "A 90-minute microneedling visit in Burbank with plant-based Chinese herbal skincare serums and red light therapy, from a licensed acupuncturist."
+    ld_service = service_ld(svc, url=SITE + ADS_MICRO_PATH, desc=desc, priced=True)
+    # A short business record so the service provider id resolves. No condition list.
+    biz = {
+        "@context": "https://schema.org",
+        "@type": "HealthAndBeautyBusiness",
+        "@id": f"{SITE}/#business",
+        "name": NAME,
+        "url": SITE + "/",
+        "telephone": PHONE_TEL,
+        "image": f"{SITE}/assets/logo-seal.png",
+        "address": {"@type": "PostalAddress", "streetAddress": ADDR["street"], "addressLocality": ADDR["city"],
+                    "addressRegion": ADDR["region"], "postalCode": ADDR["zip"], "addressCountry": "US"},
+    }
+    # Do not publish the unconfirmed first-visit amount as a structured price.
+    return main, hero_preload, [biz, faq_ld(faqs), ld_service]
+
+
+def offer_landing():
+    """Dedicated Google Ads page. noindex, not in the sitemap, not in the menu."""
+    for href, label in NAV:
+        targets = [h for h, _ in label] if isinstance(label, list) else [href]
+        if ADS_MICRO_PATH in targets:
+            sys.exit(f"{ADS_MICRO_PATH} must stay out of the site nav")
+    main, preload, ld = ads_micro_page()
+    OUT["microneedling-burbank-offer.html"] = page(
+        ADS_MICRO_PATH,
+        "Holistic Microneedling in Burbank, CA | Full Lotus Health",
+        "A 90-minute microneedling visit in Burbank with plant-based Chinese herbal skincare serums and red light therapy, from a licensed acupuncturist.",
+        main,
+        ld=ld,
+        noindex=True,
+        book_slug="medical-microneedling-session",
+        footer_map=False,
+        head_extra=preload,
+        chrome="ads",
+    )
 
 
 def nano_page(where):
@@ -2030,7 +2274,8 @@ def llms_txt():
             if s["group"] != group:
                 continue
             mins = f", {s['minutes']} min" if s.get("minutes") else ""
-            out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {s['short']}")
+            blurb = ADS_SAFE_SHORT.get(s["slug"], s["short"])
+            out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {blurb}")
         return "\n".join(out)
     series_line = series_offers()
     intake_link = INTAKE or f"{SITE}/new-patients"
@@ -2095,7 +2340,7 @@ def chat_facts():
             "price": s["price"],
             "minutes": s["minutes"],
             "group": s["group"],
-            "short": s["short"],
+            "short": ADS_SAFE_SHORT.get(s["slug"], s["short"]),
             "book": href,
             "bookLabel": label,
             "page": CANON_PAGE.get(s["slug"], "/service-page/" + s["slug"]),
@@ -2182,6 +2427,8 @@ def chat_post(p):
 
 def seo_files():
     urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
+    if ADS_MICRO_PATH in urls:
+        sys.exit(f"{ADS_MICRO_PATH} must stay out of the sitemap")
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
@@ -2189,14 +2436,20 @@ def seo_files():
         sm.append(f"<url><loc>{SITE}{u if u != '/' else '/'}</loc><lastmod>{post['date'] if post else TODAY}</lastmod><priority>{pri}</priority></url>")
     sm.append("</urlset>")
     OUT["sitemap.xml"] = "\n".join(sm) + "\n"
-    OUT["robots.txt"] = f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n"
+    OUT["robots.txt"] = (
+        "User-agent: *\nAllow: /\n\n"
+        f"# {ADS_MICRO_PATH} is a Google Ads landing page. It carries a noindex meta tag\n"
+        "# and is omitted from the sitemap so it does not compete with /microneedling-burbank.\n"
+        "# It is not disallowed: crawlers need to fetch the page to see the noindex tag.\n\n"
+        f"Sitemap: {SITE}/sitemap.xml\n"
+    )
     OUT["llms.txt"] = llms_txt()
     OUT["assets/chat-facts.json"] = json.dumps(chat_facts(), ensure_ascii=False, indent=2) + "\n"
     OUT["CNAME"] = "www.fulllotushealth.com\n"
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():

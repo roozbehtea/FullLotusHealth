@@ -954,3 +954,38 @@ button.sch-day:hover { background: var(--lapis-wash); }
   .nav-group summary, .nav-group summary::after { transition: none; }
   .nav-group details[open] > ul { animation: none; }
 }
+
+/* Google Ads landing page: logo and one book button, no site menu. */
+.ads-lp .site-header .bar { flex-wrap: nowrap; gap: 0.75rem; }
+.ads-lp .brand { min-width: 0; }
+.ads-lp .brand img { height: 62px; }
+.ads-lp .ads-nav-book { flex: none; white-space: nowrap; }
+.ads-lp .g-hero h1 { max-width: 18ch; }
+.ads-lp .g-hero-art { background: transparent; padding: 0; }
+.ads-lp .g-hero-art .photo,
+.ads-lp .g-tcm-top .photo { margin: 0; }
+.ads-lp .ads-trust {
+  list-style: none; margin: 0.4rem 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 0.45rem 1.15rem;
+  color: var(--on-cinnabar); font-size: 0.92rem; font-weight: 600;
+}
+.ads-lp .ads-trust li { display: flex; align-items: center; gap: 0.45rem; }
+.ads-lp .ads-trust a { color: var(--on-cinnabar); }
+.ads-lp .ads-ask { margin: -0.6rem 0 1rem; }
+.ads-lp .ads-ask a { color: var(--on-cinnabar); font-weight: 600; }
+.ads-offer {
+  max-width: 36rem; margin: 1.8rem auto 0; padding: 1.6rem 1.4rem 1.35rem; text-align: center;
+  border: 2px dashed var(--gold); border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.45);
+}
+.ads-offer p { margin-inline: auto; }
+.ads-offer .g-offer-cta .btn { width: 100%; }
+@media (max-width: 40rem) {
+  .ads-lp .brand img { height: 46px; }
+  .ads-lp .ads-nav-book { padding: 0.55rem 0.75rem; font-size: 0.8rem; }
+}
+@media (max-width: 52rem) {
+  .ads-lp .sticky-cta .btn { font-size: 0.8rem; padding: 0.72rem 0.4rem; white-space: nowrap; letter-spacing: 0; }
+  .ads-lp .sticky-cta .btn.ghost { flex: 1.4; }
+  body.ads-lp { padding-bottom: calc(5.6rem + env(safe-area-inset-bottom)); }
+  body.ads-lp.has-sticky .flh-chat { bottom: calc(7.6rem + env(safe-area-inset-bottom)); }
+}

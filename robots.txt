@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# /microneedling-burbank-offer is a Google Ads landing page. It carries a noindex meta tag
+# and is omitted from the sitemap so it does not compete with /microneedling-burbank.
+# It is not disallowed: crawlers need to fetch the page to see the noindex tag.
+
 Sitemap: https://www.fulllotushealth.com/sitemap.xml
