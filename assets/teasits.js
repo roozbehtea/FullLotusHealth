@@ -1,4 +1,4 @@
-/* Tea sits: lists upcoming sits with seats left, takes a reservation, and hands off to Stripe to pay.
+/* Tea sits: shows upcoming sits on a month calendar with seats left, takes a reservation, and hands off to Stripe to pay.
    Talks to the Apps Script web app in _src/teasits (URL set as teasits_url in _src/config.json).
    Collects name, email, optional phone and seat count. Nothing else. */
 (function () {
@@ -39,42 +39,73 @@
     if (s) before = getJSON("?action=release&session=" + encodeURIComponent(s)).catch(function () {});
   }
 
-  function seatDots(left, seats) {
-    var out = "";
-    for (var i = 0; i < seats; i++) out += '<span class="' + (i < seats - left ? "taken" : "open") + '"></span>';
-    return '<span class="ts-dots" aria-hidden="true">' + out + "</span>";
+  var TZ = "America/Los_Angeles";
+  var DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  function dayKey(d) { // YYYY-MM-DD in clinic time
+    var p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+    return p.year + "-" + p.month + "-" + p.day;
   }
+  function timeParts(iso) {
+    var t = new Date(iso).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).split(/[\s\u202f]+/);
+    return { time: t[0], ampm: (t[1] || "").toLowerCase() };
+  }
+  function leftNote(s) { return s.left < 1 ? "Full" : s.left <= 2 ? s.left + " left" : ""; }
 
+  // A month calendar per month that has sits. Each sit is a time button on its day.
   function render(sits) {
     if (!sits.length) { list.innerHTML = '<p class="notice">No tea sits are open for booking right now. ' + FALLBACK.replace("to reserve", "to hear about the next one") + "</p>"; return; }
-    list.innerHTML = sits.map(function (s) {
-      var full = s.left < 1;
-      // Show a count only when it helps: nothing while a sit is wide open, "Only N left" at 2 or fewer, "Full" when booked.
-      var leftText = full ? "Full" : s.left <= 2 ? "Only " + s.left + (s.left == 1 ? " seat" : " seats") + " left" : "";
-      var title = /^tea sit$/i.test(s.title) ? "" : '<span class="ts-title">' + esc(s.title) + "</span>";
-      return '<li class="ts-sit' + (full ? " full" : "") + '" data-id="' + esc(s.id) + '">' +
-        '<div class="ts-when"><span class="ts-date">' + esc(s.label) + "</span>" + title + "</div>" +
-        '<div class="ts-seats">' + (leftText ? '<span class="ts-left">' + leftText + "</span>" : "") + "</div>" +
-        '<div class="ts-price">' + (s.price > 0 ? money(s.price) : "Free") + "</div>" +
-        (full ? '<span class="btn small ghost" aria-disabled="true">Full</span>'
-              : '<button class="btn small" type="button" aria-expanded="false">Reserve</button>') +
-        "</li>";
+    var byDay = {}, months = [], prices = {};
+    sits.forEach(function (s) {
+      var k = dayKey(new Date(s.start)), m = k.slice(0, 7);
+      (byDay[k] = byDay[k] || []).push(s);
+      if (months.indexOf(m) < 0) months.push(m);
+      prices[s.price] = 1;
+    });
+    var one = Object.keys(prices).length == 1 ? Number(Object.keys(prices)[0]) : null;
+    var today = dayKey(new Date());
+    var head = DOW.map(function (d) { return '<div class="ts-dow" aria-hidden="true"><span class="l">' + d.slice(0, 3) + '</span><span class="s">' + d.charAt(0) + "</span></div>"; }).join("");
+    list.innerHTML = months.map(function (m) {
+      var y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7));
+      var first = new Date(Date.UTC(y, mo - 1, 1)).getUTCDay(), days = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+      var cells = "";
+      for (var i = 0; i < first; i++) cells += '<div class="ts-day out" aria-hidden="true"></div>';
+      for (var d = 1; d <= days; d++) {
+        var k = m + "-" + (d < 10 ? "0" : "") + d, here = byDay[k] || [];
+        cells += '<div class="ts-day' + (here.length ? " has" : "") + (k < today ? " past" : "") + '"><span class="ts-num" aria-hidden="true">' + d + "</span>" +
+          here.map(function (s) {
+            var t = timeParts(s.start), note = leftNote(s), full = s.left < 1;
+            var price = one === null ? '<span class="ts-note">' + (s.price > 0 ? money(s.price) : "Free") + "</span>" : "";
+            var inner = '<span class="ts-time">' + esc(t.time) + ' <span class="ts-ampm">' + esc(t.ampm) + "</span></span>" + price + (note ? '<span class="ts-note">' + note + "</span>" : "");
+            var aria = esc(s.label) + ", " + (s.price > 0 ? money(s.price) : "free") + (note ? ", " + (full ? "full" : "only " + note) : "");
+            return full ? '<span class="ts-slot full" role="img" aria-label="' + aria + '">' + inner + "</span>"
+                        : '<button class="ts-slot" type="button" data-id="' + esc(s.id) + '" aria-expanded="false" aria-label="Reserve ' + aria + '">' + inner + "</button>";
+          }).join("") + "</div>";
+      }
+      var tail = (first + days) % 7;
+      if (tail) for (var j = tail; j < 7; j++) cells += '<div class="ts-day out" aria-hidden="true"></div>';
+      return '<section class="ts-month" aria-label="' + MONTHS[mo - 1] + " " + y + '"><div class="ts-mhead"><h3 class="ts-mname">' + MONTHS[mo - 1] + " " + y + "</h3>" +
+        (one !== null ? '<p class="ts-mnote">' + (one > 0 ? money(one) + " a seat" : "Free") + ". Tap a time to reserve.</p>" : '<p class="ts-mnote">Tap a time to reserve.</p>') +
+        '</div><div class="ts-grid">' + head + cells + "</div></section>";
     }).join("");
-    Array.prototype.forEach.call(list.querySelectorAll(".ts-sit button"), function (b) {
-      b.addEventListener("click", function () { openForm(b.closest(".ts-sit"), sits); });
+    Array.prototype.forEach.call(list.querySelectorAll("button.ts-slot"), function (b) {
+      b.addEventListener("click", function () { openForm(b, sits); });
     });
   }
 
-  function openForm(li, sits) {
-    var open = list.querySelector(".ts-form");
-    if (open) { var was = open.previousElementSibling; open.remove(); was.querySelector("button").setAttribute("aria-expanded", "false"); if (was === li) return; }
-    var s = sits.filter(function (x) { return x.id === li.getAttribute("data-id"); })[0];
+  function openForm(b, sits) {
+    var open = list.querySelector(".ts-form"), was = list.querySelector(".ts-slot.on");
+    if (open) open.remove();
+    if (was) { was.classList.remove("on"); was.setAttribute("aria-expanded", "false"); if (was === b) { b.focus(); return; } }
+    var s = sits.filter(function (x) { return x.id === b.getAttribute("data-id"); })[0];
     var max = Math.min(MAX, s.left), opts = "";
     for (var i = 1; i <= max; i++) opts += '<option value="' + i + '">' + i + "</option>";
-    var f = document.createElement("li");
+    var f = document.createElement("div");
     f.className = "ts-form";
     f.innerHTML =
-      '<form novalidate><p class="ts-for">Reserving for <strong>' + esc(s.label) + "</strong></p>" +
+      '<form novalidate><p class="ts-for">Reserving for <strong>' + esc(s.label) + "</strong>" +
+      ' <button class="ts-close" type="button">Pick another time</button></p>' +
       '<div class="ts-fields">' +
       '<label>Name<input name="name" autocomplete="name" required maxlength="80"></label>' +
       '<label>Email<input name="email" type="email" inputmode="email" autocomplete="email" required maxlength="254"></label>' +
@@ -84,13 +115,15 @@
       '<p class="ts-actions"><button class="btn" type="submit">' + (s.price > 0 ? "Continue to payment, " + money(s.price) : "Reserve") + '</button></p>' +
       '<p class="fine">' + (s.price > 0 ? "You'll pay securely with Stripe. Have a coupon code? Enter it on the payment page. Seats are held for 30 minutes while you pay." : "") + ' To cancel later, reply to your confirmation email.</p>' +
       '<p class="gmsg" role="status" aria-live="polite"></p></form>';
-    li.after(f);
-    li.querySelector("button").setAttribute("aria-expanded", "true");
+    b.closest(".ts-month").appendChild(f);
+    b.classList.add("on"); b.setAttribute("aria-expanded", "true");
+    f.querySelector(".ts-close").addEventListener("click", function () { f.remove(); b.classList.remove("on"); b.setAttribute("aria-expanded", "false"); b.focus(); });
     var form = f.querySelector("form"), msg = f.querySelector(".gmsg"), btn = f.querySelector("button[type=submit]");
     var sel = form.elements.seats;
     var label = function () { if (s.price > 0) btn.textContent = "Continue to payment, " + money(s.price * Number(sel.value)); };
     sel.addEventListener("change", label);
-    form.elements.name.focus();
+    f.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    form.elements.name.focus({ preventScroll: true });
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }

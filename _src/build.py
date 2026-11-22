@@ -1053,10 +1053,10 @@ def tea():
 
 def tea_sits():
     if TEASITS:
-        body = f"""<p>Tea sits run every week on <strong>Tuesday, Wednesday and Thursday mornings at 8:30</strong> and <strong>Friday afternoons at 3:00</strong>. Pick a date below to save your seat.</p>
+        body = f"""<p>Tea sits run every week on <strong>Tuesday, Wednesday and Thursday mornings at 8:30</strong> and <strong>Friday afternoons at 3:00</strong>. Pick a time on the calendar to save your seat.</p>
 <div id="teasits" data-endpoint="{e(TEASITS)}">
   <p class="ts-status" role="status" aria-live="polite" hidden></p>
-  <ul class="ts-list"><li class="fine" style="padding:1rem 0">Loading dates&hellip;</li></ul>
+  <div class="ts-list"><p class="fine" style="padding:1rem 0">Loading dates&hellip;</p></div>
   <noscript><p class="notice">To reserve a seat, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
 </div>
 <p style="margin-top:var(--space-3)">None of these times work for you? Just text me at <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> and we'll find a time.</p>

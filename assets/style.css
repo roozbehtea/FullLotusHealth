@@ -578,25 +578,45 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
   .g-table td::before { content: attr(data-label); display: block; margin-bottom: 0.25rem; font-weight: 600; color: var(--cinnabar); }
 }
 
-/* ---- Tea sits (reservation list, assets/teasits.js) ---- */
+/* ---- Tea sits (month calendar, assets/teasits.js) ---- */
 .ts-status, .sch-status { margin-bottom: var(--space-3); }
 .ts-status.err, .sch-status.err { background: var(--cinnabar-wash); }
-.ts-list { list-style: none; margin: 0; padding: 0; max-width: 56rem; }
-.ts-sit { display: grid; grid-template-columns: 1fr auto auto auto; gap: 1.2rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--surface-300); }
-.ts-sit:first-child { border-top: 1px solid var(--surface-300); }
-.ts-when { display: flex; flex-direction: column; gap: 0.15rem; }
-.ts-date { font-family: var(--display); font-size: 1.3rem; font-weight: 500; color: var(--ink); }
-.ts-title { font-size: 0.9375rem; color: var(--ink-muted); }
-.ts-seats { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
-.ts-dots { display: flex; gap: 4px; }
-.ts-dots span { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--malachite); }
-.ts-dots .open { background: var(--malachite); }
-.ts-dots .taken { background: transparent; border-color: var(--surface-300); }
-.ts-left { font-size: 0.9375rem; color: var(--ink-muted); white-space: nowrap; }
-.ts-price { font-family: var(--display); font-size: 1.3rem; font-weight: 500; color: var(--cinnabar); }
-.ts-sit .btn { cursor: pointer; }
-.ts-sit.full .ts-date, .ts-sit.full .ts-price { color: var(--ink-muted); }
-.ts-sit.full .btn { opacity: 0.55; cursor: default; }
+.ts-list { max-width: 64rem; }
+.ts-month + .ts-month { margin-top: var(--space-5); }
+.ts-mhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.4rem 1.2rem; margin-bottom: var(--space-2); }
+.ts-mname { margin: 0; font-family: var(--display); font-size: clamp(1.7rem, 4.5vw, 2.4rem); font-weight: 500; color: var(--ink); }
+.ts-mnote { margin: 0; color: var(--ink-muted); }
+.ts-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--surface-300); border-left: 1px solid var(--surface-300); border-radius: var(--radius-sm); overflow: hidden; }
+.ts-dow, .ts-day { border-right: 1px solid var(--surface-300); border-bottom: 1px solid var(--surface-300); }
+.ts-dow { padding: 0.6rem 0.7rem; background: var(--surface-200); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+.ts-dow .s { display: none; }
+.ts-day { min-height: 7.5rem; padding: 0.55rem; display: flex; flex-direction: column; gap: 0.45rem; background: #fffaf1; }
+.ts-day.out { background: transparent; }
+.ts-num { font-family: var(--display); font-size: 1.1rem; line-height: 1; color: var(--ink-muted); font-variant-numeric: lining-nums; }
+.ts-day.past .ts-num { opacity: 0.45; }
+.ts-day.has .ts-num { color: var(--ink); font-weight: 600; }
+.ts-slot { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; width: 100%; padding: 0.55rem 0.65rem; border: 0; border-radius: var(--radius-sm); background: var(--malachite); color: var(--on-malachite); font: inherit; line-height: 1.15; text-align: left; cursor: pointer; }
+.ts-slot:hover { background: #264d40; }
+.ts-slot:focus-visible { outline: 3px solid var(--lapis); outline-offset: 2px; }
+.ts-slot.on { background: var(--cinnabar); color: var(--on-cinnabar); }
+.ts-time { font-family: var(--display); font-size: 1.2rem; font-weight: 500; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+.ts-ampm { font-family: var(--sans); font-size: 0.8125rem; letter-spacing: 0.04em; }
+.ts-note { font-size: 0.8125rem; font-weight: 600; }
+.ts-slot.full { background: var(--surface-200); color: var(--ink-muted); cursor: default; }
+.ts-slot.full .ts-time { text-decoration: line-through; text-decoration-thickness: 1px; }
+.ts-form { margin-top: var(--space-3); padding: 1.2rem 1.3rem 0.6rem; background: var(--surface-200); border-radius: var(--radius-md); scroll-margin: 1rem; }
+.ts-close { margin-left: 0.4rem; padding: 0; border: 0; background: none; font: inherit; font-size: 0.9375rem; color: var(--lapis); text-decoration: underline; cursor: pointer; }
+@media (max-width: 40rem) {
+  .ts-dow { padding: 0.45rem 0; text-align: center; letter-spacing: 0; }
+  .ts-dow .l { display: none; }
+  .ts-dow .s { display: inline; }
+  .ts-day { min-height: 4.6rem; padding: 0.3rem 0.2rem; gap: 0.3rem; }
+  .ts-num { font-size: 0.95rem; padding-left: 0.15rem; }
+  .ts-slot { align-items: center; padding: 0.4rem 0.1rem; text-align: center; }
+  .ts-time { font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+  .ts-ampm { font-size: 0.6875rem; }
+  .ts-note { font-size: 0.625rem; }
+}
 .ts-form { padding: 1.2rem 1.3rem 0.6rem; margin: 0 0 1rem; background: var(--surface-200); border-radius: 0 0 var(--radius-md) var(--radius-md); }
 .ts-for { margin-top: 0; }
 .ts-fields, .sch-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem 1rem; align-items: end; }
@@ -606,11 +626,6 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .ts-actions { margin: 1.1rem 0 0.4rem; }
 .ts-form .btn, .sch-form .btn { cursor: pointer; }
 .ts-form .btn[disabled], .sch-form .btn[disabled] { opacity: 0.6; cursor: wait; }
-@media (max-width: 40rem) {
-  .ts-sit { grid-template-columns: 1fr auto; row-gap: 0.7rem; }
-  .ts-sit .ts-seats { grid-row: 2; }
-  .ts-sit .btn { grid-column: 2; grid-row: 2; justify-self: end; }
-}
 
 /* First-visit offer pop-up */
 .g-offer-pop { width: min(26rem, calc(100vw - 2rem)); padding: 2rem 1.75rem 1.25rem; border: 2px dashed var(--gold); border-radius: var(--radius-md); background: var(--surface-100); color: var(--ink); text-align: center; box-shadow: 0 20px 60px rgba(30, 27, 24, 0.3); }
@@ -653,7 +668,7 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 p, li, dd, blockquote { text-wrap: pretty; }
 
 /* prices line up in lists */
-.rates .price, .facts .price, .svc-list .p, .ts-price { font-variant-numeric: lining-nums tabular-nums; }
+.rates .price, .facts .price, .svc-list .p { font-variant-numeric: lining-nums tabular-nums; }
 
 /* buttons: smooth colour change plus a light press */
 .btn { transition-property: background-color, border-color, color, transform; transition-duration: 0.16s; transition-timing-function: cubic-bezier(0.2, 0, 0, 1); -webkit-tap-highlight-color: transparent; }
