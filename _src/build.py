@@ -537,6 +537,31 @@ def booking_head(slug):
 """.replace("__BOOT__", boot)
 
 
+def teasits_head():
+    """Tea sits page: connect to Google and ask for the schedule while the rest of the page loads (same idea as booking_head)."""
+    boot = json.dumps({"endpoint": TEASITS, "key": "fl-teasits-v1", "ttl": 180000}, separators=(",", ":")).replace("<", "\\u003c")
+    return """<link rel="dns-prefetch" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<script>
+(function () {
+  var boot = __BOOT__;
+  window.__flTea = { cache: null, pending: null };
+  try {
+    var raw = localStorage.getItem(boot.key);
+    if (raw) {
+      var c = JSON.parse(raw);
+      if (c && c.t && (Date.now() - c.t) < boot.ttl && c.sits && c.sits.length) window.__flTea.cache = c.sits;
+    }
+  } catch (e) {}
+  if (/[?&](paid|cancelled)=/.test(location.search)) return;
+  window.__flTea.pending = fetch(boot.endpoint, { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+})();
+</script>
+""".replace("__BOOT__", boot)
+
+
 def ads_click_script():
     """Book and text clicks on the ads landing page. gtag is a no-op when GA4 is not configured."""
     return """<script>
@@ -1197,6 +1222,7 @@ def tea_sits():
         body = f"""<p>Tea sits run every week on <strong>Tuesday, Wednesday and Thursday mornings at 8:30</strong> and <strong>Friday afternoons at 3:00</strong>. Pick a date below to save your seat.</p>
 <div id="teasits" data-endpoint="{e(TEASITS)}">
   <p class="ts-status" role="status" aria-live="polite" hidden></p>
+  <div class="sch-cal ts-cal" aria-busy="true"><div class="sch-grid" aria-hidden="true">{"".join(f'<span class="sch-dow">{d}</span>' for d in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))}{"".join('<span class="sch-day sk"></span>' for _ in range(35))}</div></div>
   <ul class="ts-list"><li class="fine" style="padding:1rem 0">Loading dates&hellip;</li></ul>
   <noscript><p class="notice">To reserve a seat, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
 </div>
@@ -1221,7 +1247,8 @@ def tea_sits():
 </div></section>""" + cta("Prefer a private ceremony?", "Gong fu and bowl tea ceremonies for you and up to five guests.", "Book a ceremony", tone="g")
     OUT["tea-sits.html"] = page("/tea-sits", "Weekly Tea Sits in Burbank | Full Lotus Health",
         "Weekly tea sits in Burbank: an hour of old growth, organic, and aged tea, mostly in silence. Five seats per sit. See dates, seats left, and reserve online.",
-        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-sits")
+        main, ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Tea ceremonies", "/tea-ceremonies"), ("Tea sits", "/tea-sits")])], current="/tea-sits",
+        head_extra=teasits_head() if TEASITS else "")
 
 
 def book_online():
