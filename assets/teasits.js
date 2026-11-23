@@ -1,4 +1,4 @@
-/* Tea sits: lists upcoming sits with seats left, takes a reservation, and hands off to Stripe to pay.
+/* Tea sits: shows upcoming sits on a month calendar; picking a day lists its sits with seats left, takes a reservation, and hands off to Stripe to pay.
    Talks to the Apps Script web app in _src/teasits (URL set as teasits_url in _src/config.json).
    Collects name, email, optional phone and seat count. Nothing else. */
 (function () {
@@ -43,6 +43,50 @@
     var out = "";
     for (var i = 0; i < seats; i++) out += '<span class="' + (i < seats - left ? "taken" : "open") + '"></span>';
     return '<span class="ts-dots" aria-hidden="true">' + out + "</span>";
+  }
+
+  // ---- month calendar (same day grid as the booking page): pick a day, its sits show below
+  var cal = document.createElement("div");
+  cal.className = "sch-cal ts-cal";
+  list.parentNode.insertBefore(cal, list);
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var LA = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" });
+  function dayKey(date) { return LA.format(date); }                       // YYYY-MM-DD in Burbank time
+  function d(k) { return new Date(k + "T12:00:00Z"); }
+  function plus(k, n) { return new Date(d(k).getTime() + n * 864e5).toISOString().slice(0, 10); }
+  function dow(k) { return (d(k).getUTCDay() + 6) % 7; }                 // 0 = Monday
+  var all = [], picked = null;
+
+  function renderCal() {
+    var byDay = {};
+    all.forEach(function (s) { var k = dayKey(new Date(s.start)); (byDay[k] = byDay[k] || []).push(s); });
+    var today = dayKey(new Date()), firstSit = dayKey(new Date(all[0].start)), lastSit = dayKey(new Date(all[all.length - 1].start));
+    var from = plus(firstSit, -dow(firstSit)), last = plus(lastSit, 6 - dow(lastSit));
+    var head = "";
+    DAYS.forEach(function (n) { head += '<span class="sch-dow" aria-hidden="true">' + n + "</span>"; });
+    var cells = "";
+    for (var k = from; k <= last; k = plus(k, 1)) {
+      var dt = d(k), n = dt.getUTCDate();
+      var num = (n === 1 ? '<span class="sch-mo">' + MON[dt.getUTCMonth()] + "</span>" : "") + n;
+      var label = DAYS[dow(k)] + " " + MON[dt.getUTCMonth()] + " " + n;
+      var day = byDay[k];
+      if (day) {
+        var open = day.some(function (s) { return s.left > 0; });
+        cells += '<button type="button" class="sch-day ' + (open ? "open" : "wait") + (k === picked ? " on" : "") + '" data-day="' + k + '" aria-pressed="' + (k === picked) + '" aria-label="' + label + (open ? ", tea sit" : ", tea sit full") + '">' + num + "</button>";
+      } else {
+        cells += '<span class="sch-day off' + (k < today ? " out" : "") + '" aria-hidden="true">' + num + "</span>";
+      }
+    }
+    cal.innerHTML = '<div class="sch-grid" role="group" aria-label="Choose a day">' + head + cells + "</div>" +
+      '<p class="fine sch-key"><span class="sch-sw open"></span> seats open <span class="sch-sw wait"></span> full</p>';
+    Array.prototype.forEach.call(cal.querySelectorAll("button[data-day]"), function (b) {
+      b.addEventListener("click", function () { picked = b.getAttribute("data-day"); renderCal(); showDay(); list.scrollIntoView({ behavior: "smooth", block: "nearest" }); });
+    });
+  }
+
+  function showDay() {
+    render(all.filter(function (s) { return dayKey(new Date(s.start)) === picked; }));
   }
 
   function render(sits) {
@@ -123,8 +167,12 @@
   function load() {
     return getJSON("").then(function (r) {
       if (!r.sits) throw new Error("bad");
-      render(r.sits);
-    }).catch(function () { list.innerHTML = '<p class="notice">The schedule couldn\'t load just now. ' + FALLBACK + "</p>"; });
+      all = r.sits;
+      if (!all.length) { cal.innerHTML = ""; render(all); return; }
+      var keep = picked && all.some(function (s) { return dayKey(new Date(s.start)) === picked; });
+      if (!keep) { var first = all.filter(function (s) { return s.left > 0; })[0] || all[0]; picked = dayKey(new Date(first.start)); }
+      renderCal(); showDay();
+    }).catch(function () { cal.innerHTML = ""; list.innerHTML = '<p class="notice">The schedule couldn\'t load just now. ' + FALLBACK + "</p>"; });
   }
   before.then(load);
 })();
