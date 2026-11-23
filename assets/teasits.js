@@ -198,6 +198,13 @@
     var p = early ? early.catch(function () { return getJSON(""); }) : getJSON("");
     return p.then(function (r) {
       if (!r || !r.sits) throw new Error("bad");
+      if (r.saved) {
+        // Saved copy: drop sits whose online booking has closed (1 hour before start), show it now,
+        // then quietly bring seat counts up to the minute from the live schedule.
+        var soon = Date.now() + 36e5;
+        present(r.sits.filter(function (s) { return new Date(s.start).getTime() > soon; }));
+        return getJSON("").then(function (x) { if (x && x.sits) { saveCache(x.sits); present(x.sits); } }, function () {});
+      }
       saveCache(r.sits);
       present(r.sits);
     }).catch(function () {

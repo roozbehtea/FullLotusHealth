@@ -404,7 +404,9 @@ function apptWarm() {
       payloads[slug] = apptPublic_(payload);
     } catch (err) { console.error('warm ' + slug + ': ' + err); }
   }
-  try { console.log('GitHub copy of open times: ' + apptPublish_(payloads, now)); } catch (err) { console.error('publish: ' + err); }   // off = no GITHUB_TOKEN set, same = nothing changed, saved, busy, failed
+  var sits = null;   // tea sits (Code.gs) ride along in the same file, so the tea sits page never waits on Apps Script either
+  try { if (typeof listSits_ === 'function') sits = listSits_(); } catch (err) { console.error('tea sits: ' + err); }
+  try { console.log('GitHub copy of open times: ' + apptPublish_(payloads, now, sits)); } catch (err) { console.error('publish: ' + err); }   // off = no GITHUB_TOKEN set, same = nothing changed, saved, busy, failed
 }
 
 // ---- Static copy of the open times. The website reads this small file first, so a visitor never waits on Apps Script.
@@ -412,7 +414,7 @@ function apptWarm() {
 var SLOTS_HEARTBEAT_MS = 55 * 60 * 1000;   // rewrite an unchanged file about hourly, so the page can tell the refresh is still running
 
 /** Saves every service's open times to GitHub when they changed (or about hourly). Returns 'off', 'busy', 'same', 'saved' or 'failed'. */
-function apptPublish_(payloads, now) {
+function apptPublish_(payloads, now, sits) {
   var token = prop_('GITHUB_TOKEN', '');
   if (!token) return 'off';
   var n = 0, k;
@@ -422,10 +424,10 @@ function apptPublish_(payloads, now) {
   if (!lock.tryLock(3000)) return 'busy';
   try {
     var props = PropertiesService.getScriptProperties();
-    var digest = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(payloads)));
+    var digest = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(sits ? { s: payloads, t: sits } : payloads)));
     var last = Number(props.getProperty('SLOTS_AT') || 0);
     if (props.getProperty('SLOTS_DIGEST') === digest && now - last >= 0 && now - last < SLOTS_HEARTBEAT_MS) return 'same';
-    if (!apptGithubPut_(token, JSON.stringify({ generated: now, services: payloads }))) return 'failed';
+    if (!apptGithubPut_(token, JSON.stringify(sits ? { generated: now, services: payloads, teasits: sits } : { generated: now, services: payloads }))) return 'failed';
     props.setProperty('SLOTS_DIGEST', digest);
     props.setProperty('SLOTS_AT', String(now));
     return 'saved';
