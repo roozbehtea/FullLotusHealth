@@ -38,6 +38,13 @@
       }
     ]
   },
+  "acupuncturePackage": {
+    "name": "Acupuncture 5-visit package",
+    "slug": "acupuncture-repeat-treatment",
+    "price": 500,
+    "visits": 5,
+    "summary": "Acupuncture 5-visit package: 5 follow-up visits for $500 ($100 less than five single visits). Book your first visit online, and we will book the rest together after your first appointment."
+  },
   "services": [
     {
       "slug": "medical-microneedling-session",
