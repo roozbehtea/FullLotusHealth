@@ -186,6 +186,7 @@ BY_SLUG = {s["slug"]: s for s in SERVICES}
 
 # Services that can be booked on the site (the table in _src/booking/Booking.gs), checked against SERVICES so prices and lengths never drift.
 APPT = {}
+_OFFER_APPT = {}   # booking slugs that are not organic services (the ads prices). Checked against ADS_OFFERS below.
 if BOOKAPI:
     import re as _rx
     _gs = (pathlib.Path(__file__).parent / "booking" / "Booking.gs").read_text()
@@ -193,7 +194,10 @@ if BOOKAPI:
     APPT = json.loads(_m.group(1)) if _m else {}
     for _slug, _a in APPT.items():
         _s = BY_SLUG.get(_slug)
-        if not _s or _s["price"] != _a["price"] or _s["minutes"] != _a["minutes"]:
+        if not _s:
+            _OFFER_APPT[_slug] = _a
+            continue
+        if _s["price"] != _a["price"] or _s["minutes"] != _a["minutes"]:
             sys.exit(f"_src/booking/Booking.gs does not match SERVICES for {_slug}: fix the price or minutes in one of them")
 # One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
 CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
@@ -1929,10 +1933,31 @@ MICRO_PAGE_REVIEWS = [
 # The organic pages still say "42" or "40+" and were left as they are.
 ADS_GOOGLE_RATING = "5.0"
 ADS_GOOGLE_REVIEW_COUNT = 41
-# Owner confirmed 2026-11-22. Matches the site popup ("20% off your first session").
-# The dollar amounts live only in this string. The badge repeats "20% off", as the popup does.
-ADS_FIRST_VISIT_OFFER = "20% off the first session ($400, regularly $500)"
+# Ads-page prices only. Struck amounts must match the listed service prices.
+# Sale amounts and sash labels live here, not on the organic pages.
+ADS_OFFERS = {
+    "single": dict(was=500, now=400, off=20, sash="20% OFF",
+                   note="First-time visitors. 90 minutes, includes herbal serums and red light."),
+    "series": dict(was=2000, now=1800, off=10, sash="10% OFF",
+                   note="5 sessions, 90 minutes each."),
+}
+ADS_BOOK_FIRST = "microneedling-offer-first"
+ADS_BOOK_SERIES = "microneedling-offer-series"
+# False until Booking.gs is deployed as a new version of the existing Apps Script web app.
+# While false, ads Book buttons stay on /book/medical-microneedling-session (which charges $500).
+ADS_OFFER_BOOKING_LIVE = False
 ADS_MICRO_PATH = "/microneedling-burbank-offer"
+if BOOKAPI:
+    _expected_offer = {
+        ADS_BOOK_FIRST: (ADS_OFFERS["single"]["now"], 90),
+        ADS_BOOK_SERIES: (ADS_OFFERS["series"]["now"], 90),
+    }
+    if set(_OFFER_APPT) != set(_expected_offer):
+        sys.exit("Booking.gs services that are not in SERVICES must be exactly the ads offer slugs: " + ", ".join(sorted(_OFFER_APPT)))
+    for _slug, (_price, _minutes) in _expected_offer.items():
+        _a = _OFFER_APPT[_slug]
+        if _a["price"] != _price or _a["minutes"] != _minutes:
+            sys.exit(f"Booking.gs {_slug} is ${_a['price']} / {_a['minutes']} min; the ads offer is ${_price} / {_minutes} min")
 # Cosmetic wording for chat-facts.json and llms.txt, which the ads page chat can repeat.
 # Organic page copy is left unchanged.
 ADS_SAFE_SHORT = {
@@ -2037,6 +2062,7 @@ def micro_page(where):
 def ads_micro_page():
     """Google Ads landing page. No site nav, no nanoneedling link, cosmetic wording only."""
     mn = "medical-microneedling-session"
+    first_book = ADS_BOOK_FIRST if ADS_OFFER_BOOKING_LIVE else mn
     mi, pk = BY_SLUG[mn], PACKAGES[mn]
     price, series = mi["price"], pk["price"]
     hero_fig, hero_preload = webp_figure(
@@ -2053,15 +2079,40 @@ def ads_micro_page():
         f'<li>Licensed Acupuncturist (L.Ac.)</li>'
         f'</ul>'
     )
+    lotus = """<svg class="ads-lotus" viewBox="0 0 72 40" width="72" height="40" aria-hidden="true" focusable="false">
+<path d="M36 34c-2-8-1-16 0-22 1 6 2 14 0 22z" fill="none" stroke="#e7cf9c" stroke-width="1.2"/>
+<path d="M36 32c-8-2-16-8-18-16 6 2 12 6 18 16z" fill="none" stroke="#e7cf9c" stroke-width="1.15"/>
+<path d="M36 32c8-2 16-8 18-16-6 2-12 6-18 16z" fill="none" stroke="#e7cf9c" stroke-width="1.15"/>
+<path d="M36 30c-14 0-22-8-24-14 8 1 16 5 24 14z" fill="none" stroke="#f4ecdf" stroke-width="1.05" opacity=".85"/>
+<path d="M36 30c14 0 22-8 24-14-8 1-16 5-24 14z" fill="none" stroke="#f4ecdf" stroke-width="1.05" opacity=".85"/>
+<path d="M14 28c6 1 14 1 22 0M36 28c8 1 16 1 22 0" fill="none" stroke="#a8843e" stroke-width=".8" stroke-linecap="round"/>
+</svg>"""
+    vs_rows = [
+        ("The visit", "90 minutes with one person", "Often a much shorter appointment"),
+        ("Who", "Licensed acupuncturist, in Burbank since 2016", "Varies by clinic"),
+        ("Serums", "Custom Chinese herbal skincare serums", "Often a standard serum"),
+        ("Red light", "Included in the visit", "Often priced separately"),
+    ]
+    vs_body = "".join(
+        f'<tr><th scope="row">{e(label)}</th><td>{e(ours)}</td><td>{e(theirs)}</td></tr>'
+        for label, ours, theirs in vs_rows)
     hero = f"""<div class="hero-band tone-c g-hero"><div class="wrap g-hero-grid">
-<div class="g-hero-text"><div class="band short" aria-hidden="true"></div>
-<h1>Holistic Microneedling in Burbank, CA</h1>
-<p class="lede">Clinical collagen induction paired with custom plant-based Chinese herbal skincare serums and red light therapy, performed by a Licensed Acupuncturist.</p>
-<p class="g-actions">{book_btn("Book Your First Session", slug=mn)}</p>
+<div class="g-hero-text">{lotus}<div class="band short" aria-hidden="true"></div>
+<h1>Ancient Healing Meets Modern Microneedling</h1>
+<p class="lede">Not a med-spa assembly line: a 90-minute ritual by a licensed acupuncturist, pairing medical-grade microneedling with custom Chinese herbal serums and red light.</p>
+<p class="g-actions">{book_btn("Book Your First Session", slug=first_book)}</p>
 <p class="ads-ask"><a href="sms:{PHONE_TEL}">Questions? Text {PHONE_DISPLAY}</a></p>
 {rating}</div>
 <div class="g-hero-art">{hero_fig}</div>
-</div></div>"""
+</div></div>
+<section class="ads-vs-wrap" aria-labelledby="ads-vs-h"><div class="wrap">
+<h2 id="ads-vs-h" class="sr-only">Full Lotus and a typical med-spa visit</h2>
+<div class="ads-vs"><table>
+<caption class="sr-only">Full Lotus and a typical med-spa visit</caption>
+<thead><tr><td></td><th scope="col">Full Lotus</th><th scope="col">A typical med-spa visit</th></tr></thead>
+<tbody>{vs_body}</tbody>
+</table></div>
+</div></section>"""
     different = f"""<section><div class="wrap g-tcm-top">
 <div>{g_head("The visit", "What Makes Full Lotus Microneedling Different", "A med spa appointment is often short. This one is 90 minutes, with one licensed acupuncturist, from topical numbing through red light.")}
 {g_steps([
@@ -2087,24 +2138,36 @@ def ads_micro_page():
 ])}
 {faq_block(faqs)}
 </div></section>"""
-    offer_block = f"""<div class="ads-offer">
-<div class="g-offer-badge" aria-hidden="true"><span>20%</span>off</div>
-<p class="eyebrow">New patients</p>
-<h3>{e(ADS_FIRST_VISIT_OFFER)}</h3>
-<p>For a first-time visitor. The visit is still 90 minutes, with custom plant-based Chinese herbal skincare serums and red light therapy included.</p>
-<div class="g-offer-cta">{book_btn("Book Your First Session", slug=mn)}</div>
+    def ads_card(key, name, action):
+        o = ADS_OFFERS[key]
+        if o["was"] * (100 - o["off"]) != o["now"] * 100:
+            sys.exit(f"ads {key} price does not match its {o['off']}% sash")
+        if not o["sash"].startswith(f"{o['off']}%"):
+            sys.exit(f"ads {key} sash does not match its percent")
+        return f"""<div class="cf-opt ads-price">
+<p class="ads-sash">{e(o["sash"])}</p>
+<p class="cf-name">{name}</p>
+<p class="ads-was"><s><span class="sr">Was </span>${o["was"]:,}</s></p>
+<p class="cf-price"><span class="sr">Now </span>${o["now"]:,}</p>
+<p class="cf-sub">{e(o["note"])}</p>
+<p>{action}</p>
 </div>"""
-    fees = f"""<section id="pricing"><div class="wrap">{g_head("Fees", "Pricing", "Serums and red light therapy are included in the price.")}
+    if ADS_OFFERS["single"]["was"] != price or ADS_OFFERS["series"]["was"] != series:
+        sys.exit("ads strike prices must match the listed microneedling prices")
+    single_card = ads_card("single", "First session", book_btn("Book Your First Session", slug=first_book))
+    series_action = (book_btn("Book the series", slug=ADS_BOOK_SERIES) if ADS_OFFER_BOOKING_LIVE
+                     else f'<a class="btn ghost" href="sms:{PHONE_TEL}">Text about the series</a>')
+    series_card = ads_card("series", e(SERIES) + " series", series_action)
+    fees = f"""<section id="pricing"><div class="wrap">{g_head("Fees", "Pricing")}
 <div class="cf-opts two">
-<div class="cf-opt"><p class="cf-name">Single session</p><p class="cf-price">${price}</p><p class="cf-sub">90 minutes. Includes custom plant-based Chinese herbal skincare serums and red light therapy.</p><p>{book_btn("Book Your First Session", slug=mn)}</p></div>
-<div class="cf-opt"><p class="cf-name">{e(SERIES)} series</p><p class="cf-price">${series:,}</p><p class="cf-sub">{e(series_offer(mn))}. A first single session counts toward the series.</p><p><a class="btn ghost" href="sms:{PHONE_TEL}">Text to ask about the series</a></p></div>
+{single_card}
+{series_card}
 </div>
-{offer_block}
 </div></section>"""
     closing = f"""<section class="cta"><div class="wrap">
 <h2>Ready when you are</h2>
 <p>Choose a time, or send a short question before you book.</p>
-<p class="g-actions">{book_btn("Book Your First Session", slug=mn)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY} for a quick question before booking</a></p>
+<p class="g-actions">{book_btn("Book Your First Session", slug=first_book)}<a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY} for a quick question before booking</a></p>
 </div></section>"""
     main = hero + different + say + expect + fees + closing
     plain = _re.sub(r"<blockquote>.*?</blockquote>", "", main, flags=_re.S)
@@ -2116,11 +2179,17 @@ def ads_micro_page():
     ) if _re.search(p, plain, _re.I)]
     if banned:
         sys.exit("ads landing page failed the wording check: " + ", ".join(banned))
-    if main.count(ADS_FIRST_VISIT_OFFER) != 1:
-        sys.exit("the first-visit offer must appear exactly once, from ADS_FIRST_VISIT_OFFER")
-    svc = dict(mi)
-    desc = "A 90-minute microneedling visit in Burbank with plant-based Chinese herbal skincare serums and red light therapy, from a licensed acupuncturist."
-    ld_service = service_ld(svc, url=SITE + ADS_MICRO_PATH, desc=desc, priced=True)
+    if "offer-pop" in main or "$500 less" in main:
+        sys.exit("ads page must not include the percent popup or the old series-savings line")
+    svc = dict(mi, price=ADS_OFFERS["single"]["now"])
+    desc = "A 90-minute microneedling visit in Burbank with a licensed acupuncturist, custom Chinese herbal serums, and red light."
+    ld_service = service_ld(svc, url=SITE + ADS_MICRO_PATH, desc=desc, priced=False)
+    ld_service["offers"] = [
+        {"@type": "Offer", "name": "First microneedling session", "price": money(ADS_OFFERS["single"]["now"]),
+         "priceCurrency": "USD", "url": SITE + ADS_MICRO_PATH},
+        {"@type": "Offer", "name": SERIES + " series: Microneedling (5 sessions)", "price": money(ADS_OFFERS["series"]["now"]),
+         "priceCurrency": "USD", "url": SITE + ADS_MICRO_PATH},
+    ]
     # A short business record so the service provider id resolves. No condition list.
     biz = {
         "@context": "https://schema.org",
@@ -2133,8 +2202,51 @@ def ads_micro_page():
         "address": {"@type": "PostalAddress", "streetAddress": ADDR["street"], "addressLocality": ADDR["city"],
                     "addressRegion": ADDR["region"], "postalCode": ADDR["zip"], "addressCountry": "US"},
     }
-    # Do not publish the unconfirmed first-visit amount as a structured price.
     return main, hero_preload, [biz, faq_ld(faqs), ld_service]
+
+
+def offer_book_pages():
+    """Ads checkout pages. noindex, not in the menu or the sitemap. The server charges APPT_SERVICES, not the page."""
+    if not BOOKAPI:
+        return
+    pages = [
+        dict(slug=ADS_BOOK_FIRST, name="Microneedling, first visit", price=ADS_OFFERS["single"]["now"],
+             lede="First-time visitor price. 90 minutes, with herbal serums and red light.",
+             extra="This visit is 90 minutes. The time you pick is the visit itself."),
+        dict(slug=ADS_BOOK_SERIES, name="Microneedling, Five Element series", price=ADS_OFFERS["series"]["now"],
+             lede="Five sessions, 90 minutes each. This payment covers the series.",
+             extra="The time you pick is the first session. The other four are scheduled with you after this visit."),
+    ]
+    for spec in pages:
+        slug = spec["slug"]
+        if slug in BY_SLUG:
+            sys.exit(f"{slug} must not be an organic service")
+        gl = f' data-skin-intake="{e(SKIN_INTAKE)}"' if SKIN_INTAKE else ""
+        main = f'''<section class="cf"><div class="wrap cf-wrap sch-wrap">
+<p class="crumbs"><a href="{ADS_MICRO_PATH}">Microneedling offer</a> / {e(spec["name"])}</p>
+<h1>{e(spec["name"])}</h1>
+<p class="lede">{e(spec["lede"])}</p>
+<p><strong>90 minutes &middot; ${spec["price"]:,}</strong> &middot; {e(ADDR_LINE)}</p>
+<p>{e(spec["extra"])}</p>
+<div id="sched" class="sch" data-endpoint="{e(BOOKAPI)}" data-service="{e(slug)}"{gl}>
+  <p class="sch-status notice" role="status" aria-live="polite" hidden></p>
+  <div class="sch-cal" aria-busy="true"><p class="sch-finding" role="status">Finding open times…</p><div class="sch-grid" aria-hidden="true">{"".join(f'<span class="sch-dow">{d}</span>' for d in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))}{"".join('<span class="sch-day sk"></span>' for _ in range(35))}</div></div>
+  <div class="sch-times"></div>
+  <div class="sch-details"></div>
+  <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
+</div>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(ADDR_LINE)}</li><li><strong>Payment:</strong> taken when you book your time. Nothing is booked until payment goes through.</li><li><strong>Cancelling:</strong> up to 24 hours ahead, the visit is released. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
+<p class="fine"><a href="{ADS_MICRO_PATH}">Back to the offer</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
+</div></section><script src="/assets/booking.js" defer></script>'''
+        built = page(f"/book/{slug}", f"Book {spec['name']} | {NAME}", f"Book {spec['name']} at Full Lotus Health in Burbank.",
+                     main, noindex=True, focus=True, head_extra=booking_head(slug))
+        if "offer-pop" in built or re_free(built):
+            sys.exit(f"/book/{slug} failed the ads wording check")
+        OUT[f"book/{slug}.html"] = built
+
+
+def re_free(html):
+    return _re.search(r"(?<!-)\bfree\b", html, _re.I)
 
 
 def offer_landing():
@@ -2144,18 +2256,28 @@ def offer_landing():
         if ADS_MICRO_PATH in targets:
             sys.exit(f"{ADS_MICRO_PATH} must stay out of the site nav")
     main, preload, ld = ads_micro_page()
-    OUT["microneedling-burbank-offer.html"] = page(
+    built = page(
         ADS_MICRO_PATH,
-        "Holistic Microneedling in Burbank, CA | Full Lotus Health",
-        "A 90-minute microneedling visit in Burbank with plant-based Chinese herbal skincare serums and red light therapy, from a licensed acupuncturist.",
+        "Ancient Healing Meets Modern Microneedling | Full Lotus Health",
+        "A 90-minute microneedling visit in Burbank with a licensed acupuncturist, custom Chinese herbal serums, and red light.",
         main,
         ld=ld,
         noindex=True,
-        book_slug="medical-microneedling-session",
+        book_slug=ADS_BOOK_FIRST if ADS_OFFER_BOOKING_LIVE else "medical-microneedling-session",
         footer_map=False,
         head_extra=preload,
         chrome="ads",
     )
+    if "offer-pop" in built:
+        sys.exit("ads page must not include the site percent popup")
+    live_first = f'href="/book/{ADS_BOOK_FIRST}"' in built
+    live_series = f'href="/book/{ADS_BOOK_SERIES}"' in built
+    if ADS_OFFER_BOOKING_LIVE:
+        if not live_first or not live_series:
+            sys.exit("ads Book buttons must use the offer booking pages while ADS_OFFER_BOOKING_LIVE is true")
+    elif live_first or live_series:
+        sys.exit("ads Book buttons must stay on the regular links until ADS_OFFER_BOOKING_LIVE is true")
+    OUT["microneedling-burbank-offer.html"] = built
 
 
 def nano_page(where):
@@ -2497,8 +2619,8 @@ def chat_post(p):
 
 def seo_files():
     urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
-    if ADS_MICRO_PATH in urls:
-        sys.exit(f"{ADS_MICRO_PATH} must stay out of the sitemap")
+    if ADS_MICRO_PATH in urls or any(ADS_BOOK_FIRST in u or ADS_BOOK_SERIES in u for u in urls):
+        sys.exit("the ads landing page and its booking pages must stay out of the sitemap")
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         post = next((q for q in POSTS if u == f"/post/{q['slug']}"), None)
@@ -2519,7 +2641,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, offer_book_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():

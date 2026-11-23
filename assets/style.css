@@ -961,7 +961,8 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .ads-lp .brand { min-width: 0; }
 .ads-lp .brand img { height: 62px; }
 .ads-lp .ads-nav-book { flex: none; white-space: nowrap; }
-.ads-lp .g-hero h1 { max-width: 18ch; }
+.ads-lp .g-hero h1 { max-width: 16ch; }
+.ads-lotus { display: block; margin: 0 0 0.85rem; }
 .ads-lp .g-hero-art { background: transparent; padding: 0; }
 .ads-lp .g-hero-art .photo,
 .ads-lp .g-tcm-top .photo { margin: 0; }
@@ -974,12 +975,27 @@ button.sch-day:hover { background: var(--lapis-wash); }
 .ads-lp .ads-trust a { color: var(--on-cinnabar); }
 .ads-lp .ads-ask { margin: -0.6rem 0 1rem; }
 .ads-lp .ads-ask a { color: var(--on-cinnabar); font-weight: 600; }
-.ads-offer {
-  max-width: 36rem; margin: 1.8rem auto 0; padding: 1.6rem 1.4rem 1.35rem; text-align: center;
-  border: 2px dashed var(--gold); border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.45);
+.ads-vs-wrap { background: var(--surface-100); padding-block: clamp(1.4rem, 3vw, 2.2rem); }
+.ads-vs { overflow-x: auto; }
+.ads-vs table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.ads-vs th, .ads-vs td { text-align: left; vertical-align: top; padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--surface-300); }
+.ads-vs thead th { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cinnabar); border-bottom: 2px solid var(--cinnabar); }
+.ads-vs tbody th { font-weight: 600; width: 7.5rem; }
+.ads-vs td:first-of-type { background: rgba(139, 58, 58, 0.05); }
+.ads-price { position: relative; overflow: hidden; padding-top: 2.4rem; }
+.ads-sash {
+  position: absolute; top: 1.35rem; right: -2.55rem; width: 9.2rem;
+  transform: rotate(35deg); transform-origin: center;
+  margin: 0; padding: 0.38rem 0;
+  background: var(--cinnabar); color: var(--on-cinnabar);
+  font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; text-align: center; line-height: 1.2;
+  box-shadow: inset 0 -1px 0 var(--gold), 0 8px 16px rgba(30, 27, 24, 0.06);
 }
-.ads-offer p { margin-inline: auto; }
-.ads-offer .g-offer-cta .btn { width: 100%; }
+.ads-was { margin: 0.55rem 0 0; color: var(--ink-muted); font-size: 1.05rem; }
+.ads-was s { text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: var(--cinnabar); }
+.ads-price .cf-price { margin-top: 0; }
+.ads-price .cf-name, .ads-price .ads-was, .ads-price .cf-price, .ads-price .cf-sub { position: relative; z-index: 1; }
 @media (max-width: 40rem) {
   .ads-lp .brand img { height: 46px; }
   .ads-lp .ads-nav-book { padding: 0.55rem 0.75rem; font-size: 0.8rem; }

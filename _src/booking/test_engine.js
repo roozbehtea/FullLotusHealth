@@ -31,8 +31,8 @@ const SpreadsheetApp = { openById(id) { const t = sheets[id]; if (!t) throw new 
     getRange: (r, c, nr, nc) => ({ getValues: () => t.slice(r - 1, r - 1 + nr).map(row => row.slice(c - 1, c - 1 + nc)) }) }] }; } };
 const ctx = { Utilities, SpreadsheetApp, console, TZ, prop_: (k, d) => d, cfg_: () => ({ match: 'tea sit' }), Date, Math, JSON, String, parseInt, parseFloat, isNaN, Array, Object };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname, 'Booking.gs'), 'utf8') + '\nthis.__api={AC,apptFormsNote_,apptFormList_,apptCfg_,apptDays_,apptCfg_,slotFree_,at_,addDays_,dayKey_,dow_,apptSoonThrough_,APPT_SERVICES};', ctx);
-const { AC, apptFormsNote_, apptFormList_, apptDays_, apptCfg_, at_, addDays_, dayKey_, dow_, apptSoonThrough_, APPT_SERVICES } = ctx.__api;
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'Booking.gs'), 'utf8') + '\nthis.__api={AC,apptFormsNote_,apptFormList_,apptCfg_,apptDays_,apptCfg_,slotFree_,at_,addDays_,dayKey_,dow_,apptSoonThrough_,APPT_SERVICES,apptQuotedCents_};', ctx);
+const { AC, apptFormsNote_, apptFormList_, apptDays_, apptCfg_, at_, addDays_, dayKey_, dow_, apptSoonThrough_, APPT_SERVICES, apptQuotedCents_ } = ctx.__api;
 
 let n = 0; const ok = (name, fn) => { fn(); n++; console.log('ok  ' + name); };
 const cfg = apptCfg_();
@@ -41,6 +41,27 @@ const ev = (key, from, to, full) => ({ s: at_(key, from * 60), e: at_(key, to * 
 const times = d => d.slots.map(s => Utilities.formatDate(new Date(s.start), TZ, 'h:mm a'));
 
 ok('services match prices/minutes', () => { for (const k in APPT_SERVICES) assert(APPT_SERVICES[k].minutes > 0 && APPT_SERVICES[k].price > 0); });
+ok('ad offer visits charge the advertised prices for a 90-minute microneedling slot', () => {
+  const base = APPT_SERVICES['medical-microneedling-session'];
+  const first = APPT_SERVICES['microneedling-offer-first'];
+  const series = APPT_SERVICES['microneedling-offer-series'];
+  assert.strictEqual(first.minutes, 90);
+  assert.strictEqual(first.minutes, base.minutes);
+  assert.strictEqual(first.price, 400);
+  assert.strictEqual(series.minutes, base.minutes);
+  assert.strictEqual(series.price, 1800);
+  assert.strictEqual(!!series.package, true);
+  assert.strictEqual(apptQuotedCents_('microneedling-offer-first').cents, 40000);
+  assert.strictEqual(apptQuotedCents_('microneedling-offer-series').cents, 180000);
+  assert.strictEqual(apptQuotedCents_('microneedling-offer-first', 500).error, 'price');
+  assert.strictEqual(apptQuotedCents_('microneedling-offer-series', '1800').cents, 180000);
+  assert.strictEqual(apptQuotedCents_('not-a-service').error, 'service');
+  const day = '2026-11-20';
+  const opts = Object.assign({}, cfg, { maxVisible: 99, rotate: false });
+  const slots = mins => times(apptDays_([], mins, opts, now).find(d => d.date === day));
+  assert.deepStrictEqual(slots(first.minutes), slots(base.minutes));
+  assert.deepStrictEqual(slots(series.minutes), slots(base.minutes));
+});
 ok('only Mon/Wed/Fri on an empty calendar, 24h notice, 21-day window', () => {
   const days = apptDays_([], 45, cfg, now);
   days.forEach(d => assert([1, 3, 5].includes(dow_(at_(d.date, 720))), d.date));
@@ -145,6 +166,13 @@ ok('an all-day event takes the day off the calendar entirely', () => {
     const n1 = note('medical-microneedling-session', 'other@example.com', '+1 818 555 0102');
     assert.strictEqual(n1, 'Forms on file: New Patient Intake');
     assert.strictEqual(names('medical-microneedling-session', n1), 'Skin Treatment Intake & Consent');
+  });
+  ok('ad offer visits ask for the same skin form as microneedling', () => {
+    for (const slug of ['microneedling-offer-first', 'microneedling-offer-series']) {
+      const n1 = note(slug, 'other@example.com', '+1 818 555 0102');
+      assert.strictEqual(n1, 'Forms on file: New Patient Intake', slug);
+      assert.strictEqual(names(slug, n1), 'Skin Treatment Intake & Consent', slug);
+    }
   });
   ok('an emergency contact phone does not count as a match', () => {
     assert.strictEqual(note('acupuncture-initial-treatment', 'x@example.com', '310-555-9999'), '');
