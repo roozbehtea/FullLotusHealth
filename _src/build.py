@@ -1233,7 +1233,7 @@ def tea():
 
 def tea_sits():
     if TEASITS:
-        body = f"""<p>Tea sits run every week on <strong>Tuesday, Wednesday and Thursday mornings at 8:30</strong> and <strong>Friday afternoons at 3:00</strong>. Pick a date below to save your seat.</p>
+        body = f"""<p>Pick a date below to save your seat.</p>
 <div id="teasits" data-endpoint="{e(TEASITS)}">
   <p class="ts-status" role="status" aria-live="polite" hidden></p>
   <div class="sch-cal ts-cal" aria-busy="true"><div class="sch-grid" aria-hidden="true">{"".join(f'<span class="sch-dow">{d}</span>' for d in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))}{"".join('<span class="sch-day sk"></span>' for _ in range(35))}</div></div>
@@ -1244,7 +1244,7 @@ def tea_sits():
 <script src="/assets/teasits.js" defer></script>"""
     else:
         body = f'<div class="notice"><p><strong>Online reservations open soon.</strong> To save a seat now, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></div>'
-    main = hero("Weekly tea sits.",
+    main = hero('Weekly tea sits.<span class="ts-sched">Tuesday, Wednesday &amp; Thursday at 8:30&nbsp;am<br>Friday at 3&nbsp;pm</span>',
         "A tea sit is an opportunity to still and energize the mind in a beautiful setting drinking old growth, organic, and aged teas which are tonics for the mind and body. Each sit is an hour, with five seats, so reserve ahead.", tone="n", cls="clouds roomy", deco=cloud_field("a", "bottom"),
         cta_html=('<a class="btn" href="#teasits">See dates and reserve</a>' if TEASITS else f'<a class="btn" href="sms:{PHONE_TEL}">Text to reserve a seat</a>')) + f"""
 <section><div class="wrap">
