@@ -539,8 +539,12 @@ def booking_head(slug):
 
 def teasits_head():
     """Tea sits page: connect to Google and ask for the schedule while the rest of the page loads (same idea as booking_head)."""
-    boot = json.dumps({"endpoint": TEASITS, "key": "fl-teasits-v1", "ttl": 180000}, separators=(",", ":")).replace("<", "\\u003c")
-    return """<link rel="dns-prefetch" href="https://script.google.com">
+    boot = json.dumps({"endpoint": TEASITS, "slots": SLOTS, "key": "fl-teasits-v1", "ttl": 180000, "maxAge": 5400000}, separators=(",", ":")).replace("<", "\\u003c")
+    hosts = ""
+    if SLOTS:
+        origin = "/".join(SLOTS.split("/")[:3])
+        hosts = f'<link rel="preconnect" href="{e(origin)}" crossorigin>\n'
+    return hosts + """<link rel="dns-prefetch" href="https://script.google.com">
 <link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <link rel="preconnect" href="https://script.google.com">
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
@@ -556,7 +560,17 @@ def teasits_head():
     }
   } catch (e) {}
   if (/[?&](paid|cancelled)=/.test(location.search)) return;
-  window.__flTea.pending = fetch(boot.endpoint, { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+  // The saved copy on GitHub (refreshed every 5 minutes by Booking.gs) answers in a fraction of a second; Apps Script is the fallback.
+  function live() { return fetch(boot.endpoint, { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); }); }
+  function saved() {
+    if (!boot.slots) return Promise.reject(new Error("off"));
+    return fetch(boot.slots, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("none"); return r.json(); }).then(function (f) {
+      var age = Date.now() - ((f && f.generated) || 0);
+      if (!f || !f.teasits || age < -300000 || age > boot.maxAge) throw new Error("stale");
+      return { sits: f.teasits, saved: true };
+    });
+  }
+  window.__flTea.pending = saved().catch(live);
 })();
 </script>
 """.replace("__BOOT__", boot)
