@@ -254,6 +254,24 @@ def series_offers():
         body = ", ".join(bits[:-1]) + f", or {bits[-1]}"
     return f"{SERIES} series: {body}"
 
+
+# ------------------------------------------------------------------ acupuncture package
+# 5 follow-up (repeat) visits for $500. Patients book the first visit online; the rest are booked together after it. State the package price. Never call a visit free.
+ACU_PACK_SLUG = "acupuncture-repeat-treatment"
+ACU_PACK = dict(name="Acupuncture 5-visit package", price=500, visits=5)
+ACU_PACK["per"] = ACU_PACK["price"] // ACU_PACK["visits"]
+ACU_PACK_HOW = "Book your first visit online, and we will book the rest together after your first appointment."
+
+
+def acu_pack_line():
+    """For example 'Acupuncture 5-visit package: 5 follow-up visits for $500 ($100 less than five single visits)'."""
+    single = BY_SLUG[ACU_PACK_SLUG]["price"]
+    line = f'{ACU_PACK["name"]}: {ACU_PACK["visits"]} follow-up visits for ${ACU_PACK["price"]:,}'
+    save = single * ACU_PACK["visits"] - ACU_PACK["price"]
+    if save > 0:
+        line += f' (${save:,} less than five single visits)'
+    return line
+
 TESTIMONIALS_HOME = [
     ("Finding Roozbeh was like finding a rare and precious treasure. His insight and knowledge never ceases to amaze me and every treatment I have had from him over the past 5 years has felt in tune with what I needed at the time. His skillful application of needles means that even if in pain or sick, I can go to him for help and feel confident that he will be kind and gentle in his endeavor to help me feel better. After treatment I often stay for tea and meditation in the purpose built tea lounge… all in all Full Lotus Health is wonderful experience for body and mind and spirit.", "Sue"),
     ("Roozbeh brings together tea, acupuncture and TCM for a holistic healing experience. I've been doing tea and acupuncture with him for some time now and thoroughly enjoy his company. He is well versed in tea with many years of experience making the combination with his traditional Chinese medicine expertise truly rich and edifying. Roozbeh's passion for the healing arts and care for his clients is genuinely something I admire. There are few people here in California with the combination of expertise that he has and I consider myself fortunate to know him!", "Amelia"),
@@ -371,6 +389,9 @@ def service_ld(s, url=None, desc=None, priced=True):
         if pk:
             d["offers"] = [d["offers"], {"@type": "Offer", "name": pk["name"] + " (5 sessions)", "price": money(pk["price"]),
                                          "priceCurrency": "USD", "url": BOOKS.get(s.get("slug")) or BOOK or f"{SITE}/book-online"}]
+        if s.get("slug") == ACU_PACK_SLUG:
+            d["offers"] = [d["offers"], {"@type": "Offer", "name": ACU_PACK["name"], "price": money(ACU_PACK["price"]),
+                                         "priceCurrency": "USD", "url": f"{SITE}/book/{ACU_PACK_SLUG}"}]
     return d
 
 
@@ -1083,6 +1104,7 @@ def acupuncture():
     <div class="path"><h3>In person, in Burbank</h3>
       <p>Acupuncture with herbal medicine as needed, plus cupping, moxibustion or massage when they help. First visit 60 minutes, follow-ups 45.</p>
       <ul class="way-links"><li><a href="/service-page/acupuncture-initial-treatment">First visit</a></li><li><a href="/service-page/acupuncture-repeat-treatment">Follow-up visit</a></li></ul>
+      <p class="fine">{e(acu_pack_line())}. {e(ACU_PACK_HOW)}</p>
       <p class="vbtn">{book_btn("Book in person")}</p></div>
     <div class="path"><h3>Online, by video</h3>
       <p>A Chinese herbal medicine consultation from home, for people farther away or who want to start with herbs. First consultation 60 minutes, follow-ups 45.</p>
@@ -1211,7 +1233,7 @@ def book_online():
             "full-lotus-lift": "Facial acupuncture for a lifted, rested look."}),
         ("Acupuncture", "acu", {
             "acupuncture-initial-treatment": "Your first acupuncture visit, with a full intake.",
-            "acupuncture-repeat-treatment": "For returning patients."}),
+            "acupuncture-repeat-treatment": f"For returning patients. Also as a 5-visit package for ${ACU_PACK['price']}."}),
         ("Online consultation", "consult", {
             "initial-consultation-online": "A first video visit about your health and herbs.",
             "repeat-consultation-online": "A follow-up video visit."}),
@@ -1257,6 +1279,8 @@ def confirm_pages():
         new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
+            if s["slug"] == ACU_PACK_SLUG:
+                series += f'<p class="cf-new">{e(acu_pack_line())}. That works out to ${ACU_PACK["per"]} a visit instead of ${s["price"]}. To start the package, book your first visit below, and we will book the rest together after your first appointment.</p>'
             gl = f' data-fallback="{e(BOOKS[s["slug"]])}"' if s["slug"] in BOOKS else ""
             if SKIN_INTAKE and s["slug"] in SKIN_SLUGS:
                 gl += f' data-skin-intake="{e(SKIN_INTAKE)}"'
@@ -1648,6 +1672,11 @@ def service_pages():
         loc = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         pk = PACKAGES.get(s["slug"])
         series_fact = series_block = ""
+        if s["slug"] == ACU_PACK_SLUG:
+            series_fact = f'<dt>Package</dt><dd><span class="price">${ACU_PACK["price"]:,}</span> for {ACU_PACK["visits"]} visits</dd>'
+            series_block = (f'<h2 id="package" style="margin-top:2rem">{e(ACU_PACK["name"])}</h2>'
+                            f'<p>{e(acu_pack_line())}. That works out to ${ACU_PACK["per"]} a visit instead of ${s["price"]}.</p>'
+                            f'<p>{e(ACU_PACK_HOW)}</p><p>{book_btn("Book your first visit", slug=s["slug"])}</p>')
         if pk:
             series_fact = f'<dt>Series</dt><dd><span class="price">${pk["price"]:,}</span> for 5 sessions</dd>'
             series_block = (f'<h2 id="series" style="margin-top:2rem">{e(SERIES)} series</h2>'
@@ -2290,6 +2319,7 @@ def llms_txt():
 - Cancellation: free up to {NOTICE_HOURS} hours ahead. Less than {NOTICE_HOURS} hours' notice, or a no-show, is charged ${LATE_FEE}. Call or text to cancel.
 - New patients complete the intake form before the first visit: {intake_link}
 - {SERIES}: five sessions through Wood, Fire, Earth, Metal, and Water, with red light therapy included. {series_line}. {SITE}/five-element-rejuvenation
+- {acu_pack_line()}. {ACU_PACK_HOW}
 - Tea ceremonies are booked by text at {PHONE_DISPLAY}. Weekly tea sits: {SITE}/tea-sits
 - Google reviews: {GOOGLE_REVIEWS}
 - In California, microneedling may be performed by physicians and licensed acupuncturists.
@@ -2380,6 +2410,8 @@ def chat_facts():
                 for slug, p in PACKAGES.items()
             ],
         },
+        "acupuncturePackage": {"name": ACU_PACK["name"], "slug": ACU_PACK_SLUG, "price": ACU_PACK["price"],
+                               "visits": ACU_PACK["visits"], "summary": acu_pack_line() + ". " + ACU_PACK_HOW},
         "services": services,
         "posts": [chat_post(p) for p in POSTS],
     }
