@@ -33,6 +33,25 @@ gtag('config', 'G-EL9S8KWV52', { page_location: gaUrl.href });
 <meta name="theme-color" content="#f4ecdf">
 <link rel="icon" href="/assets/favicon-64.png" type="image/png" sizes="64x64">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="dns-prefetch" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<script>
+(function () {
+  var boot = {"endpoint":"https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec","key":"fl-teasits-v1","ttl":180000};
+  window.__flTea = { cache: null, pending: null };
+  try {
+    var raw = localStorage.getItem(boot.key);
+    if (raw) {
+      var c = JSON.parse(raw);
+      if (c && c.t && (Date.now() - c.t) < boot.ttl && c.sits && c.sits.length) window.__flTea.cache = c.sits;
+    }
+  } catch (e) {}
+  if (/[?&](paid|cancelled)=/.test(location.search)) return;
+  window.__flTea.pending = fetch(boot.endpoint, { redirect: "follow", cache: "no-store" }).then(function (r) { return r.json(); });
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -66,6 +85,7 @@ gtag('config', 'G-EL9S8KWV52', { page_location: gaUrl.href });
   <p>Tea sits run every week on <strong>Tuesday, Wednesday and Thursday mornings at 8:30</strong> and <strong>Friday afternoons at 3:00</strong>. Pick a date below to save your seat.</p>
 <div id="teasits" data-endpoint="https://script.google.com/macros/s/AKfycbzQ9eWRWm9aIlx-yES_Qd-DZ2v-jxVZP9Pp8gWYAKnA1-AjTkH8UYCOThGsL-u-2w9A/exec">
   <p class="ts-status" role="status" aria-live="polite" hidden></p>
+  <div class="sch-cal ts-cal" aria-busy="true"><div class="sch-grid" aria-hidden="true"><span class="sch-dow">Mon</span><span class="sch-dow">Tue</span><span class="sch-dow">Wed</span><span class="sch-dow">Thu</span><span class="sch-dow">Fri</span><span class="sch-dow">Sat</span><span class="sch-dow">Sun</span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span><span class="sch-day sk"></span></div></div>
   <ul class="ts-list"><li class="fine" style="padding:1rem 0">Loading dates&hellip;</li></ul>
   <noscript><p class="notice">To reserve a seat, text <a href="sms:+18182539307">(818) 253-9307</a> or email <a href="mailto:info@fulllotushealth.com">info@fulllotushealth.com</a>.</p></noscript>
 </div>

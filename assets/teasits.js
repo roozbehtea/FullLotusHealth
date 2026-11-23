@@ -46,9 +46,9 @@
   }
 
   // ---- month calendar (same day grid as the booking page): pick a day, its sits show below
-  var cal = document.createElement("div");
-  cal.className = "sch-cal ts-cal";
-  list.parentNode.insertBefore(cal, list);
+  var cal = root.querySelector(".ts-cal");
+  if (!cal) { cal = document.createElement("div"); cal.className = "sch-cal ts-cal"; list.parentNode.insertBefore(cal, list); }
+  var CACHE_KEY = "fl-teasits-v1", CACHE_TTL = 180000;
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   var LA = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" });
@@ -57,12 +57,21 @@
   function plus(k, n) { return new Date(d(k).getTime() + n * 864e5).toISOString().slice(0, 10); }
   function dow(k) { return (d(k).getUTCDay() + 6) % 7; }                 // 0 = Monday
   var all = [], picked = null;
+  (function paintSkeleton() {
+    var cells = cal.querySelectorAll(".sch-day.sk");
+    if (!cells.length) return;
+    var today = dayKey(new Date()), start = plus(today, -dow(today));
+    for (var i = 0; i < cells.length; i++) {
+      var k = plus(start, i), dt = d(k), n = dt.getUTCDate();
+      cells[i].innerHTML = (n === 1 ? '<span class="sch-mo">' + MON[dt.getUTCMonth()] + "</span>" : "") + n;
+    }
+  })();
 
   function renderCal() {
     var byDay = {};
     all.forEach(function (s) { var k = dayKey(new Date(s.start)); (byDay[k] = byDay[k] || []).push(s); });
-    var today = dayKey(new Date()), firstSit = dayKey(new Date(all[0].start)), lastSit = dayKey(new Date(all[all.length - 1].start));
-    var from = plus(firstSit, -dow(firstSit)), last = plus(lastSit, 6 - dow(lastSit));
+    var today = dayKey(new Date()), lastSit = dayKey(new Date(all[all.length - 1].start));
+    var from = plus(today, -dow(today)), last = plus(lastSit, 6 - dow(lastSit));
     var head = "";
     DAYS.forEach(function (n) { head += '<span class="sch-dow" aria-hidden="true">' + n + "</span>"; });
     var cells = "";
@@ -145,7 +154,7 @@
         .then(function (r) { return r.json(); })
         .then(function (r) {
           if (r.ok && r.url) { store(KEY, r.session); location.href = r.url; return; }
-          if (r.ok && r.free) { f.remove(); say("<strong>You're in.</strong> A confirmation is on its way to your email."); load(); return; }
+          if (r.ok && r.free) { f.remove(); say("<strong>You're in.</strong> A confirmation is on its way to your email."); load(true); return; }
           btn.disabled = false; msg.className = "gmsg err";
           if (r.error === "full" && r.left) {
             while (sel.options.length > r.left) sel.remove(sel.options.length - 1);
@@ -155,7 +164,7 @@
           }
           if (r.error === "full" || r.error === "closed") {
             say(r.error === "full" ? "Sorry, that sit just filled up." : "Online booking for that sit has closed. " + FALLBACK, true);
-            load(); return;
+            load(true); return;
           }
           msg.innerHTML = r.error === "email" ? "Please check your email address." :
             r.error === "name" ? "Please add your name." : "That didn't go through. " + FALLBACK;
@@ -164,15 +173,37 @@
     });
   }
 
-  function load() {
-    return getJSON("").then(function (r) {
-      if (!r.sits) throw new Error("bad");
-      all = r.sits;
-      if (!all.length) { cal.innerHTML = ""; render(all); return; }
-      var keep = picked && all.some(function (s) { return dayKey(new Date(s.start)) === picked; });
-      if (!keep) { var first = all.filter(function (s) { return s.left > 0; })[0] || all[0]; picked = dayKey(new Date(first.start)); }
-      renderCal(); showDay();
-    }).catch(function () { cal.innerHTML = ""; list.innerHTML = '<p class="notice">The schedule couldn\'t load just now. ' + FALLBACK + "</p>"; });
+  function sitsKey(x) { return x.map(function (s) { return s.id + ":" + s.left + ":" + s.price; }).join("|"); }
+  function present(sits) {
+    var same = all.length && sitsKey(all) === sitsKey(sits);
+    all = sits;
+    cal.removeAttribute("aria-busy");
+    if (same) return;
+    if (list.querySelector(".ts-form")) { renderCal(); return; }   // don't wipe a form someone is filling in
+    if (!all.length) { cal.innerHTML = ""; render(all); return; }
+    var keep = picked && all.some(function (s) { return dayKey(new Date(s.start)) === picked; });
+    if (!keep) { var first = all.filter(function (s) { return s.left > 0; })[0] || all[0]; picked = dayKey(new Date(first.start)); }
+    renderCal(); showDay();
   }
-  before.then(load);
+  function saveCache(sits) { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), sits: sits })); } catch (e) {} }
+  function readCache() {
+    var early = window.__flTea && window.__flTea.cache;
+    if (early) return early;
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c && c.t && Date.now() - c.t < CACHE_TTL && c.sits && c.sits.length) return c.sits; } catch (e) {}
+    return null;
+  }
+  function load(fresh) {
+    var early = !fresh && window.__flTea && window.__flTea.pending;
+    if (window.__flTea) window.__flTea.pending = null;
+    var p = early ? early.catch(function () { return getJSON(""); }) : getJSON("");
+    return p.then(function (r) {
+      if (!r || !r.sits) throw new Error("bad");
+      saveCache(r.sits);
+      present(r.sits);
+    }).catch(function () {
+      if (all.length) return;   // a saved schedule is already showing; Reserve still checks seats live
+      cal.innerHTML = ""; list.innerHTML = '<p class="notice">The schedule couldn\'t load just now. ' + FALLBACK + "</p>"; });
+  }
+  if (!paid && !cancelled) { var saved = readCache(); if (saved) present(saved); }
+  before.then(function () { return load(paid || cancelled); });
 })();
