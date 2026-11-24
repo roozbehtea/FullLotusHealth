@@ -64,5 +64,34 @@ Service prices and lengths live in `Booking.gs` (`APPT_SERVICES`) and in `SERVIC
 `node _src/booking/test_engine.js` checks the slot rules (days, notice, two rooms, holds, rotation, daylight saving) against made-up calendars.
 `node _src/booking/test_publish.js` checks the saved copy: Booking.gs writing it to GitHub, and the page using it or falling back (run `python3 _src/build.py` first).
 
+## Book by text (TextBot.gs)
+
+Patients can book by text with the same rules as the website. The assistant is a guided conversation, not an AI: it lists services and prices, offers the same openings as the booking page (it reads `apptSlots_`), takes a name and email, and on YES sends the same Stripe payment link (`apptBook_`). Nothing goes on the calendar until it is paid, exactly as online.
+
+What it does by itself:
+- Understands numbers, service names ("microneedling", "facial", "online consult"), days ("Friday", "Dec 5", "mornings") and MORE.
+- Asks "first visit or been before?" when someone just says acupuncture.
+- Recognizes a phone number that has a paid booking and offers "Should I book it for Jane (j•••@gmail.com)?".
+- Sends anything about cancelling or rescheduling, the word ROOZBEH, or three replies it can't follow to you by email with the conversation, then stays quiet with that number for 12 hours so you can answer yourself. Texting BOOK starts it again.
+- STOP ends its texts for good; START turns them back on. It never answers health questions.
+- Limits: 80 answered texts per number per day, 3 payment links per number per hour.
+
+### Try it first (no phone number needed)
+`/text-booking-test` on the website (hidden, noindex) talks to the assistant like a text thread. It reads the real calendar but stops before payment: no Stripe link, no hold, no sheet row, no email. Set the script property `BOT_TEST` to `false` to turn the page off.
+
+To install it (in the same Apps Script project as booking):
+1. Add a script file named `TextBot` and paste `_src/booking/TextBot.gs` into it. Save.
+2. Replace `Code.gs` with `_src/teasits/Code.gs` (one new line hands `bot_` requests to TextBot.gs).
+3. Deploy > Manage deployments > pencil on the live deployment > Version: **New version** > Deploy. Do not click New deployment.
+
+### Connecting a real number (not done yet)
+Whatever number is chosen only has to call `botInbound_(phone, text)` for each incoming text and send back the replies it returns. Two routes:
+- **Google Voice (818) 253-9307:** Voice forwards texts to Gmail and a 1-minute Apps Script trigger answers by replying to that email. Free and inside your Google BAA, but about a minute per reply, and it depends on Voice's email forwarding, which needs testing first.
+- **A new AWS number:** the same AWS service as the reminder texts. Instant replies, a few dollars a month, but a separate number and carrier registration first.
+
+Every real conversation is logged in a **Text bot** tab of the sheet (time, number, what they wrote, the reply). The test page logs nothing.
+
+`node _src/booking/test_textbot.js` plays 19 whole conversations against made-up calendars.
+
 ## Not built yet
 Patients cancel or reschedule by text, as before. When you do, edit or delete the calendar event and mark the row in the Appointments tab as `cancelled`; refund in Stripe if you choose to.
