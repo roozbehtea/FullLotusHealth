@@ -990,3 +990,19 @@ button.sch-day:hover { background: var(--lapis-wash); }
   body.ads-lp { padding-bottom: calc(5.6rem + env(safe-area-inset-bottom)); }
   body.ads-lp.has-sticky .flh-chat { bottom: calc(7.6rem + env(safe-area-inset-bottom)); }
 }
+
+/* Text booking test page (/text-booking-test): the chat look from the virtual assistant, in a phone-sized panel. */
+.tb-wrap { max-width: 34rem; }
+body:has(#tb) .flh-chat { display: none; }   /* the site chat bubble would cover Send here */
+.tb-phone {
+  display: flex; flex-direction: column; height: min(36rem, 72dvh); margin: 1.2rem 0 0.8rem;
+  background: #fffdf9; border: 1px solid rgba(30, 27, 24, 0.22); border-radius: var(--radius-md); overflow: hidden;
+}
+.tb-log { padding-top: 0.8rem; }
+.tb-typing p, .tb-quiet p { color: var(--ink-muted); font-style: italic; }
+.tb-try { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.tb-chip {
+  font: inherit; font-size: 0.875rem; color: var(--ink); background: var(--surface-200);
+  border: 1px solid var(--surface-300); border-radius: var(--radius-pill); min-height: 2.4rem; padding: 0.3rem 0.8rem; cursor: pointer;
+}
+.tb-chip:hover { background: var(--gold-wash); }

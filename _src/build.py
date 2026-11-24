@@ -462,6 +462,32 @@ def visit_section(heading_id="visit-h"):
 </div></section>"""
 
 
+def text_booking_test():
+    """Hidden page for trying the book-by-text assistant (_src/booking/TextBot.gs) before it has a phone number.
+    Not in the menu, sitemap or search results. It never takes payment or holds a time."""
+    if not BOOKAPI:
+        return
+    main = f"""<section><div class="wrap tb-wrap">
+<p class="eyebrow">Book by text, test</p>
+<h1>Try the text booking assistant</h1>
+<p class="lede">Type the way a patient would text. It reads your real calendar, but this page stops before payment, so nothing is held, booked or emailed.</p>
+<div class="tb-phone" id="tb" data-endpoint="{e(BOOKAPI)}">
+  <div class="flh-chat-head"><p class="eyebrow">Full Lotus Health</p><button type="button" class="flh-chat-close" id="tb-reset">Start over</button></div>
+  <div class="flh-chat-log tb-log" id="tb-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+  <form class="flh-chat-form" id="tb-form">
+    <label class="sr" for="tb-q">Text message</label>
+    <input id="tb-q" class="flh-chat-input" maxlength="400" autocomplete="off" placeholder="Text message" enterkeyhint="send">
+    <button class="btn small" type="submit">Send</button>
+  </form>
+</div>
+<p class="fine tb-try">Try: <button type="button" class="tb-chip">Hi</button> <button type="button" class="tb-chip">Do you have microneedling on Friday?</button> <button type="button" class="tb-chip">I need to reschedule</button> <button type="button" class="tb-chip">ROOZBEH</button></p>
+<p class="tb-fail fine" id="tb-fail" hidden>The assistant isn't answering yet. Its script may not be updated in Apps Script.</p>
+</div></section>
+<script src="/assets/textbot-test.js" defer></script>"""
+    OUT["text-booking-test.html"] = page("/text-booking-test", f"Text booking test | {NAME}",
+        "Test page for the Full Lotus Health text booking assistant.", main, noindex=True, focus=True)
+
+
 def chat_widget():
     return f"""<div class="flh-chat" id="flh-chat" data-endpoint="{e(CHAT)}">
   <button type="button" class="flh-chat-launch" aria-expanded="false" aria-controls="flh-chat-panel" aria-label="Ask the virtual assistant">
@@ -2519,7 +2545,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, text_booking_test, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():

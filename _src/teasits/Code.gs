@@ -59,6 +59,7 @@ function doPost(e) {
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { return json_({ error: 'bad_request' }); }
   try {
     if (String(body.action || '').indexOf('appt_') === 0) return json_(apptPost_(body));   // appointments: Booking.gs
+    if (String(body.action || '').indexOf('bot_') === 0) return json_(botPost_(body));     // book by text: TextBot.gs
     if (body.action === 'reserve') return json_(reserve_(body));
     return json_({ error: 'bad_request' });
   } catch (err) {
