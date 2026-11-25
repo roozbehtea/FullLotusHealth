@@ -1018,7 +1018,7 @@ def home():
 </div></section>
 
 <section class="deep-l" aria-labelledby="meet-h"><div class="wrap split">
-  <div class="meet-photo">{photo("roozbeh-portrait", "Roozbeh Ghobadpour, L.Ac., in the clinic")}</div>
+  <div class="meet-photo">{photo("roozbeh-portrait", "Roozbeh Ghobadpour, L.Ac., smiling, in a dark green shirt")}</div>
   <div>
     <p class="eyebrow">Your practitioner</p>
     <h2 id="meet-h">Meet Roozbeh</h2>
@@ -1066,7 +1066,7 @@ def treatments():
 </div></section>
 
 <section class="deep-m"><div class="wrap split">
-  <div><h2>Whatever resides in the heart is expressed in the face</h2>{photo("treatment-room", "The treatment room at Full Lotus Health in Burbank")}</div>
+  <div><h2>Whatever resides in the heart is expressed in the face</h2>{photo("treatment-room", "A treatment room at Full Lotus Health in Burbank: a white treatment table by the windows, a floor lamp and a framed ink painting")}</div>
   <div>
     <p>Full Lotus Health treats skin as the visible end of your whole health. Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist, chooses the herbal serums, the points, and the pace of your series from a Chinese medicine assessment, not from a fixed protocol.</p>
     <p>Not sure which treatment fits? Book a session and we'll decide together, or text a question to <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p>
@@ -1213,7 +1213,7 @@ def tea():
   </ul>
 </div></section>
 <section class="night">{cloud_field("b", "top")}<div class="wrap split">
-  <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2>{photo("tea-space", "The tea space at Full Lotus Health")}</div>
+  <div><p class="eyebrow">Tea and Chinese medicine</p><h2>The magic of tea</h2>{photo("tea-space", "Tea being poured from a clay teapot into two cups in the tea room at Full Lotus Health")}</div>
   <div>
     <p>In Chinese medicine, tea is known as the premier Chinese herb for the mind. In tea ceremony we drink aged, old growth, organic teas, which have a profound ability to calm and energize the mind and allow one to access the heart/mind in meditation.</p>
     <p>We provide tea ceremony in the tradition of Wu De, a foremost expert on tea who has written many books on tea and owns Global Tea Hut. Roozbeh has been studying with Wu De for over fifteen years, and Wu De has served tea at Full Lotus Health.</p>
@@ -1610,10 +1610,12 @@ GUIDES = {
     "full-lotus-lift": ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank: a guide"),
 }
 
+ROOM_ALT = "The treatment room at Full Lotus Health in Burbank: a treatment table, an LED light panel, a sink and an armchair"
+
 # Diagram and photo shown at the top of a service page: the same art and photo (and alt text) the guide page uses.
 SERVICE_ART = {
-    "medical-microneedling-session": (art.skin_layers, "skin-texture", "Close-up of smooth, even skin in soft light"),
-    "facial-nano-needling": (art.nano_layers, "serum-lotus", "A dropper bottle of golden herbal serum beside a pink lotus petal"),
+    "medical-microneedling-session": (art.skin_layers, "treatment-microneedling", ROOM_ALT),
+    "facial-nano-needling": (art.nano_layers, "treatment-nanoneedling", ROOM_ALT),
 }
 
 
@@ -1659,7 +1661,7 @@ def beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide):
     else:
         intro, rest = body, []
     if not fig:
-        fig = f'<div class="g-after-photos">{photo("gua-sha", "A jade gua sha stone, a jar of serum and a folded linen towel on a wooden tray")}</div>'
+        fig = f'<div class="g-after-photos">{photo("treatment-facial", "A facial treatment room at Full Lotus Health: a white treatment chair by the window, a floor lamp and a framed ink painting")}</div>'
     rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a></li>' for r in s["related"])
     ask = f'Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.'
     reviews = (f'<section class="wash-g"><div class="wrap"><p class="eyebrow">Reviews</p><h2>What patients say</h2>'
@@ -1709,6 +1711,8 @@ def service_pages():
         guide = f'<li><a href="{g[0]}">{e(g[1])}</a></li>' if g else ""
         sa = SERVICE_ART.get(s["slug"])
         fig = (f'<div class="g-cmp-art">{sa[0]()}</div><div class="g-after-photos">{photo(sa[1], sa[2])}</div>') if sa else ""
+        if not sa and s["group"] == "tea":
+            fig = photo("tea", "Two cups of tea and a clay teapot on a wooden tea table")
         dur =f'<dt>Time</dt><dd>{s["minutes"]} minutes</dd>' if s["minutes"] else ""
         loc = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         pk = PACKAGES.get(s["slug"])
@@ -1991,7 +1995,7 @@ def micro_page(where):
          ("bottle", "Full Lotus Skin serums", "Chosen for your skin and applied as the needles open fresh channels, so they penetrate deeply."),
          ("light", "Red light therapy", "Included in every session. Most people enjoy resting under it while the serums penetrate.")],
         f"<h3>Unhurried, one on one</h3><p>Every session is with Roozbeh himself, in a quiet private room. Visits often end with tea.</p><p>{book_btn('Book microneedling', slug=mn)}</p>",
-        "treatment-microneedling", "Microneedling treatment at Full Lotus Health in Burbank")
+        "treatment-microneedling", ROOM_ALT)
     suits = f"""<section><div class="wrap">{g_head("Who it suits", "Microneedling is a good fit if you want to soften")}
 {g_cards([("lines", "Fine lines and wrinkles", "Including crow's feet."), ("scar", "The look of acne scars", None), ("texture", "Uneven texture and tone", None),
           ("pores", "Enlarged pores", None), ("hair", "Thinning along the hairline", "With scalp microneedling."),
@@ -2042,7 +2046,7 @@ def ads_micro_page():
     hero_fig, hero_preload = webp_figure(
         "hero", TEA_ALT, priority=True, sizes="(min-width: 52rem) 46vw, 100vw")
     serum_fig, _ = webp_figure(
-        "serums", "Amber bottles and dried botanicals",
+        "treatment-microneedling", ROOM_ALT,
         sizes="(min-width: 52rem) 42vw, 100vw")
     reviews = [(without_rx_sentence(t), who) for t, who in MICRO_PAGE_REVIEWS]
     rating = (
@@ -2186,7 +2190,7 @@ def nano_page(where):
          ("light", "Red light therapy", "Included with every session."),
          ("tea", "Back to your day", "There is no downtime, so you can go straight back to your day.")],
         "<h3>It works on its own or as a series</h3><p>Nanoneedling suits a one-off glow and also works as a regular series. Your first visit starts the conversation about what fits your skin.</p>",
-        "treatment-nanoneedling", "Nanoneedling treatment at Full Lotus Health in Burbank")
+        "treatment-nanoneedling", ROOM_ALT)
     say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("facial-nano-needling")}</div></section>'
     faq = f"""<section class="wash-l"><div class="wrap g-faq">{faq_block([
   ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
