@@ -606,7 +606,15 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .ts-fields input:focus, .ts-fields select:focus, .sch-fields input:focus, .sch-fields textarea:focus { outline: 2px solid var(--lapis); outline-offset: 1px; border-color: var(--lapis); }
 .ts-fields label[hidden] { display: none; }
 .ts-actions { margin: 1.1rem 0 0.4rem; }
-.ts-form .btn, .sch-form .btn { cursor: pointer; }
+.ts-form .btn, .sch-form .btn, .ins-form .btn { cursor: pointer; }
+.ins-form { margin-top: 1.4rem; }
+.ins-form input[type="text"], .ins-form input[type="email"], .ins-form input[type="tel"], .ins-form input[type="date"], .ins-form select { width: 100%; font: inherit; font-weight: 400; padding: 0.75rem 0.9rem; color: var(--ink); background: #fffaf1; border: 2px solid var(--surface-300); border-radius: var(--radius-sm); }
+.ins-form select:focus, .ins-form input:focus { outline: 2px solid var(--lapis); outline-offset: 1px; border-color: var(--lapis); }
+.ins-form .ins-span { grid-column: 1 / -1; }
+.ins-form .ins-consent { flex-direction: row; align-items: flex-start; gap: 0.7rem; font-weight: 400; }
+.ins-form .ins-consent input { width: 1.2rem; height: 1.2rem; margin-top: 0.2rem; flex: none; }
+.ins-form .notice { margin-top: 1rem; }
+.ins-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .ts-form .btn[disabled], .sch-form .btn[disabled] { opacity: 0.6; cursor: wait; }
 @media (max-width: 40rem) {
   .ts-sit { grid-template-columns: 1fr auto; row-gap: 0.7rem; }

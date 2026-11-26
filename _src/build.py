@@ -1581,7 +1581,7 @@ def insurance():
         ("Are sliding scale treatments available?",
          f"A limited number of sliding scale treatments are available for those in financial need. Call <a href=\"tel:{PHONE_TEL}\">{PHONE_DISPLAY}</a>, text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>, or email <a href=\"mailto:{EMAIL}\">{EMAIL}</a> to ask."),
         ("How do I ask for a benefits check?",
-         f'Call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>, or email <a href="mailto:{EMAIL}?subject=PPO%20benefits%20check">{EMAIL}</a>, and ask us to check your PPO benefits. You can also <a href="/book-online">book a visit</a> and tell us you would like a benefits check. There is no online verification tool. Please keep health details off text and email. Use the <a href="/new-patients">new patient intake form</a> for those.'),
+         f'Use the benefits check form on this page. You can also call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a>, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>, or email <a href="mailto:{EMAIL}?subject=PPO%20benefits%20check">{EMAIL}</a>. Please keep other health details off text and email. Eligibility is not a guarantee of payment.'),
         ("Do you take HMO, Medi-Cal, or Medicare?",
          "No. HMO, Medi-Cal, and Medicare are not accepted. If you are not sure what kind of plan you have, contact the clinic and we will look at it with you."),
         ("Can I use an HSA or FSA?",
@@ -1604,6 +1604,7 @@ def insurance():
     <div class="notice"><p>Eligibility is not a guarantee of payment.</p></div>
     <h2 style="margin-top:2rem">Sliding scale</h2>
     <p>A limited number of sliding scale treatments are available for those in financial need. <a href="tel:{PHONE_TEL}">Call</a>, <a href="sms:{PHONE_TEL}">text</a>, or <a href="mailto:{EMAIL}">email</a> the clinic to ask.</p>
+    <p>For a benefits check, use the form <a href="#benefits">below</a>.</p>
     <h2 style="margin-top:2rem">PPO plans</h2>
     <p>We accept PPO insurance plans. Aetna PPO is one of them. If you have been looking for an acupuncturist near Burbank who takes Aetna PPO, you can ask us to check the benefits on your card before you book.</p>
     <p>HMO, Medi-Cal, and Medicare are not accepted.</p>
@@ -1613,19 +1614,66 @@ def insurance():
   <div>
     <h2>What to expect</h2>
     <ol class="steps">
-      <li><h3>Ask us to check your plan</h3><p>Call, text, or email the name of your PPO. We will tell you what we know. The website does not verify benefits for you.</p></li>
+      <li><h3>Ask us to check your plan</h3><p>Use the benefits check form on this page, or call, text, or email the name of your PPO. We will tell you what we know.</p></li>
       <li><h3>Pay out of pocket</h3><p>You pay the clinic at the time of service. Payment is taken when you book.</p></li>
       <li><h3>Reimbursement after insurance pays</h3><p>Once insurance pays, you are reimbursed up to the amount of the treatment. Ask us what your plan needs when you request a benefits check.</p></li>
     </ol>
   </div>
 </div></section>
-<section class="sand" id="benefits"><div class="wrap split">
+<section class="sand" id="benefits"><div class="wrap">
+  <p class="eyebrow">Benefits check</p>
+  <h2>Ask us to check a plan</h2>
+  <p>Send your name and your PPO details. For Aetna PPO we can check whether the plan shows as active. For another PPO we save the request and follow up by email.</p>
+  <form id="ins-check" class="ins-form sch-form" data-email="{EMAIL}" data-phone="{PHONE_DISPLAY}" data-phone-tel="{PHONE_TEL}" aria-describedby="ins-privacy">
+    <div class="sch-fields">
+      <label for="ins-first">First name
+        <input id="ins-first" name="firstName" type="text" autocomplete="given-name" required maxlength="60">
+      </label>
+      <label for="ins-last">Last name
+        <input id="ins-last" name="lastName" type="text" autocomplete="family-name" required maxlength="60">
+      </label>
+      <label for="ins-dob">Date of birth
+        <input id="ins-dob" name="dob" type="date" autocomplete="bday" required max="{TODAY}">
+      </label>
+      <label for="ins-email">Email
+        <input id="ins-email" name="email" type="email" autocomplete="email" required maxlength="254">
+      </label>
+      <label for="ins-phone">Phone <span class="fine">(optional)</span>
+        <input id="ins-phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
+      </label>
+      <label for="ins-carrier">Insurance carrier
+        <select id="ins-carrier" name="carrier" required>
+          <option value="">Choose a plan</option>
+          <option>Aetna PPO</option>
+          <option>Other PPO</option>
+        </select>
+      </label>
+      <label class="ins-span" for="ins-member">Member ID
+        <input id="ins-member" name="memberId" type="text" autocomplete="off" required maxlength="40" spellcheck="false">
+      </label>
+      <label class="ins-consent ins-span" for="ins-consent">
+        <input id="ins-consent" name="consent" type="checkbox" required>
+        <span>I agree to Full Lotus Health using this information to check my benefits and to contact me about the result.</span>
+      </label>
+    </div>
+    <div class="ins-hp" aria-hidden="true">
+      <label for="ins-website">Company</label>
+      <input id="ins-website" name="website" type="text" tabindex="-1" autocomplete="off">
+    </div>
+    <p class="fine" id="ins-privacy">We use this only to check benefits and to contact you about the result. Please don't add other health details.</p>
+    <p class="ts-actions"><button class="btn" type="submit">Check benefits</button></p>
+    <div id="ins-result" class="notice" role="status" aria-live="polite" hidden>
+      <p id="ins-result-text"></p>
+      <p>Eligibility is not a guarantee of payment.</p>
+    </div>
+  </form>
+  <noscript><p class="notice">To ask for a benefits check, email <a href="mailto:{EMAIL}?subject=PPO%20benefits%20check">{EMAIL}</a> or call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p></noscript>
+</div></section>
+<section><div class="wrap split">
   <div>
-    <p class="eyebrow">Benefits check</p>
-    <h2>Ask us, then book</h2>
-    <p>There is no online benefits checker. Tell us the plan name, and whether it is a PPO, and we will tell you what we know before you come in.</p>
+    <h2>Or reach us directly</h2>
     {contact_block()}
-    <p class="fine">Please keep health details off text and email. Share those on the <a href="/new-patients">new patient intake form</a> or in person.</p>
+    <p class="fine">Please keep other health details off text and email. Share those on the <a href="/new-patients">new patient intake form</a> or in person.</p>
   </div>
   <div>
     <p style="display:flex;gap:.9rem;flex-wrap:wrap">{book_btn("Book a visit")} <a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>
@@ -1651,6 +1699,7 @@ def insurance():
         ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Insurance", "/insurance")]), faq_ld(faqs)],
         current="/insurance",
         footer_map=False,
+        head_extra='<script src="/assets/insurance-check.js" defer></script>\n',
     )
 
 
@@ -2459,7 +2508,7 @@ def llms_txt():
 - Hours: {HOURS}
 - Phone or text: {PHONE_DISPLAY} · Email: {EMAIL}
 - Serves Burbank, Glendale, Toluca Lake, North Hollywood, and Studio City
-- PPO insurance, including Aetna PPO. You pay out of pocket at the time of service. Payment is taken when you book. Nothing is booked until payment goes through. Once insurance pays, you are reimbursed up to the amount of the treatment. HMO, Medi-Cal, and Medicare are not accepted. Personal injury cases are not accepted. Eligibility is not a guarantee of payment. Details: {SITE}/insurance
+- PPO insurance, including Aetna PPO. You pay out of pocket at the time of service. Payment is taken when you book. Nothing is booked until payment goes through. Once insurance pays, you are reimbursed up to the amount of the treatment. HMO, Medi-Cal, and Medicare are not accepted. Personal injury cases are not accepted. A benefits-check form is on the insurance page. Eligibility is not a guarantee of payment. Details: {SITE}/insurance
 - Book online: {SITE}/book-online
 - Cancellation: free up to {NOTICE_HOURS} hours ahead. Less than {NOTICE_HOURS} hours' notice, or a no-show, is charged ${LATE_FEE}. Call or text to cancel.
 - New patients complete the intake form before the first visit: {intake_link}
@@ -2543,6 +2592,7 @@ def chat_facts():
             "Payment is taken when you book. Nothing is booked until payment goes through. "
             "HMO, Medi-Cal, and Medicare are not accepted. We do not take personal injury cases. "
             "For any other plan, contact the clinic. "
+            "A form on the insurance page can request a benefits check. "
             "Eligibility is not a guarantee of payment."
         ),
         "also": "Chinese herbal medicine, cupping, moxibustion, and therapeutic massage are also offered. A fee for those is not listed on the site. Text the clinic and ask.",
