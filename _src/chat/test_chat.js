@@ -201,6 +201,8 @@ assert(insPage.indexOf('"@type":"FAQPage"') >= 0, "faq schema");
 assert(insPage.indexOf('aria-current="page"') >= 0 && insPage.indexOf('href="/insurance"') >= 0, "insurance is in the nav");
 assert(insPage.indexOf("2116 N Glenoaks") >= 0, "insurance page address");
 assert(insPage.indexOf("Aetna PPO") >= 0, "insurance page names Aetna PPO");
+assert((insPage.split("A limited number of sliding scale treatments are available for those in financial need.").length - 1) >= 3, "sliding scale on the page, in the faq, and in schema");
+assert(insPage.indexOf('"name":"Are sliding scale treatments available?"') >= 0, "sliding scale question in schema");
 assert(!/\bDr\./.test(insPage), "insurance page does not say Dr.");
 assert(!/\bcomplimentary\b/i.test(insPage), "insurance page does not say complimentary");
 assert(!/\bfree\b/i.test(insPage), "insurance page does not say free");

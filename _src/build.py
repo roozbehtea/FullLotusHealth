@@ -1578,6 +1578,8 @@ def insurance():
          "You can still book a visit and pay out of pocket. If acupuncture is not a covered benefit, there may be no reimbursement. Ask us to check your plan before you come in if you want to know that first."),
         ("How does reimbursement work?",
          "You pay the clinic out of pocket at the time of service. Payment is taken when you book, and nothing is booked until payment goes through. Once insurance pays, you are reimbursed up to the amount of the treatment. The amount depends on your plan. We do not quote a coverage percentage. Ask us what your plan needs when you request a benefits check. Eligibility is not a guarantee of payment."),
+        ("Are sliding scale treatments available?",
+         f"A limited number of sliding scale treatments are available for those in financial need. Call <a href=\"tel:{PHONE_TEL}\">{PHONE_DISPLAY}</a>, text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a>, or email <a href=\"mailto:{EMAIL}\">{EMAIL}</a> to ask."),
         ("How do I ask for a benefits check?",
          f'Call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>, or email <a href="mailto:{EMAIL}?subject=PPO%20benefits%20check">{EMAIL}</a>, and ask us to check your PPO benefits. You can also <a href="/book-online">book a visit</a> and tell us you would like a benefits check. There is no online verification tool. Please keep health details off text and email. Use the <a href="/new-patients">new patient intake form</a> for those.'),
         ("Do you take HMO, Medi-Cal, or Medicare?",
@@ -1600,6 +1602,8 @@ def insurance():
     <p>Patients pay the clinic out of pocket at the time of service. On this site, that payment is taken when you book, and nothing is booked until payment goes through. Fees for each visit are on the service pages and at checkout.</p>
     <p>Once insurance pays, you are reimbursed up to the amount of the treatment. What comes back depends on your own benefits. We do not quote a coverage percentage, and we do not bill the plan in place of your payment.</p>
     <div class="notice"><p>Eligibility is not a guarantee of payment.</p></div>
+    <h2 style="margin-top:2rem">Sliding scale</h2>
+    <p>A limited number of sliding scale treatments are available for those in financial need. <a href="tel:{PHONE_TEL}">Call</a>, <a href="sms:{PHONE_TEL}">text</a>, or <a href="mailto:{EMAIL}">email</a> the clinic to ask.</p>
     <h2 style="margin-top:2rem">PPO plans</h2>
     <p>We accept PPO insurance plans. Aetna PPO is one of them. If you have been looking for an acupuncturist near Burbank who takes Aetna PPO, you can ask us to check the benefits on your card before you book.</p>
     <p>HMO, Medi-Cal, and Medicare are not accepted.</p>
