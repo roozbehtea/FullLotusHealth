@@ -27,6 +27,20 @@
   function me() { try { var v = JSON.parse(localStorage.getItem(ME) || "null"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } }
   function remember(v) { try { localStorage.setItem(ME, JSON.stringify({ name: v.name, email: v.email, phone: v.phone })); } catch (e) {} }
   function forget() { try { localStorage.removeItem(ME); } catch (e) {} }
+  // A "book your next visit" link from a confirmation email carries the patient's details after the # (never sent to a server). Save them here, then clear the address bar.
+  (function () {
+    var m = /^#me=([A-Za-z0-9_-]+)$/.exec(location.hash);
+    if (!m) return;
+    try {
+      var b = m[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (b.length % 4) b += "=";
+      var bin = atob(b), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var v = JSON.parse(new TextDecoder().decode(bytes));
+      if (v && v.name && v.email) remember({ name: String(v.name).slice(0, 80), email: String(v.email).slice(0, 254), phone: String(v.phone || "").slice(0, 30) });
+    } catch (e) {}
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  })();
   var FALLBACK = 'Please text <a href="sms:+18182539307">(818) 253-9307</a> or email <a href="mailto:info@fulllotushealth.com">info@fulllotushealth.com</a> and we will find you a time.' +
     (GOOGLE ? ' You can also <a href="' + esc(GOOGLE) + '" rel="noopener">book on our Google calendar page</a>.' : "");
 

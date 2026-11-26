@@ -210,9 +210,11 @@ ok('an all-day event takes the day off the calendar entirely', () => {
       }),
       getDefaultCalendar: () => null
     };
+    ctx.Utilities.newBlob = str => ({ getBytes: () => Array.from(Buffer.from(str, 'utf8')) });
+    ctx.Utilities.base64EncodeWebSafe = bytes => Buffer.from(bytes).toString('base64url') + '==';
     let u = 0; ctx.Utilities.getUuid = () => 'abcd' + String(++u).padStart(4, '0') + '-0000';
   };
-  vm.runInContext('this.__pkg={apptBook_,pkgFind_,apptRows_,pkgTag_};', ctx);
+  vm.runInContext('this.__pkg={apptBook_,pkgFind_,apptRows_,pkgTag_,apptBookLink_};', ctx);
   const P = ctx.__pkg;
   const realNow = Date.now();
   const firstSlot = (slug) => apptDays_([], APPT_SERVICES[slug].minutes, apptCfg_(), realNow).find(d => d.slots.length).slots[0].start;
@@ -290,6 +292,21 @@ ok('an all-day event takes the day off the calendar entirely', () => {
     sh.getRange = (r, c, nr, nc) => { const g = orig(r, c, nr, nc); return (nc === 14 && ++wide === 2) ? { getValues: () => { const v = g.getValues(); v[0][0] = 'PKG-MOVED'; return v; } } : g; };
     const r = P.apptBook_(req()); assert.strictEqual(r.error, 'server'); assert.strictEqual(calendar.length, 0);
     assert.strictEqual(appts.rows[1][AC.status - 1], 'cancelled'); assert.strictEqual(pk(2)[7], 1);
+  });
+  ok('next-visit link: first visits lead to the follow-up page, details ride after the # and decode back, accents survive', () => {
+    setup([]);
+    const dec = link => JSON.parse(Buffer.from(link.split('#me=')[1], 'base64url').toString('utf8'));
+    const l1 = P.apptBookLink_('acupuncture-initial-treatment', 'José Ñandú', 'jose@example.com', '(818) 555-0123');
+    assert(l1.startsWith('https://site.test/book/acupuncture-repeat-treatment#me='), l1);
+    assert.deepStrictEqual(dec(l1), { name: 'José Ñandú', email: 'jose@example.com', phone: '(818) 555-0123' });
+    assert(!/[=+/]/.test(l1.split('#me=')[1]), 'token is URL safe with no padding');
+    assert(P.apptBookLink_('facial-nano-needling', 'A', 'a@b.co', '1').startsWith('https://site.test/book/facial-nano-needling#me='));
+    assert(P.apptBookLink_('initial-consultation-online', 'A', 'a@b.co', '1').indexOf('/book/repeat-consultation-online#') > 0);
+  });
+  ok('next-visit link: the patient confirmation email has it, Roozbeh\'s copy does not', () => {
+    setup([pkgRow('PKG-0001')]); P.apptBook_(req());
+    assert(/Book your next visit: https:\/\/site\.test\/book\/acupuncture-repeat-treatment#me=/.test(mails[0].body), mails[0].body);
+    assert(mails[1].body.indexOf('#me=') < 0);
   });
   ok('package: pkgTag_ reads package bookings and ignores Stripe sessions', () => {
     assert.deepStrictEqual(JSON.parse(JSON.stringify(P.pkgTag_('pkg|PKG-0007|2|5|abcd1234'))), { id: 'PKG-0007', left: 2, total: 5 });

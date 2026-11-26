@@ -748,6 +748,20 @@ function apptFinish_(session) {
   if (!found.row[AC.emailed - 1]) { apptEmails_(found.row, svc); apptSet_(found.index, { emailed: new Date() }); }
 }
 
+// The page a patient books their NEXT visit on (a first visit leads to the follow-up page).
+var APPT_NEXT = { 'acupuncture-initial-treatment': 'acupuncture-repeat-treatment', 'initial-consultation-online': 'repeat-consultation-online' };
+/**
+ * A personal "book your next visit" link for the confirmation email. The patient's name, email and phone ride in the part after the #,
+ * which browsers never send to any server; the booking page saves them on that device and removes them from the address bar.
+ * That is how a returning patient's details follow them to a new phone or computer.
+ */
+function apptBookLink_(slug, name, email, phone) {
+  var next = APPT_NEXT[slug] || slug;
+  var json = JSON.stringify({ name: String(name || ''), email: String(email || ''), phone: String(phone || '') });
+  var tok = Utilities.base64EncodeWebSafe(Utilities.newBlob(json).getBytes()).replace(/=+$/, '');
+  return cfg_().site + '/book/' + next + '#me=' + tok;
+}
+
 function apptEmails_(r, svc) {
   var c = cfg_(), name = r[AC.name - 1], email = r[AC.email - 1], when = r[AC.when - 1];
   var where = svc.online ? 'Online, by video. Roozbeh will email you the video link before your visit.' : 'Full Lotus Health, ' + c.address;
@@ -756,13 +770,15 @@ function apptEmails_(r, svc) {
     return k === 0 ? '\nPlease fill in the ' + f.name + ' form before you come: ' + f.url + '\n' : 'And the ' + f.name + ' form: ' + f.url + '\n';
   }).join('');
   var series = svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '';
+  var nextLink = '';
+  try { nextLink = '\nBook your next visit: ' + apptBookLink_(String(r[AC.svc - 1]), name, email, r[AC.phone - 1]) + '\n(This link fills in your details on any device. Please do not forward it.)\n'; } catch (err) { console.error('next visit link: ' + err); }
   var pk = pkgTag_(r[AC.session - 1]);
   var paidLine = pk ? 'This visit is covered by your package: ' + pk.left + ' of ' + pk.total + ' visits left.' : 'Your payment has been received.';
   MailApp.sendEmail({
     to: email, replyTo: c.notify, name: 'Full Lotus Health',
     subject: 'Your appointment: ' + r[AC.svcName - 1] + ', ' + when.split(' at ')[0],
     body: 'Hi ' + name + ',\n\nYou are booked for ' + r[AC.svcName - 1] + ' on ' + when + '.\n\n' +
-      'Where: ' + where + '\n' + intake + series + '\n' +
+      'Where: ' + where + '\n' + intake + series + nextLink + '\n' +
       paidLine + ' To reschedule or cancel, reply to this email or text ' + c.phone + ' at least 24 hours ahead. ' +
       'Appointments cancelled or missed with less than 24 hours\' notice are charged $95.\n\nSee you soon,\nRoozbeh\nFull Lotus Health'
   });
