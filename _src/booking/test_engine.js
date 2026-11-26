@@ -308,6 +308,16 @@ ok('an all-day event takes the day off the calendar entirely', () => {
     assert(/Book your next visit: https:\/\/site\.test\/book\/acupuncture-repeat-treatment#me=/.test(mails[0].body), mails[0].body);
     assert(mails[1].body.indexOf('#me=') < 0);
   });
+  ok('phone: required for a first visit, optional for a repeat visit (but must look real if given)', () => {
+    setup([]);
+    assert.strictEqual(P.apptBook_(req({ service: 'acupuncture-initial-treatment', start: firstSlot('acupuncture-initial-treatment'), phone: '' })).error, 'phone');
+    const r = P.apptBook_(req({ phone: '' })); assert(r.ok && r.url, JSON.stringify(r));
+    setup([]); assert.strictEqual(P.apptBook_(req({ phone: '123' })).error, 'phone');
+  });
+  ok('phone: a package holder booking a repeat visit with email only is matched by email', () => {
+    setup([pkgRow('PKG-0001')]);
+    const r = P.apptBook_(req({ phone: '' })); assert.strictEqual(r.package, true); assert.strictEqual(stripeCalls, 0);
+  });
   ok('package: pkgTag_ reads package bookings and ignores Stripe sessions', () => {
     assert.deepStrictEqual(JSON.parse(JSON.stringify(P.pkgTag_('pkg|PKG-0007|2|5|abcd1234'))), { id: 'PKG-0007', left: 2, total: 5 });
     assert.strictEqual(P.pkgTag_('cs_test_123'), null);

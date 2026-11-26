@@ -580,7 +580,9 @@ function apptBook_(b) {
   var startMs = Date.parse(String(b.start || ''));
   if (!name) return { error: 'name' };
   if (!(email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) || /^[=+\-@]/.test(email)) return { error: 'email' };
-  if (phone.replace(/\D/g, '').length < 7) return { error: 'phone' };
+  // First visits need a number to reach a new patient. Repeat visits (patients we already know) need only an email; a phone is optional, but if given it must look real.
+  var phoneDigits = phone.replace(/\D/g, '').length;
+  if (svc.intake ? phoneDigits < 7 : (phoneDigits > 0 && phoneDigits < 7)) return { error: 'phone' };
   if (isNaN(startMs)) return { error: 'closed' };
   var note = apptFormsNote_(String(b.service), svc, email, phone, b.returning === true || b.returning === 'yes');
 
