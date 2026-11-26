@@ -301,6 +301,7 @@ NAV = [
         ("/tea-sits", "Weekly tea sits"),
     ]),
     ("/blog", "Blog"),
+    ("/insurance", "Insurance"),
     ("/new-patients", "New patients"),
 ]
 # Groups (a label plus a list of links) open as an accordion in the phone menu
@@ -738,6 +739,7 @@ def page(path, title, meta, main, ld=None, current=None, noindex=False, og_type=
         <ul>
           <li><a href="/treatments">Natural beauty</a></li>
           <li><a href="/acupuncture">Acupuncture &amp; herbal medicine</a></li>
+          <li><a href="/insurance">Insurance</a></li>
           <li><a href="/tea-ceremonies">Tea ceremonies</a></li>
           <li><a href="/new-patients">New patients</a></li>
           <li><a href="/blog">Blog</a></li>
@@ -934,7 +936,7 @@ HOME_QUOTES = [
 HOME_WAYS = [
     ("Acupuncture and Herbal Medicine", "/acupuncture",
      "For pain, stress, sleep and digestion, with herbal formulas when they help. Herbal consultations also run online.",
-     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine")]),
+     [("What we treat", "/acupuncture#what-we-treat"), ("In person or online", "/acupuncture#visits"), ("Herbal medicine", "/acupuncture#herbal-medicine"), ("PPO insurance", "/insurance")]),
     ("Tea Ceremony: Medicine for the Mind", "/tea-ceremonies",
      "In Chinese medicine, tea is the premier herb for calming and energizing the mind. Gong fu and bowl tea ceremonies in the tradition of Wu De.",
      [("Gong fu ceremony", "/service-page/gong-fu-tea-ceremony"), ("Bowl ceremony", "/service-page/bowl-tea-ceremony"),
@@ -1055,6 +1057,7 @@ def treatments():
   <p style="margin-top:1.6rem">{book_btn("Book a treatment")}</p>
   <p style="margin-top:1.6rem">Read more: <a href="/microneedling-burbank">microneedling in Burbank</a>, <a href="/nanoneedling-burbank">nanoneedling in Burbank</a>, <a href="/cosmetic-acupuncture-burbank">cosmetic acupuncture in Burbank</a>, <a href="/skin-conditions-burbank">Chinese medicine for skin conditions</a>.</p>
   <p class="fine" style="margin-top:1rem">How it works: your first session includes a detailed intake and treatment plan. Then relax and enjoy. Best done in a series. Fees are on each treatment page.</p>
+  <p class="fine">For acupuncture, we accept PPO plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. <a href="/insurance">Insurance and reimbursement</a>. Eligibility is not a guarantee of payment.</p>
 </div></section>
 
 <section class="wash-g"><div class="wrap">
@@ -1150,7 +1153,7 @@ def acupuncture():
       <ul class="way-links"><li><a href="{ONLINE_CONSULT}">First consultation</a></li><li><a href="/service-page/repeat-consultation-online">Follow-up consultation</a></li></ul>
       <p class="vbtn"><a class="btn" href="{ONLINE_CONSULT}">Book an online consultation</a></p></div>
   </div>
-  <p class="fine" style="margin-top:1.2rem">Fees are on each session page.</p>
+  <p class="fine" style="margin-top:1.2rem">Fees are on each session page. PPO insurance, including Aetna PPO: you pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. <a href="/insurance">How insurance works</a>. Eligibility is not a guarantee of payment.</p>
 </div></section>
 
 <section aria-labelledby="first-h"><div class="wrap">
@@ -1296,11 +1299,13 @@ def book_online():
   {fallback}
   {''.join(blocks)}
   <div class="bk-new"><div><h2 class="h3">First visit?</h2><p>Fill in the short intake form first, ideally before your appointment. It takes a few minutes.</p></div><a class="btn ghost" href="{e(INTAKE_HREF)}">New patient form</a></div>
+  <div class="bk-new" style="margin-top:1rem"><div><h2 class="h3">Using PPO insurance?</h2><p>We accept PPO plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. Ask us to check your benefits. Eligibility is not a guarantee of payment.</p></div><a class="btn ghost" href="/insurance">Insurance</a></div>
   <div class="bk-new" style="margin-top:1rem"><div><h2 class="h3">Not sure which to choose?</h2><p>Text us and we will help you choose.</p></div><a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></div>
   <p class="fine" style="margin-top:2rem">Fees are shown on each service page and at checkout. To reschedule or cancel, call or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}.</p>
   {faq_block([
     ("Where are visits?", f"In person at {ADDR_LINE}. {PARKING} {HOURS} Online consultations are by video."),
     ("Which treatment should I choose?", "Book the one closest to what you need and we will decide together, or text a question. Skin treatments are described on the <a href=\"/treatments\">natural beauty page</a> and acupuncture on the <a href=\"/acupuncture\">acupuncture page</a>."),
+    ("Do you take PPO insurance?", "We accept PPO plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. HMO, Medi-Cal, and Medicare are not accepted. <a href=\"/insurance\">Insurance and reimbursement</a>. Eligibility is not a guarantee of payment."),
     ("How long are visits?", "The length is shown beside each service. Visits are unhurried and often end with tea."),
   ], "Before you book")}
 </div></section>"""
@@ -1320,6 +1325,9 @@ def confirm_pages():
         pay = "taken when you book your time. Nothing is booked until payment goes through."
         if s["slug"] == "acupuncture-repeat-treatment":                      # package patients are booked without paying (see _src/booking/Booking.gs)
             pay = "taken when you book. Package visits are not charged."
+        ins_note = ""
+        if s["group"] == "acu":
+            ins_note = '<p class="fine">PPO insurance, including Aetna PPO: you pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. <a href="/insurance">How reimbursement works</a>. Eligibility is not a guarantee of payment.</p>'
         new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
@@ -1342,7 +1350,7 @@ def confirm_pages():
   <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
 </div>
 <ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> {pay}</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
-{new}
+{ins_note}{new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section><script src="/assets/booking.js" defer></script>'''
             OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True, head_extra=booking_head(s["slug"]))
@@ -1357,7 +1365,7 @@ def confirm_pages():
 <p class="lede">{e(s["tagline"])}</p>
 <div class="cf-opts{" two" if opt2 else ""}">{opt1}{opt2}</div>
 <ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
-{new}
+{ins_note}{new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section>'''
         OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
@@ -1557,6 +1565,91 @@ def feed():
     OUT["feed.xml"] = f'<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>{NAME} blog</title><link>{SITE}/blog</link><description>Notes on acupuncture, Chinese herbal medicine, skin, and tea.</description><language>en-us</language>{items}</channel></rss>\n'
 
 
+def insurance():
+    """PPO reimbursement. Patients pay out of pocket; insurance may pay them back. No carrier list beyond Aetna PPO."""
+    faqs = [
+        ("Do you take insurance for acupuncture in Burbank?",
+         "We accept PPO insurance plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. HMO, Medi-Cal, and Medicare are not accepted. Eligibility is not a guarantee of payment."),
+        ("Do you accept Aetna PPO?",
+         "Yes. Aetna PPO is a PPO plan we accept. You still pay out of pocket at the time of service, and any reimbursement depends on your benefits. For a different plan, contact the clinic and we will check it with you. We do not publish a list of carriers."),
+        ("Do I need a referral?",
+         "It depends on your plan. Some PPO plans do not require a referral for acupuncture, and some do. We cannot tell from the plan name alone. Call or text the clinic, or ask your plan."),
+        ("What if my plan doesn't cover acupuncture?",
+         "You can still book a visit and pay out of pocket. If acupuncture is not a covered benefit, there may be no reimbursement. Ask us to check your plan before you come in if you want to know that first."),
+        ("How does reimbursement work?",
+         "You pay the clinic out of pocket at the time of service. Payment is taken when you book, and nothing is booked until payment goes through. Once insurance pays, you are reimbursed up to the amount of the treatment. The amount depends on your plan. We do not quote a coverage percentage. Ask us what your plan needs when you request a benefits check. Eligibility is not a guarantee of payment."),
+        ("How do I ask for a benefits check?",
+         f'Call <a href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a> or text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>, or email <a href="mailto:{EMAIL}?subject=PPO%20benefits%20check">{EMAIL}</a>, and ask us to check your PPO benefits. You can also <a href="/book-online">book a visit</a> and tell us you would like a benefits check. There is no online verification tool. Please keep health details off text and email. Use the <a href="/new-patients">new patient intake form</a> for those.'),
+        ("Do you take HMO, Medi-Cal, or Medicare?",
+         "No. HMO, Medi-Cal, and Medicare are not accepted. If you are not sure what kind of plan you have, contact the clinic and we will look at it with you."),
+        ("Can I use an HSA or FSA?",
+         "That depends on the rules of your account. Ask the clinic before you book if you need to know whether a visit can be paid that way."),
+        ("Do you take personal injury cases?",
+         "No. We do not take personal injury cases."),
+    ]
+    main = hero(
+        "Acupuncture insurance in Burbank",
+        "Full Lotus Health accepts PPO insurance plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays.",
+        crumbs=[("Home", "/"), ("Insurance", "/insurance")],
+        tone="m",
+        cta_html=book_btn("Book a visit") + '<a class="btn ghost" href="#benefits">Check your plan</a>',
+    ) + f"""
+<section><div class="wrap split">
+  <div>
+    <h2>How a visit is paid</h2>
+    <p>Patients pay the clinic out of pocket at the time of service. On this site, that payment is taken when you book, and nothing is booked until payment goes through. Fees for each visit are on the service pages and at checkout.</p>
+    <p>Once insurance pays, you are reimbursed up to the amount of the treatment. What comes back depends on your own benefits. We do not quote a coverage percentage, and we do not bill the plan in place of your payment.</p>
+    <div class="notice"><p>Eligibility is not a guarantee of payment.</p></div>
+    <h2 style="margin-top:2rem">PPO plans</h2>
+    <p>We accept PPO insurance plans. Aetna PPO is one of them. If you have been looking for an acupuncturist near Burbank who takes Aetna PPO, you can ask us to check the benefits on your card before you book.</p>
+    <p>HMO, Medi-Cal, and Medicare are not accepted.</p>
+    <p>We do not publish a list of other carriers. Networks change, and a plan name on its own does not tell us your benefits. If you are not sure about your plan, contact the clinic and we will check it with you.</p>
+    <p>We do not take personal injury cases.</p>
+  </div>
+  <div>
+    <h2>What to expect</h2>
+    <ol class="steps">
+      <li><h3>Ask us to check your plan</h3><p>Call, text, or email the name of your PPO. We will tell you what we know. The website does not verify benefits for you.</p></li>
+      <li><h3>Pay out of pocket</h3><p>You pay the clinic at the time of service. Payment is taken when you book.</p></li>
+      <li><h3>Reimbursement after insurance pays</h3><p>Once insurance pays, you are reimbursed up to the amount of the treatment. Ask us what your plan needs when you request a benefits check.</p></li>
+    </ol>
+  </div>
+</div></section>
+<section class="sand" id="benefits"><div class="wrap split">
+  <div>
+    <p class="eyebrow">Benefits check</p>
+    <h2>Ask us, then book</h2>
+    <p>There is no online benefits checker. Tell us the plan name, and whether it is a PPO, and we will tell you what we know before you come in.</p>
+    {contact_block()}
+    <p class="fine">Please keep health details off text and email. Share those on the <a href="/new-patients">new patient intake form</a> or in person.</p>
+  </div>
+  <div>
+    <p style="display:flex;gap:.9rem;flex-wrap:wrap">{book_btn("Book a visit")} <a class="btn ghost" href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a></p>
+    <p style="margin-top:1.2rem"><a class="btn ghost" href="mailto:{EMAIL}?subject=PPO%20benefits%20check">Email a benefits question</a></p>
+    <h2 class="h3" style="margin-top:2rem">Also see</h2>
+    <ul class="checks">
+      <li><a href="/acupuncture">Acupuncture and herbal medicine</a></li>
+      <li><a href="/book-online">Book online</a></li>
+      <li><a href="/new-patients">New patients</a></li>
+      <li><a href="/treatments">Natural beauty treatments</a></li>
+    </ul>
+    <p class="fine">Roozbeh Ghobadpour, L.Ac. Fees are listed with each service, not on this page.</p>
+  </div>
+</div></section>
+<section><div class="wrap">{faq_block(faqs, "Insurance questions")}</div></section>
+{visit_section("ins-visit-h")}
+""" + cta("Ask about your plan, or book a visit", "Text us to request a benefits check, or choose a time. New patients, please complete the intake form before the first visit.", "Book a visit", extra=f' <a class="btn ghost" href="/new-patients">New patient form</a>', tone="l")
+    OUT["insurance.html"] = page(
+        "/insurance",
+        "Acupuncture Insurance in Burbank | PPO Plans | Full Lotus Health",
+        "Acupuncture that takes PPO insurance in Burbank, including Aetna PPO. Pay at your visit; your plan may reimburse you. Eligibility is not a guarantee of payment.",
+        main,
+        ld=[business_ld(), breadcrumb_ld([("Home", "/"), ("Insurance", "/insurance")]), faq_ld(faqs)],
+        current="/insurance",
+        footer_map=False,
+    )
+
+
 def new_patients():
     if INTAKE:
         action = f'<p><a class="btn" href="{e(INTAKE)}" rel="noopener">Open the intake form</a></p><p class="fine">The form opens in Google Forms. It is not part of this website.</p>'
@@ -1587,6 +1680,7 @@ def new_patients():
     ("What are your hours?", HOURS),
     ("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}."),
     ("What treatments can I book?", "Acupuncture, microneedling, nanoneedling, cosmetic acupuncture, online consultations, and tea ceremonies. See <a href=\"/book-online\">all services</a>."),
+    ("Do you take insurance?", "We accept PPO plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. HMO, Medi-Cal, and Medicare are not accepted. <a href=\"/insurance\">Insurance details</a>. Eligibility is not a guarantee of payment."),
   ], "New patient questions")}</div></section>"""
     OUT["new-patients.html"] = page("/new-patients", "New Patients | Full Lotus Health, Burbank",
         "New to Full Lotus Health? Book a time, then complete the new patient intake form before your first visit in Burbank, CA.",
@@ -1631,6 +1725,8 @@ def service_faq(s):
     if s["minutes"]:
         items.append((f"How long is a {s['name'].split(':')[-1].strip().lower()} visit?", f"Plan on {s['minutes']} minutes. Visits are unhurried."))
     items.append(("How do I book?", f"Use the Book button on this page to pick a time on the calendar. New patients, please complete the <a href=\"/new-patients\">intake form</a> before your first visit."))
+    if s["group"] == "acu":
+        items.append(("Do you take insurance?", "We accept PPO plans, including Aetna PPO. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. <a href=\"/insurance\">Insurance and reimbursement</a>. Eligibility is not a guarantee of payment."))
     items.append(("How do I reschedule or cancel?", f"Call or text <a href=\"sms:{PHONE_TEL}\">{PHONE_DISPLAY}</a> at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours' notice are charged ${LATE_FEE}."))
     return faq_block(items)
 
@@ -1739,7 +1835,7 @@ def service_pages():
     {('<p><a class="btn ghost" href="' + e(INTAKE) + '" rel="noopener">New patient form</a></p><p class="fine">First visit? Please fill this out before you come.</p>') if (INTAKE and "initial" in s["slug"]) else ""}
     <p class="fine">Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
     <h2 class="h3" style="margin-top:2rem">Also see</h2>
-    <ul class="checks">{rel}{guide}</ul>
+    <ul class="checks">{rel}{guide}{('<li><a href="/insurance">PPO insurance</a></li>' if s["group"] == "acu" else "")}</ul>
   </div>
   <div>{fig}{''.join(parts)}{series_block}
     {service_faq(s)}
@@ -2332,7 +2428,7 @@ def condition_pages():
 
 def notfound():
     main = hero("Page not found.", "That address doesn't lead anywhere. Try one of these.", tone="c") + """
-<section><div class="wrap"><ul class="checks"><li><a href="/">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture</a></li><li><a href="/book-online">Book online</a></li></ul></div></section>"""
+<section><div class="wrap"><ul class="checks"><li><a href="/">Home</a></li><li><a href="/treatments">Natural beauty</a></li><li><a href="/acupuncture">Acupuncture</a></li><li><a href="/insurance">Insurance</a></li><li><a href="/book-online">Book online</a></li></ul></div></section>"""
     OUT["404.html"] = page("/404", "Page not found | Full Lotus Health", "That page was not found. Visit the Full Lotus Health home page or book acupuncture, microneedling, or a tea ceremony in Burbank, CA.", main, noindex=True)
 
 
@@ -2359,7 +2455,8 @@ def llms_txt():
 - Hours: {HOURS}
 - Phone or text: {PHONE_DISPLAY} · Email: {EMAIL}
 - Serves Burbank, Glendale, Toluca Lake, North Hollywood, and Studio City
-- Self-pay clinic. Payment is taken when you book. Nothing is booked until payment goes through. Book online: {SITE}/book-online
+- PPO insurance, including Aetna PPO. You pay out of pocket at the time of service. Payment is taken when you book. Nothing is booked until payment goes through. Once insurance pays, you are reimbursed up to the amount of the treatment. HMO, Medi-Cal, and Medicare are not accepted. Personal injury cases are not accepted. Eligibility is not a guarantee of payment. Details: {SITE}/insurance
+- Book online: {SITE}/book-online
 - Cancellation: free up to {NOTICE_HOURS} hours ahead. Less than {NOTICE_HOURS} hours' notice, or a no-show, is charged ${LATE_FEE}. Call or text to cancel.
 - New patients complete the intake form before the first visit: {intake_link}
 - {SERIES}: five sessions through Wood, Fire, Earth, Metal, and Water, with red light therapy included. {series_line}. {SITE}/five-element-rejuvenation
@@ -2391,6 +2488,7 @@ Roozbeh Ghobadpour, L.Ac., holds an M.A. in Traditional Chinese Medicine from Yo
 - [Cosmetic acupuncture in Burbank]({SITE}/cosmetic-acupuncture-burbank)
 - [Skin conditions]({SITE}/skin-conditions-burbank)
 - [Acupuncture and herbs]({SITE}/acupuncture)
+- [Insurance (PPO reimbursement)]({SITE}/insurance)
 - [Tea ceremonies]({SITE}/tea-ceremonies)
 - [New patients]({SITE}/new-patients)
 - [Book online]({SITE}/book-online)
@@ -2434,7 +2532,15 @@ def chat_facts():
         "payment": "Payment is taken when you book your time. Nothing is booked until payment goes through.",
         "lateFee": LATE_FEE,
         "noticeHours": NOTICE_HOURS,
-        "selfPay": "This is a self-pay clinic.",
+        "selfPay": "PPO plans are accepted. You pay out of pocket at the time of service.",
+        "insurance": (
+            "We accept PPO insurance plans, including Aetna PPO. "
+            "You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. "
+            "Payment is taken when you book. Nothing is booked until payment goes through. "
+            "HMO, Medi-Cal, and Medicare are not accepted. We do not take personal injury cases. "
+            "For any other plan, contact the clinic. "
+            "Eligibility is not a guarantee of payment."
+        ),
         "also": "Chinese herbal medicine, cupping, moxibustion, and therapeutic massage are also offered. A fee for those is not listed on the site. Text the clinic and ask.",
         "intakeHref": INTAKE or "/new-patients",
         "bookOnline": "/book-online",
@@ -2499,7 +2605,7 @@ def chat_post(p):
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
+    urls = ["/", "/treatments", "/acupuncture", "/insurance", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
     if ADS_MICRO_PATH in urls:
         sys.exit(f"{ADS_MICRO_PATH} must stay out of the sitemap")
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -2522,7 +2628,7 @@ def seo_files():
     OUT[".nojekyll"] = ""
 
 
-for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
+for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, insurance, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
 
 for rel, content in OUT.items():

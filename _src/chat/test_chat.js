@@ -70,6 +70,16 @@ assert(hrs.text.indexOf("By appointment") >= 0 && hrs.text.indexOf("booking cale
 var cancel = chat.reply(facts, "what is the cancellation policy?");
 assert(has(cancel, "$95") && has(cancel, "24"), "late fee");
 
+var ins = chat.reply(facts, "do you take aetna ppo insurance?");
+assert(ins && ins.id === "insurance", "insurance question");
+assert(has(ins, "/insurance"), "insurance page link");
+assert(ins.text.indexOf("Eligibility is not a guarantee of payment.") >= 0, "insurance disclaimer");
+assert(ins.text.indexOf("Aetna PPO") >= 0, "names Aetna PPO");
+assert(ins.text.indexOf("HMO") >= 0, "names plans that are not accepted");
+assert(!/\bfree\b/i.test(ins.text), "insurance answer has no free wording");
+assert(ins.text.indexOf("Dr.") < 0, "insurance answer does not say Dr.");
+assert(fs.existsSync(path.join(root, "insurance.html")), "insurance page exists");
+
 var health = chat.reply(facts, "will microneedling help my acne scars?");
 assert(health.id === "medical", "health question is refused");
 assert(!/\b(it will help|this will help|yes, it will)\b/i.test(health.text), "no promise");
@@ -181,6 +191,25 @@ assert(treat.indexOf('id="flh-chat"') >= 0, "treatments chat");
 
 var patients = html("new-patients.html");
 assert((patients.match(/<iframe/g) || []).length === 1, "new patients map");
+assert(patients.indexOf('href="/insurance"') >= 0, "new patients links to insurance");
+
+var insPage = html("insurance.html");
+assert(insPage.indexOf("<title>Acupuncture Insurance in Burbank | PPO Plans | Full Lotus Health</title>") >= 0, "insurance title");
+assert(insPage.indexOf("Acupuncture that takes PPO insurance in Burbank") >= 0, "insurance meta phrase");
+assert(insPage.indexOf("Eligibility is not a guarantee of payment.") >= 0, "disclaimer visible");
+assert(insPage.indexOf('"@type":"FAQPage"') >= 0, "faq schema");
+assert(insPage.indexOf('aria-current="page"') >= 0 && insPage.indexOf('href="/insurance"') >= 0, "insurance is in the nav");
+assert(insPage.indexOf("2116 N Glenoaks") >= 0, "insurance page address");
+assert(insPage.indexOf("Aetna PPO") >= 0, "insurance page names Aetna PPO");
+assert(!/\bDr\./.test(insPage), "insurance page does not say Dr.");
+assert(!/\bcomplimentary\b/i.test(insPage), "insurance page does not say complimentary");
+assert(!/\bfree\b/i.test(insPage), "insurance page does not say free");
+assert((insPage.match(/<iframe/g) || []).length === 1, "insurance page has one map");
+
+var bookPage = html("book-online.html");
+assert(bookPage.indexOf('href="/insurance"') >= 0, "booking page links to insurance");
+var treatPage = html("treatments.html");
+assert(treatPage.indexOf('href="/insurance"') >= 0, "treatments links to insurance");
 var book = html("book/facial-nano-needling.html");
 assert(book.indexOf('id="flh-chat"') >= 0, "booking page chat");
 assert(book.indexOf("/assets/chat.js") >= 0, "chat script");

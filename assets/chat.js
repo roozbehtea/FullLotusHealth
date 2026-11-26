@@ -44,7 +44,7 @@
     ["contact", /\b(phone|call you|text you|email|contact|reach you|number)\b/],
     ["who", /\b(who is|roozbeh|credential|license|licensed|practitioner|about him|about rooz)\b/],
     ["also", /\b(herbal|herbs|cupping|moxa|moxibustion|massage)\b/],
-    ["insurance", /\b(insurance|self-pay|self pay|hsa|fsa)\b/],
+    ["insurance", /\b(insurance|self-pay|self pay|hsa|fsa|aetna|ppo|hmo|medicare|medi-cal|medicaid|reimburs)/],
     ["offer", /\b(free consult|free consultation|discount|coupon|promo code|special offer|groupon|deal)\b/],
     ["scope", /\b(what do you treat|what can you treat|do you treat|conditions you|for pain|for stress|for sleep|for digestion)\b/],
     ["book", /\b(book|booking|appointment|schedule|reserve|availability|openings)\b/],
@@ -217,8 +217,12 @@
   function insurance(facts) {
     return {
       id: "insurance",
-      text: facts.selfPay + " " + facts.payment,
-      links: [{ href: facts.bookOnline, label: "Book a visit", primary: true }]
+      text: facts.insurance || (facts.selfPay + " " + facts.payment),
+      links: [
+        { href: "/insurance", label: "Insurance and reimbursement" },
+        { href: facts.bookOnline, label: "Book a visit", primary: true },
+        { href: "sms:" + facts.phoneTel, label: "Text to check your plan" }
+      ]
     };
   }
   function offer(facts) {
@@ -374,6 +378,7 @@
     var services = matchServices(facts, text);
     var topics = topicsIn(text);
     if (topics.offer && !topics.series) return offer(facts);
+    if (topics.insurance) return withPost(insurance(facts), post);
     var reading = /\b(expect|what happens|how does|how do|what is|what's|tell me about|blog|article|difference|versus|vs|which is|compare|comparison|how it works)\b/.test(text);
     var practical = askingMoney || topics.where || topics.hours || topics.cancel || topics.pay || topics.intake || topics.contact || topics.book || topics.insurance || topics.who;
     if (post && reading && !practical) {
