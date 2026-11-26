@@ -1319,7 +1319,7 @@ def confirm_pages():
         where = "Online, by video" if "Online" in s["name"] else ADDR_LINE
         pay = "taken when you book your time. Nothing is booked until payment goes through."
         if s["slug"] == "acupuncture-repeat-treatment":                      # package patients are booked without paying (see _src/booking/Booking.gs)
-            pay = "taken when you book your time. If you have a prepaid package, it covers this visit and nothing is charged. Otherwise nothing is booked until payment goes through."
+            pay = "taken when you book. Package visits are not charged."
         new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
