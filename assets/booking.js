@@ -162,8 +162,8 @@
 
   // ---- coming back from Stripe
   var params = new URLSearchParams(location.search);
-  var paid = params.get("paid"), cancelled = params.get("cancelled");
-  if (paid || cancelled) history.replaceState(null, "", location.pathname);
+  var paid = params.get("paid"), cancelled = params.get("cancelled"), pkgPaid = params.get("pkgpaid"), pkgCancelled = params.get("pkgcancelled");
+  if (paid || cancelled || pkgPaid || pkgCancelled) history.replaceState(null, "", location.pathname);
   var before = Promise.resolve(false);
   if (paid) {
     say("Confirming your appointment&hellip;");
@@ -182,6 +182,63 @@
     say("No payment was taken and nothing is booked. Pick a time below to try again.");
     if (s) before = getJSON("?action=appt_release&session=" + encodeURIComponent(s)).then(function () { return false; }, function () { return false; });
   }
+
+  if (pkgPaid) {                                                          // back from buying a package: activate it, then show the calendar so they can pick a visit
+    say("Activating your package&hellip;");
+    before = getJSON("?action=appt_package_confirm&session=" + encodeURIComponent(pkgPaid)).then(function (r) {
+      if (r.ok && r.package) {
+        remember({ name: r.name, email: r.email, phone: r.phone });
+        say("<strong>Your package is active.</strong> You have " + esc(r.visits) + " visits to book. Pick a time below and you will not be charged. A confirmation is on its way to your email.");
+      } else {
+        say("Your payment is still processing. Your package will be active within a few minutes and you will get an email. If not, " + FALLBACK.charAt(0).toLowerCase() + FALLBACK.slice(1), true);
+      }
+      return false;
+    }).catch(function () {
+      say("We could not confirm just now. If you paid, your package will be active within a few minutes and you will get an email. " + FALLBACK, true);
+      return false;
+    });
+  } else if (pkgCancelled) {
+    say("No payment was taken and no package was bought.");
+  }
+
+  // ---- buy the 5-visit package (acupuncture repeat visits). Only patients on file can: the name and phone must match, and the page never says which part failed.
+  function initPackageBuy() {
+    if (SLUG !== "acupuncture-repeat-treatment") return;
+    var saved = me(), box = document.createElement("div");
+    box.className = "pkg-buy";
+    box.innerHTML = '<p><button class="btn ghost" type="button" data-open>Buy the 5-visit package, $500</button></p>' +
+      '<p class="fine">For patients we have seen before. Then pick your visits below, with nothing more to pay.</p>' +
+      '<form hidden><div class="sch-fields">' +
+      field("name", "Name", 'autocomplete="name" required maxlength="80"', saved.name) +
+      field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"', saved.phone) +
+      field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"', saved.email) + "</div>" +
+      '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+      '<p class="ts-actions"><button class="btn" type="submit">Continue to payment, $500</button></p>' +
+      '<p class="fine">Use the name and phone number we have on file for you. You will pay securely with Stripe.</p>' +
+      '<p class="gmsg" role="status" aria-live="polite"></p></form>';
+    root.insertBefore(box, root.firstChild);
+    var open = box.querySelector("[data-open]"), form = box.querySelector("form"), msg = form.querySelector(".gmsg"), btn = form.querySelector("button[type=submit]");
+    open.addEventListener("click", function () { form.hidden = !form.hidden; if (!form.hidden) form.elements.name.focus(); });
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      btn.disabled = true; msg.className = "gmsg"; msg.textContent = "One moment…";
+      var v = { name: form.elements.name.value.trim(), email: form.elements.email.value.trim(), phone: form.elements.phone.value.trim() };
+      post({ action: "appt_package", service: SLUG, name: v.name, email: v.email, phone: v.phone, website: form.elements.website.value })
+        .then(function (r) {
+          if (r.ok && r.url) { remember(v); location.href = r.url; return; }
+          btn.disabled = false; msg.className = "gmsg err";
+          msg.innerHTML = r.error === "not_found" ? 'We could not match that name and phone number. Please check them, or text <a href="sms:+18182539307">(818) 253-9307</a> and we will sort it out.' :
+            r.error === "have_package" ? "You already have a package with " + esc(r.left) + " visits left. Pick a time below and you will not be charged." :
+            r.error === "email" ? "Please check your email address." :
+            r.error === "phone" ? "Please add the phone number we have on file for you." :
+            r.error === "name" ? "Please add your name." :
+            r.error === "busy" ? 'Too many tries just now. Please text <a href="sms:+18182539307">(818) 253-9307</a>.' : "That did not go through. " + FALLBACK;
+        })
+        .catch(function () { btn.disabled = false; msg.className = "gmsg err"; msg.innerHTML = "That did not go through. " + FALLBACK; });
+    });
+  }
+  initPackageBuy();
 
   function formsLine(r) {                                                // only the forms this patient still needs
     var skin = r.skin !== undefined ? r.skin : (r.intake && !!SKIN), links = [];

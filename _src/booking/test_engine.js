@@ -173,7 +173,8 @@ ok('an all-day event takes the day off the calendar entirely', () => {
       const t = this;
       return {
         getValues: () => t.rows.slice(r - 1, r - 1 + (nr || 1)).map(row => { const o = []; for (let k = 0; k < (nc || 1); k++) o.push(row[c - 1 + k] === undefined ? '' : row[c - 1 + k]); return o; }),
-        setValue: v => { while (t.rows.length < r) t.rows.push([]); t.rows[r - 1][c - 1] = v; }
+        setValue: v => { while (t.rows.length < r) t.rows.push([]); t.rows[r - 1][c - 1] = v; },
+        setFormula: v => { while (t.rows.length < r) t.rows.push([]); t.rows[r - 1][c - 1] = v; }
       };
     }
   }
@@ -188,17 +189,26 @@ ok('an all-day event takes the day off the calendar entirely', () => {
   const toRow = o => [o.id, o.pid, o.name, o.email, o.phone, o.service, o.total, o.used, '', o.date, 500, o.status, o.log, ''];
   const EHR = 'ehr-sheet-id';
   let book, appts, ehr, calendar, mails, stripeCalls;
-  const setup = (pkgs) => {
+  const PAT_HEAD = ['PatientID', 'Status', 'IsDemo', 'FirstName', 'LastName', 'PreferredName', 'DOB', 'Sex', 'Pronouns', 'Email', 'Phone'];
+  const patRow = (id, first, last, phone, over) => Object.assign({ id, first, last, pref: '', phone, demo: '' }, over || {});
+  const toPat = o => [o.id, 'active', o.demo, o.first, o.last, o.pref, '', '', '', '', o.phone];
+  let stripeParams, stripeState;
+  const setup = (pkgs, patients) => {
     appts = new FakeSheet('Appointments', []);
     ehr = new FakeBook([new FakeSheet('Packages', [PKG_HEAD].concat(pkgs.map(toRow))), new FakeSheet('AuditLog', [['Timestamp', 'User', 'Action', 'PatientID', 'RecordID', 'Model', 'InputTokens', 'OutputTokens', 'EstCostUSD', 'Detail']])]);
+    ehr.sheets.push(new FakeSheet('Patients', [PAT_HEAD].concat((patients || []).map(toPat))));
     book = new FakeBook([appts]);
-    calendar = []; mails = []; stripeCalls = 0;
+    calendar = []; mails = []; stripeCalls = 0; stripeParams = []; stripeState = {};
     ctx.SpreadsheetApp = { getActiveSpreadsheet: () => book, openById: id => { if (id === EHR) return ehr; throw new Error('no sheet ' + id); } };
     ctx.prop_ = (k, d) => k === 'PACKAGES_SHEET_ID' ? EHR : d;
     ctx.cfg_ = () => ({ match: 'tea sit', stripeKey: 'sk_test', calendarId: 'cal', site: 'https://site.test', address: '2116 N Glenoaks Blvd', phone: '(818) 253-9307', notify: 'info@test' });
     ctx.clean_ = (v, max) => String(v || '').trim().slice(0, max);
-    ctx.stripe_ = () => { stripeCalls++; return { id: 'cs_test_' + stripeCalls, url: 'https://stripe.test/pay' }; };
-    ctx.paidOk_ = () => true;
+    ctx.stripe_ = (method, path, params) => {
+      if (method === 'post' && path === '/v1/checkout/sessions') { stripeCalls++; stripeParams.push(params); return { id: 'cs_test_' + stripeCalls, url: 'https://stripe.test/pay' }; }
+      const id = path.split('/').pop();
+      return stripeState[id] || { payment_status: 'unpaid', status: 'open', amount_total: 0 };
+    };
+    ctx.paidOk_ = s => s.payment_status === 'paid' || (s.payment_status === 'no_payment_required' && s.status === 'complete');
     ctx.LockService = { getScriptLock: () => ({ waitLock() {}, tryLock: () => true, releaseLock() {} }) };
     ctx.CacheService = { getScriptCache: () => ({ get: () => null, put() {} }) };
     ctx.MailApp = { sendEmail: m => mails.push(m) };
@@ -214,7 +224,7 @@ ok('an all-day event takes the day off the calendar entirely', () => {
     ctx.Utilities.base64EncodeWebSafe = bytes => Buffer.from(bytes).toString('base64url') + '==';
     let u = 0; ctx.Utilities.getUuid = () => 'abcd' + String(++u).padStart(4, '0') + '-0000';
   };
-  vm.runInContext('this.__pkg={apptBook_,pkgFind_,apptRows_,pkgTag_,apptBookLink_};', ctx);
+  vm.runInContext('this.__pkg={apptBook_,pkgFind_,apptRows_,pkgTag_,apptBookLink_,apptPackageBuy_,apptPackageConfirm_,pkgReconcile_,pkgPatientFind_};', ctx);
   const P = ctx.__pkg;
   const realNow = Date.now();
   const firstSlot = (slug) => apptDays_([], APPT_SERVICES[slug].minutes, apptCfg_(), realNow).find(d => d.slots.length).slots[0].start;
@@ -317,6 +327,93 @@ ok('an all-day event takes the day off the calendar entirely', () => {
   ok('phone: a package holder booking a repeat visit with email only is matched by email', () => {
     setup([pkgRow('PKG-0001')]);
     const r = P.apptBook_(req({ phone: '' })); assert.strictEqual(r.package, true); assert.strictEqual(stripeCalls, 0);
+  });
+  // ---------------------------------------------------------------- buying a package online
+  const PATS = [patRow('P-1', 'José', 'Ñandú', '(818) 555-0101'), patRow('P-2', 'Anna', 'Lee Smith', '3105550102', { pref: 'Annie' }), patRow('P-3', 'Demo', 'Person', '3105550103', { demo: true })];
+  const buy = (over) => Object.assign({ action: 'appt_package', service: 'acupuncture-repeat-treatment', name: 'Jose Nandu', email: 'jose@example.com', phone: '818-555-0101' }, over || {});
+  const pkgs = () => ehr.getSheetByName('Packages').rows.slice(1);
+  const audit = () => ehr.getSheetByName('AuditLog').rows.slice(1);
+
+  ok('buy: name and phone on file start Stripe for $500; a Pending package row is written and is not usable yet', () => {
+    setup([], PATS);
+    const r = P.apptPackageBuy_(buy()); assert(r.ok && r.url && /^cs_test_/.test(r.session), JSON.stringify(r));
+    const f = stripeParams[0];
+    assert.strictEqual(f['line_items[0][price_data][unit_amount]'], '50000'); assert.strictEqual(f.mode, 'payment'); assert.strictEqual(f.customer_email, 'jose@example.com');
+    assert(f.success_url.indexOf('/book/acupuncture-repeat-treatment?pkgpaid={CHECKOUT_SESSION_ID}') > 0);
+    assert.strictEqual(pkgs().length, 1); const row = pkgs()[0];
+    assert.strictEqual(row[0], 'PKG-0001'); assert.strictEqual(row[1], 'P-1'); assert.strictEqual(row[5], 'Acupuncture'); assert.strictEqual(row[6], 5); assert.strictEqual(row[7], 0);
+    assert.strictEqual(row[10], 500); assert.strictEqual(row[11], 'Pending payment'); assert.strictEqual(row[13], 'Stripe ' + r.session); assert(/^=IF\(G2/.test(row[8]));
+    const b = P.apptBook_(req({ email: 'jose@example.com', phone: '' })); assert(b.url && !b.package, 'a Pending package must not pay for a visit');
+  });
+  ok('buy: wrong phone or wrong name is refused with the same answer, and nothing is created', () => {
+    setup([], PATS);
+    [buy({ phone: '818-555-9999' }), buy({ name: 'Jose Garcia' }), buy({ name: 'Nandu' }), buy({ name: 'Maria Nandu' })].forEach(b => {
+      const r = P.apptPackageBuy_(b); assert.deepStrictEqual(JSON.parse(JSON.stringify(r)), { error: 'not_found' }, JSON.stringify(b));
+    });
+    assert.strictEqual(stripeCalls, 0); assert.strictEqual(pkgs().length, 0);
+  });
+  ok('buy: name matching ignores case, accents and extra words; preferred name works; every word of a long last name is needed; demo patients never match', () => {
+    setup([], PATS);
+    assert(P.apptPackageBuy_(buy({ name: '  JOSÉ   ñandú ' })).ok);
+    assert(P.apptPackageBuy_(buy({ name: 'Jose Q. Nandu', phone: '+1 (818) 555-0101', email: 'b@example.com' })).ok);
+    assert(P.apptPackageBuy_(buy({ name: 'Annie Lee Smith', phone: '3105550102' })).ok, 'preferred name');
+    assert.strictEqual(P.apptPackageBuy_(buy({ name: 'Anna Smith', phone: '3105550102' })).error, 'not_found', 'missing a last-name word');
+    assert.strictEqual(P.apptPackageBuy_(buy({ name: 'Demo Person', phone: '3105550103' })).error, 'not_found');
+  });
+  ok('buy: someone who already has an active package with visits left is told so, and is not charged again', () => {
+    setup([pkgRow('PKG-0001', { email: 'jose@example.com', phone: '8185550101' })], PATS);
+    const r = P.apptPackageBuy_(buy()); assert.strictEqual(r.error, 'have_package'); assert.strictEqual(r.left, 4); assert.strictEqual(stripeCalls, 0);
+  });
+  ok('buy: bad input is refused (no phone, bad email, no name, honeypot, unknown service) with no Stripe call', () => {
+    setup([], PATS);
+    assert.strictEqual(P.apptPackageBuy_(buy({ phone: '' })).error, 'phone');
+    assert.strictEqual(P.apptPackageBuy_(buy({ email: 'nope' })).error, 'email');
+    assert.strictEqual(P.apptPackageBuy_(buy({ name: '' })).error, 'name');
+    assert.strictEqual(P.apptPackageBuy_(buy({ website: 'x' })).error, 'bad_request');
+    assert.strictEqual(P.apptPackageBuy_(buy({ service: 'facial-nano-needling' })).error, 'service');
+    assert.strictEqual(stripeCalls, 0);
+  });
+  ok('buy: a flood of guesses is slowed down (25 tries per 10 minutes)', () => {
+    setup([], PATS); let n = 0; ctx.CacheService = { getScriptCache: () => ({ get: () => String(n), put: (k, v) => { n = Number(v); } }) };
+    let last; for (let i = 0; i < 26; i++) last = P.apptPackageBuy_(buy({ phone: '818-555-9999' }));
+    assert.strictEqual(last.error, 'busy');
+  });
+  ok('confirm: once Stripe says paid the package turns Active with date and price, emails go out, an audit line is written, and the next visit is free', () => {
+    setup([], PATS); const r = P.apptPackageBuy_(buy());
+    stripeState[r.session] = { payment_status: 'paid', status: 'complete', amount_total: 50000 };
+    const c = P.apptPackageConfirm_(r.session); assert(c.ok && c.package && c.visits === 5, JSON.stringify(c));
+    assert.strictEqual(c.name, 'Jose Nandu'); assert.strictEqual(c.email, 'jose@example.com');
+    const row = pkgs()[0]; assert.strictEqual(row[11], 'Active'); assert.strictEqual(row[10], 500); assert(/^\d{4}-\d{2}-\d{2}$/.test(row[9]), row[9]);
+    assert.strictEqual(mails.length, 2); assert(mails[0].body.indexOf('Hi Jose!') === 0 && /It is active now/.test(mails[0].body) && /#me=/.test(mails[0].body), mails[0].body);
+    assert(/Package bought: Jose Nandu/.test(mails[1].subject)); assert(/PKG-0001/.test(mails[1].body));
+    assert.strictEqual(audit().length, 1); assert.strictEqual(audit()[0][2], 'package purchased'); assert.strictEqual(audit()[0][4], 'PKG-0001');
+    const stripeBefore = stripeCalls; const b = P.apptBook_(req({ email: 'jose@example.com', phone: '' }));
+    assert(b.ok && b.package && b.left === 4 && stripeCalls === stripeBefore, JSON.stringify(b));
+  });
+  ok('confirm: a second confirm changes nothing and sends nothing; unpaid stays Pending; unknown or malformed sessions are refused', () => {
+    setup([], PATS); const r = P.apptPackageBuy_(buy());
+    const early = P.apptPackageConfirm_(r.session); assert.strictEqual(early.ok, false); assert.strictEqual(pkgs()[0][11], 'Pending payment'); assert.strictEqual(mails.length, 0);
+    stripeState[r.session] = { payment_status: 'paid', status: 'complete', amount_total: 50000 };
+    P.apptPackageConfirm_(r.session); P.apptPackageConfirm_(r.session);
+    assert.strictEqual(mails.length, 2); assert.strictEqual(audit().length, 1); assert.strictEqual(pkgs().length, 1);
+    assert.strictEqual(P.apptPackageConfirm_('cs_nothing').error, 'not_found'); assert.strictEqual(P.apptPackageConfirm_('../x').error, 'bad_request');
+  });
+  ok('confirm: a 100% promo code (Stripe: no payment required) activates the package at $0, so it can be tested without a card', () => {
+    setup([], PATS); const r = P.apptPackageBuy_(buy());
+    stripeState[r.session] = { payment_status: 'no_payment_required', status: 'complete', amount_total: 0 };
+    assert(P.apptPackageConfirm_(r.session).ok); assert.strictEqual(pkgs()[0][11], 'Active'); assert.strictEqual(pkgs()[0][10], 0);
+  });
+  ok('reconcile: a paid-but-never-confirmed package turns Active, an expired checkout turns Cancelled, an open one is left alone', () => {
+    setup([], PATS);
+    const a = P.apptPackageBuy_(buy({ email: 'a@example.com' })), b = P.apptPackageBuy_(buy({ email: 'b@example.com' })), c = P.apptPackageBuy_(buy({ email: 'c@example.com' }));
+    stripeState[a.session] = { payment_status: 'paid', status: 'complete', amount_total: 50000 };
+    stripeState[b.session] = { payment_status: 'unpaid', status: 'expired', amount_total: 0 };
+    P.pkgReconcile_();
+    assert.deepStrictEqual(pkgs().map(x => x[11]), ['Active', 'Cancelled', 'Pending payment']);
+  });
+  ok('a booking checkout session can never activate a package', () => {
+    setup([], PATS); stripeState['cs_booking_1'] = { payment_status: 'paid', status: 'complete', amount_total: 12000 };
+    assert.strictEqual(P.apptPackageConfirm_('cs_booking_1').error, 'not_found');
   });
   ok('package: pkgTag_ reads package bookings and ignores Stripe sessions', () => {
     assert.deepStrictEqual(JSON.parse(JSON.stringify(P.pkgTag_('pkg|PKG-0007|2|5|abcd1234'))), { id: 'PKG-0007', left: 2, total: 5 });
