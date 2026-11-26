@@ -10,6 +10,8 @@ If you have never had acupuncture, the first visit can feel like a leap. Here is
 
 Book a time online, then fill out the [new patient intake form](/new-patients). Roozbeh reviews it before you come in, so your visit can begin with what matters most to you. Please keep health details off text and email. The intake form is the place for them.
 
+If you hope to use PPO insurance, including Aetna PPO, read [how insurance and reimbursement work](/insurance) before you book. You pay out of pocket at the time of service, and you are reimbursed up to the amount of the treatment once insurance pays. Eligibility is not a guarantee of payment.
+
 ## The consultation
 
 Your first session starts with a conversation about your health history, your lifestyle, and what you hope to change. From that, a treatment plan is mapped out for you. An initial acupuncture treatment is 60 minutes.
