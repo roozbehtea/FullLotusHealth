@@ -1317,6 +1317,9 @@ def confirm_pages():
         pk = PACKAGES.get(s["slug"])
         mins = f'{s["minutes"]} minutes' if s["minutes"] else ""
         where = "Online, by video" if "Online" in s["name"] else ADDR_LINE
+        pay = "taken when you book your time. Nothing is booked until payment goes through."
+        if s["slug"] == "acupuncture-repeat-treatment":                      # package patients are booked without paying (see _src/booking/Booking.gs)
+            pay = "taken when you book your time. If you have a prepaid package, it covers this visit and nothing is charged. Otherwise nothing is booked until payment goes through."
         new = ('<p class="cf-new">First visit? <a href="' + e(INTAKE_HREF) + '" rel="noopener">Fill in the new patient form</a> before you come. It takes a few minutes.</p>') if "initial" in s["slug"] else ""
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
@@ -1338,7 +1341,7 @@ def confirm_pages():
   <div class="sch-details"></div>
   <noscript><p class="notice">To book, text <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a> or email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p></noscript>
 </div>
-<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time. Nothing is booked until payment goes through.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
+<ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> {pay}</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
 {new}
 <p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section><script src="/assets/booking.js" defer></script>'''
