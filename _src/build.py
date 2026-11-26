@@ -31,6 +31,10 @@ HOURS = "By appointment. Open times show in the booking calendar."
 LATE_FEE = 95
 NOTICE_HOURS = 24
 GOOGLE_REVIEWS = "https://www.google.com/maps/place/?q=place_id:" + PLACE_ID   # the clinic's Google listing
+YELP = "https://www.yelp.com/biz/full-lotus-health-burbank-2"   # the clinic's Yelp listing
+# Nearby areas, kept the same on every page and on the Google Business Profile.
+NEARBY = ("Glendale", "Montrose", "Toluca Lake", "North Hollywood", "Studio City")
+NEARBY_TEXT = ", ".join(NEARBY[:-1]) + ", and " + NEARBY[-1]
 MAPS = "https://www.google.com/maps/search/?api=1&query=" + "2116+N+Glenoaks+Blvd+Ste+3+Burbank+CA+91504" + "&query_place_id=" + PLACE_ID
 # A place_id-only embed URL draws a world map unless you send a Maps API key.
 # The street address geocodes in the keyless embed. The place_id stays on the Google Maps link.
@@ -357,7 +361,7 @@ def business_ld():
         "slogan": "The calmest hour of your week.",
         "foundingDate": "2016-10",
         "description": "Acupuncture and Chinese herbal medicine clinic in Burbank, CA, run by one licensed acupuncturist and focused on skin: microneedling, nanoneedling, and cosmetic acupuncture. Also offers acupuncture, herbal medicine, cupping, moxibustion, and tea ceremony.",
-        "sameAs": [GOOGLE_REVIEWS],
+        "sameAs": [GOOGLE_REVIEWS, YELP],
         "telephone": PHONE_TEL,
         "email": EMAIL,
         "image": f"{SITE}/assets/logo-seal.png",
@@ -367,7 +371,7 @@ def business_ld():
                     "addressRegion": ADDR["region"], "postalCode": ADDR["zip"], "addressCountry": "US"},
         "geo": {"@type": "GeoCoordinates", "latitude": 34.1929, "longitude": -118.3247},
         "hasMap": MAPS,
-        "areaServed": [{"@type": "City", "name": c} for c in ("Burbank", "Glendale", "Toluca Lake", "North Hollywood", "Studio City")],
+        "areaServed": [{"@type": "City", "name": "Burbank"}, {"@type": "City", "name": "Glendale"}] + [{"@type": "Place", "name": c} for c in NEARBY[1:]],
         "founder": person_ld(),
         "employee": {"@id": f"{SITE}/#roozbeh"},
         "knowsAbout": ["Cosmetic acupuncture", "Microneedling", "Nanoneedling", "Acupuncture", "Chinese herbal medicine", "Chinese medicine for skin conditions", "Cupping", "Moxibustion", "Chinese tea ceremony"],
@@ -1070,7 +1074,7 @@ def treatments():
   <div>
     <p>Full Lotus Health treats skin as the visible end of your whole health. Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist, chooses the herbal serums, the points, and the pace of your series from a Chinese medicine assessment, not from a fixed protocol.</p>
     <p>Not sure which treatment fits? Book a session and we'll decide together, or text a question to <a href="sms:{PHONE_TEL}">{PHONE_DISPLAY}</a>.</p>
-    <p>Our clinic is at {ADDR_LINE}, convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
+    <p>Our clinic is at {ADDR_LINE}, convenient to {NEARBY_TEXT}.</p>
   </div>
 </div></section>
 
@@ -1625,7 +1629,7 @@ def service_faq(s):
     loc = ("This visit is online, by video. " if online else f"Full Lotus Health is at {ADDR_LINE}. ")
     items = []
     if not online:
-        items.append(("Where do I go?", f"{e(loc)}{e(PARKING)} {e(HOURS)} Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City. <a href=\"{MAPS}\" rel=\"noopener\">Open in Google Maps</a> or <a href=\"{MAPS_APPLE}\" rel=\"noopener\">Apple Maps</a>."))
+        items.append(("Where do I go?", f"{e(loc)}{e(PARKING)} {e(HOURS)} Convenient to {NEARBY_TEXT}. <a href=\"{MAPS}\" rel=\"noopener\">Open in Google Maps</a> or <a href=\"{MAPS_APPLE}\" rel=\"noopener\">Apple Maps</a>."))
     else:
         items.append(("Where does this visit happen?", "Online, by video. You only need a private spot and a device with a camera."))
     if s["minutes"]:
@@ -1687,7 +1691,7 @@ def beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide):
 <section><div class="wrap split">
   <div><h2 class="h3">Also see</h2><ul class="checks">{rel}{guide}<li><a href="/treatments">All natural beauty treatments</a></li></ul></div>
   <div>{service_faq(s)}
-    <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
+    <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to {NEARBY_TEXT}.</p>
   </div>
 </div></section>"""
 
@@ -1743,7 +1747,7 @@ def service_pages():
   </div>
   <div>{fig}{''.join(parts)}{series_block}
     {service_faq(s)}
-    <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to Glendale, Toluca Lake, North Hollywood, and Studio City.</p>
+    <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to {NEARBY_TEXT}.</p>
   </div>
 </div></section>"""
         canon_to = CANON_PAGE.get(s["slug"]) or SEARCH_CANON.get(s["slug"])
@@ -2164,7 +2168,7 @@ def offer_landing():
 def nano_page(where):
     na = BY_SLUG["facial-nano-needling"]
     hero_html = g_hero("l", "Nanoneedling · Burbank", "Nanoneedling in Burbank, CA",
-        "A gentle facial with custom serums and red light therapy. No downtime.",
+        "A gentle skin renewal session with custom serums and red light therapy. No downtime.",
         ["60-minute sessions", "No downtime", "Custom serums", "Red light therapy included"], art.nano_layers())
     how = f"""<section><div class="wrap">
 {g_head("How it works", "Gentle at the surface, absorbed where you need it")}
@@ -2191,17 +2195,19 @@ def nano_page(where):
         "<h3>It works on its own or as a series</h3><p>Nanoneedling suits a one-off glow and also works as a regular series. Your first visit starts the conversation about what fits your skin.</p>",
         "treatment-nanoneedling", "Nanoneedling treatment at Full Lotus Health in Burbank")
     say = f'<section><div class="wrap">{g_head("Patients", "What patients say")}{g_quotes("facial-nano-needling")}</div></section>'
-    faq = f"""<section class="wash-l"><div class="wrap g-faq">{faq_block([
+    faqs = [
   ("Is there downtime after nanoneedling?", "No. You can go straight back to your day."),
   ("How long is a session?", "Sixty minutes."),
   ("Who does the treatment?", "Roozbeh Ghobadpour, L.Ac., a licensed acupuncturist with over 10 years of clinical experience."),
   ("Nanoneedling or microneedling?", "Nanoneedling is a surface-level treatment for glow and hydration. <a href=\"/microneedling-burbank\">Microneedling</a> works deeper, for scarring, lines, and thinning hair. If you're not sure which fits, book a session and we'll decide together, or text a question."),
   ("Can I do nanoneedling as a series?", "Yes. It works well on its own or as a regular series."),
-  ("Where is the clinic?", where),
-])}</div></section>"""
-    offer = g_offer("nanoneedling facial", "Nourishing serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
+  ("Where is the clinic?", where + " " + PARKING),
+]
+    faq = f'<section class="wash-l"><div class="wrap g-faq">{faq_block(faqs)}</div></section>'
+    offer = g_offer("nanoneedling session", "Nourishing serums, a natural glow and red light therapy, with no downtime, at a welcome price for your first visit.")
     return (hero_html + how + help_ + g_series_promo("wash-l", "facial-nano-needling") + why + table + compare + session + say + faq + offer,
-            g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]))
+            g_related(na, [("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
+            [faq_ld(faqs)])
 
 
 
@@ -2211,7 +2217,13 @@ def landing_pages():
     mi, na, li = BY_SLUG["medical-microneedling-session"], BY_SLUG["facial-nano-needling"], BY_SLUG["full-lotus-lift"]
     def link(slug, label=None):
         return f'<a href="/service-page/{slug}">{e(label or BY_SLUG[slug]["name"])}</a>'
-    where = f"Full Lotus Health is at {ADDR_LINE}, convenient to Glendale, Toluca Lake, North Hollywood, and Studio City."
+    where = f"Full Lotus Health is at {ADDR_LINE}, convenient to {NEARBY_TEXT}."
+    LIFT_FAQS = [
+  ("What is cosmetic acupuncture?", "Facial acupuncture at tension-releasing and lifting points, combined with constitutional body points and red light therapy."),
+  ("Should I book one session or a series?", "Cosmetic acupuncture is best done as a series. Your first session includes a detailed intake and treatment plan."),
+  ("How is it different from microneedling?", f"Cosmetic acupuncture works with acupuncture points and the mind-body connection. <a href=\"/microneedling-burbank\">Microneedling</a> and <a href=\"/nanoneedling-burbank\">nanoneedling</a> work on the skin's surface and layers with herbal serums."),
+  ("Where is the clinic?", where + " " + PARKING),
+    ]
     pages = [
       dict(path="/microneedling-burbank", file="microneedling-burbank.html", svc=mi, tone="c",
            title="Microneedling in Burbank, CA from $500 | Full Lotus Health",
@@ -2219,8 +2231,8 @@ def landing_pages():
            h1="Microneedling in Burbank, CA", rich=lambda: micro_page(where), book="medical-microneedling-session", priced=True,
            more=[("/nanoneedling-burbank", "Nanoneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/nanoneedling-burbank", file="nanoneedling-burbank.html", svc=na, tone="l",
-           title="Nanoneedling Burbank: Gentle Glow Facial | Full Lotus Health",
-           meta="Nanoneedling facial in Burbank: a gentle, no-downtime surface treatment with herbal serums and red light therapy for glowing, hydrated skin.",
+           title="Nanoneedling in Burbank, CA from $350 | Full Lotus Health",
+           meta="Nanoneedling in Burbank from a licensed acupuncturist: a gentle, no-downtime skin renewal session with herbal serums and red light therapy. 60 minutes, $350.",
            h1="Nanoneedling in Burbank, CA", rich=lambda: nano_page(where),
            more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/cosmetic-acupuncture-burbank", "Cosmetic acupuncture in Burbank")]),
       dict(path="/cosmetic-acupuncture-burbank", file="cosmetic-acupuncture-burbank.html", svc=li, tone="n",
@@ -2235,13 +2247,8 @@ def landing_pages():
 <p>The Full Lotus Lift is a holistic, personalized beauty treatment designed to bring out your natural, radiant glow. It uses premium organic products and gentle techniques to nourish the skin while promoting a profound sense of inner calm.</p>
 <h2>Who gives it</h2>
 <p>Roozbeh Ghobadpour, L.Ac., is a licensed acupuncturist with over 10 years of clinical experience. Your first session includes a detailed intake and treatment plan. Then you relax and enjoy. It is best done as a series.</p>
-{faq_block([
-  ("What is cosmetic acupuncture?", "Facial acupuncture at tension-releasing and lifting points, combined with constitutional body points and red light therapy."),
-  ("Should I book one session or a series?", "Cosmetic acupuncture is best done as a series. Your first session includes a detailed intake and treatment plan."),
-  ("How is it different from microneedling?", f"Cosmetic acupuncture works with acupuncture points and the mind-body connection. <a href=\"/microneedling-burbank\">Microneedling</a> and <a href=\"/nanoneedling-burbank\">nanoneedling</a> work on the skin's surface and layers with herbal serums."),
-  ("Where is the clinic?", where),
-])}
-""", more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/nanoneedling-burbank", "Nanoneedling in Burbank")]),
+{faq_block(LIFT_FAQS)}
+""", faqs=LIFT_FAQS, more=[("/microneedling-burbank", "Microneedling in Burbank"), ("/nanoneedling-burbank", "Nanoneedling in Burbank")]),
     ]
     global BOOK_HERE
     for pg in pages:
@@ -2271,13 +2278,14 @@ def landing_pages():
 </div></section>""" + cta("Ready to book?", "Choose a time that works for you.", "Book a treatment")
         OUT[pg["file"]] = page(pg["path"], pg["title"], pg["meta"], main,
             ld=[business_ld(), service_ld(svc, url=SITE + pg["path"], desc=pg["meta"], priced=False),
-                breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])])
+                breadcrumb_ld([("Home", "/"), ("Natural beauty", "/treatments"), (pg["h1"], pg["path"])])]
+               + ([faq_ld(pg["faqs"])] if pg.get("faqs") else []))
     BOOK_HERE = None
 
 
 def condition_pages():
     """Skin conditions. No prices (fees stay on the service pages); visits book as acupuncture or an online consultation."""
-    where = f"Full Lotus Health is at {ADDR_LINE}, convenient to Glendale, Toluca Lake, North Hollywood, and Studio City."
+    where = f"Full Lotus Health is at {ADDR_LINE}, convenient to {NEARBY_TEXT}."
     acu, onl = "acupuncture-initial-treatment", "initial-consultation-online"
     pages = [
       dict(path="/skin-conditions-burbank", file="skin-conditions-burbank.html", tone="c",
@@ -2358,7 +2366,7 @@ def llms_txt():
 - Parking: {PARKING} (N Glenoaks Blvd.)
 - Hours: {HOURS}
 - Phone or text: {PHONE_DISPLAY} · Email: {EMAIL}
-- Serves Burbank, Glendale, Toluca Lake, North Hollywood, and Studio City
+- Serves Burbank, {NEARBY_TEXT}
 - Self-pay clinic. Payment is taken when you book. Nothing is booked until payment goes through. Book online: {SITE}/book-online
 - Cancellation: free up to {NOTICE_HOURS} hours ahead. Less than {NOTICE_HOURS} hours' notice, or a no-show, is charged ${LATE_FEE}. Call or text to cancel.
 - New patients complete the intake form before the first visit: {intake_link}
