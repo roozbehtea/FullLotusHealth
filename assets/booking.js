@@ -22,6 +22,11 @@
   function money(n) { return "$" + (n % 1 ? n.toFixed(2) : n); }
   function store(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} }
   function stored(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  // A returning patient should not retype their details: name, email and phone are kept on this device only (never sent anywhere until they book).
+  var ME = "fl-me";
+  function me() { try { var v = JSON.parse(localStorage.getItem(ME) || "null"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } }
+  function remember(v) { try { localStorage.setItem(ME, JSON.stringify({ name: v.name, email: v.email, phone: v.phone })); } catch (e) {} }
+  function forget() { try { localStorage.removeItem(ME); } catch (e) {} }
   var FALLBACK = 'Please text <a href="sms:+18182539307">(818) 253-9307</a> or email <a href="mailto:info@fulllotushealth.com">info@fulllotushealth.com</a> and we will find you a time.' +
     (GOOGLE ? ' You can also <a href="' + esc(GOOGLE) + '" rel="noopener">book on our Google calendar page</a>.' : "");
 
@@ -240,16 +245,17 @@
   }
 
   // ---- details and payment
-  function field(name, label, attrs) { return '<label>' + label + '<input name="' + name + '" ' + attrs + "></label>"; }
+  function field(name, label, attrs, val) { return '<label>' + label + '<input name="' + name + '" ' + attrs + (val ? ' value="' + esc(val) + '"' : "") + "></label>"; }
   function renderDetails() {
-    var sv = data.service, s = pickedSlot;
+    var sv = data.service, s = pickedSlot, saved = me(), hasSaved = !!(saved.name && saved.email);
     details.innerHTML =
       '<form novalidate class="sch-form"><h2 class="h3">Your details</h2>' +
       '<p class="sch-sum"><strong>' + esc(sv.name) + "</strong><br>" + esc(s.day.label) + " at " + esc(s.label) + " &middot; " + sv.minutes + " min &middot; " + money(sv.price) + "</p>" +
+      (hasSaved ? '<p class="fine">Welcome back. We filled in your details. <button type="button" class="linkish" data-forget>Not you?</button></p>' : "") +
       '<div class="sch-fields">' +
-      field("name", "Name", 'autocomplete="name" required maxlength="80"') +
-      field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"') +
-      field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"') +
+      field("name", "Name", 'autocomplete="name" required maxlength="80"', saved.name) +
+      field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"', saved.email) +
+      field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"', saved.phone) +
       (sv.intake ? '<label class="sch-wide sch-check"><input type="checkbox" name="returning" value="yes"> I\'ve already completed the forms</label>' : "") + "</div>" +
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">Continue to payment, ' + money(sv.price) + "</button></p>" +
@@ -257,12 +263,15 @@
       (SLUG === "acupuncture-repeat-treatment" ? '<p class="fine">Have a package? Use the same email or phone you bought it with and you will not be charged. If you are sent to pay, text <a href="sms:+18182539307">(818) 253-9307</a>.</p>' : "") +
       '<p class="gmsg" role="status" aria-live="polite"></p></form>';
     var form = details.querySelector("form"), msg = form.querySelector(".gmsg"), btn = form.querySelector("button[type=submit]");
-    form.elements.name.focus({ preventScroll: true });
+    var fg = form.querySelector("[data-forget]");
+    if (fg) fg.addEventListener("click", function () { forget(); ["name", "email", "phone"].forEach(function (k) { form.elements[k].value = ""; }); fg.parentNode.hidden = true; form.elements.name.focus(); });
+    (hasSaved ? form.elements.email : form.elements.name).focus({ preventScroll: true });
     details.scrollIntoView({ behavior: "smooth", block: "nearest" });
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
       btn.disabled = true; msg.className = "gmsg"; msg.textContent = "Checking that time is still open…";
+      remember({ name: form.elements.name.value.trim(), email: form.elements.email.value.trim(), phone: form.elements.phone.value.trim() });
       post({ action: "appt_book", service: SLUG, start: s.start, name: form.elements.name.value, email: form.elements.email.value,
         phone: form.elements.phone.value, returning: !!(form.elements.returning && form.elements.returning.checked), website: form.elements.website.value })
         .then(function (r) {
