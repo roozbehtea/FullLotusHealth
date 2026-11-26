@@ -1,12 +1,11 @@
 /* Benefits check on /insurance.
 
    APPS_SCRIPT_URL
-   Paste the deployed Apps Script web app URL here (it ends in /exec).
-   Leave the quotes empty until apps-script/insurance-check.gs is deployed.
-   This is the only place that URL belongs. Do not put a Stedi key in this file
-   or anywhere else on the website. The key stays in Apps Script Script Properties.
+   The "Website insurance check" web app on the Full Lotus Clinic Apps Script
+   project. This is the only place that URL belongs. Do not put a Stedi key
+   in this file or anywhere else on the website. The key stays in Script Properties.
 */
-var APPS_SCRIPT_URL = "";
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCx302RNfDjs3vSfebNTw8w90MyFkoxuHFkWXNc9fBAgFDpyCs0B6A8c6mgzhIWjrI/exec";
 
 (function () {
   var form = document.getElementById("ins-check");

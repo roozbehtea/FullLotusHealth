@@ -212,13 +212,16 @@ assert(insPage.indexOf('for="ins-first"') >= 0 && insPage.indexOf('for="ins-cons
 assert(insPage.indexOf("/assets/insurance-check.js") >= 0, "benefits script");
 assert(!/healthcare\.us\.stedi|STEDI_API_KEY/.test(insPage), "insurance page has no Stedi secret");
 var insJs = fs.readFileSync(path.join(root, "assets/insurance-check.js"), "utf8");
-assert(/var APPS_SCRIPT_URL = "";/.test(insJs), "APPS_SCRIPT_URL is the empty placeholder");
-assert(!/healthcare\.us\.stedi|STEDI_API_KEY/.test(insJs), "form script has no Stedi secret");
-var insGs = fs.readFileSync(path.join(root, "apps-script/insurance-check.gs"), "utf8");
-assert(insGs.indexOf("https://healthcare.us.stedi.com/2024-04-01/change/medicalnetwork/eligibility/v3") >= 0, "stedi legacy url");
+assert(insJs.indexOf('var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCx302RNfDjs3vSfebNTw8w90MyFkoxuHFkWXNc9fBAgFDpyCs0B6A8c6mgzhIWjrI/exec";') >= 0, "APPS_SCRIPT_URL is the deployed web app");
+assert(!/STEDI_API_KEY|healthcare\.us\.stedi/.test(insJs), "form script has no Stedi secret");
+var insGs = fs.readFileSync(path.join(root, "apps-script/WebInsurance.gs"), "utf8");
+assert(insGs.indexOf("UrlFetchApp.fetch(STEDI_ELIGIBILITY_URL") >= 0, "uses the project eligibility url");
+assert(insGs.indexOf("payerId: payerId") >= 0, "2026 payer field");
 assert(insGs.indexOf("'Aetna PPO': '60054'") >= 0, "aetna payer id");
 assert(insGs.indexOf("INS_SERVICE_TYPE = '30'") >= 0, "service type 30");
+assert(insGs.indexOf("SPREADSHEET_ID") >= 0, "clinic spreadsheet fallback");
 assert(insGs.indexOf("status: checked.status") >= 0, "returns a status only");
+assert(!fs.existsSync(path.join(root, "apps-script/insurance-check.gs")), "old script file is gone");
 assert((insPage.match(/<iframe/g) || []).length === 1, "insurance page has one map");
 
 var bookPage = html("book-online.html");

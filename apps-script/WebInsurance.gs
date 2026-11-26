@@ -1,43 +1,10 @@
 /**
- * Benefits check for the Full Lotus Health /insurance form.
- *
- * Paste this into the Apps Script project that already runs the scheduler
- * (tea sits and booking), because that project holds the Stedi key.
- * Setup is in apps-script/README.md next to this file.
- *
- * The website never sees the Stedi key. It posts JSON here and receives
- * only {status: "active"|"inactive"|"unknown"}.
- *
- * If this project already has a Stedi eligibility function, call that from
- * insStedi_() instead of the request written below, and map its result to
- * active, inactive, or unknown. Do not return the raw Stedi body.
- *
- * Endpoint checked against Stedi's public docs (legacy JSON still published):
- *   POST https://healthcare.us.stedi.com/2024-04-01/change/medicalnetwork/eligibility/v3
- *   Authorization: <api-key>     (no "Key " prefix on this healthcare endpoint)
- *   https://www.stedi.com/docs/healthcare/api-reference/post-healthcare-eligibility-legacy
- *   https://www.stedi.com/docs/healthcare/send-eligibility-checks
- * Request fields: tradingPartnerServiceId, provider.organizationName,
- * provider.npi, subscriber.firstName, subscriber.lastName,
- * subscriber.dateOfBirth (YYYYMMDD), subscriber.memberId,
- * encounter.serviceTypeCodes.
- * Aetna's primary payer ID on Stedi's payer page is 60054
- * (https://www.stedi.com/healthcare/network/aetna). Stedi payer ID HPQRS
- * is an alias. Keep the id a string.
- *
- * Service type: Stedi maps acupuncture procedure codes 97810–97814 to STC 64,
- * then 1 (Medical Care). STC AL is Vision, so this file does not send AL.
- * Aetna's published supported-STC list includes 30 and 1, and does not list 64.
- * This check sends 30 (Health Benefit Plan Coverage), which is also Stedi's
- * default, so the result is whether the plan is active. It does not quote
- * acupuncture benefits, copays, or deductibles.
- *
- * Stedi also publishes a newer endpoint, POST
- * https://healthcare.us.stedi.com/2026-06-01/eligibility-check, with payerId
- * and a YYYY-MM-DD date of birth. Use the call this project already has
- * if it points there.
+ * WebInsurance.gs - website benefits-check + email capture for fulllotushealth.com/insurance.
+ * Added to the "Full Lotus Clinic" project. Reuses STEDI_API_KEY, STEDI_ELIGIBILITY_URL,
+ * stediList_, stediSummary_ and settingStr_ from Code.gs. Leads go to the "Insurance Leads"
+ * tab of the clinic spreadsheet (SPREADSHEET_ID) unless LEADS_SHEET_ID is set.
+ * The website only ever receives {status: "active"|"inactive"|"unknown"}.
  */
-
 var INS_STEDI_URL = 'https://healthcare.us.stedi.com/2024-04-01/change/medicalnetwork/eligibility/v3';
 var INS_PAYERS = { 'Aetna PPO': '60054' };
 var INS_SERVICE_TYPE = '30';
@@ -51,10 +18,6 @@ function insProp_(key) {
 
 function insJson_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doGet() {
-  return insJson_({ ok: true });
 }
 
 function doPost(e) {
@@ -115,30 +78,34 @@ function insDecide_(lead) {
   var payerId = INS_PAYERS[lead.carrier];
   if (!payerId) return { status: 'unknown', summary: 'not checked (other PPO)' };
   var key = insProp_('STEDI_API_KEY');
-  var npi = insProp_('PROVIDER_NPI').replace(/\D/g, '');
-  if (!key || npi.length !== 10) return { status: 'unknown', summary: 'not checked (missing script property)' };
+  if (!key) return { status: 'unknown', summary: 'not checked (missing STEDI_API_KEY)' };
+  var npi = '';
+  try { npi = settingStr_('PROVIDER_NPI'); } catch (err) { npi = ''; }
+  npi = String(npi || insProp_('PROVIDER_NPI') || '1205389913').replace(/\D/g, '');
   try {
     var data = insStedi_(key, npi, payerId, lead);
     var status = insStatus_(data);
-    return { status: status, summary: status };
+    var summary = status;
+    try { summary = status + ' | ' + stediSummary_(data).slice(0, 1500); } catch (e2) {}
+    return { status: status, summary: summary };
   } catch (err) {
-    return { status: 'unknown', summary: 'not checked (request failed)' };
+    return { status: 'unknown', summary: 'not checked (' + String(err && err.message || err).slice(0, 200) + ')' };
   }
 }
 
+// Uses the same Stedi endpoint and request shape as actionVerifyInsurance_ in Code.gs.
 function insStedi_(key, npi, payerId, lead) {
   var payload = {
-    tradingPartnerServiceId: payerId,
-    provider: { organizationName: INS_ORG, npi: npi },
+    payerId: payerId,
+    provider: { npi: npi },
     subscriber: {
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      dateOfBirth: lead.dob.replace(/-/g, ''),
-      memberId: lead.memberId
+      memberId: lead.memberId,
+      dateOfBirth: lead.dob,
+      name: { person: { firstName: lead.firstName, lastName: lead.lastName } }
     },
-    encounter: { serviceTypeCodes: [INS_SERVICE_TYPE] }
+    encounter: { services: [{ system: 'STC', value: INS_SERVICE_TYPE }] }
   };
-  var res = UrlFetchApp.fetch(INS_STEDI_URL, {
+  var res = UrlFetchApp.fetch(STEDI_ELIGIBILITY_URL, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: key },
@@ -147,28 +114,26 @@ function insStedi_(key, npi, payerId, lead) {
   });
   var code = res.getResponseCode();
   var text = res.getContentText() || '';
-  if (code < 200 || code >= 300) throw new Error('stedi http ' + code);
+  if (code < 200 || code >= 300) throw new Error('stedi http ' + code + ': ' + text.slice(0, 150));
   return JSON.parse(text);
 }
 
 function insStatus_(data) {
   if (!data || typeof data !== 'object') return 'unknown';
-  if (data.errors && data.errors.length) return 'unknown';
-  var active = false;
-  var inactive = false;
-  var plans = data.planStatus || [];
-  var i;
-  for (i = 0; i < plans.length; i++) {
-    insMark_(plans[i].statusCode, plans[i].status, function (kind) {
-      if (kind === 'active') active = true;
-      if (kind === 'inactive') inactive = true;
+  var active = false, inactive = false;
+  var plans = stediList_(data.plans);
+  plans.forEach(function (pl) {
+    var b = pl.benefits || {};
+    stediList_(b.statuses).forEach(function (s) {
+      var st = String(s.status || '').toUpperCase();
+      if (st.indexOf('INACTIVE') >= 0) inactive = true;
+      else if (st.indexOf('ACTIVE') >= 0) active = true;
     });
-  }
-  var benefits = data.benefitsInformation || [];
-  for (i = 0; i < benefits.length; i++) {
-    if (String(benefits[i].code || '') === '1') active = true;
-    if (String(benefits[i].code || '') === '6') inactive = true;
-  }
+  });
+  // Legacy-shaped responses, just in case.
+  stediList_(data.planStatus).forEach(function (p) {
+    insMark_(p.statusCode, p.status, function (k) { if (k === 'active') active = true; if (k === 'inactive') inactive = true; });
+  });
   if (active) return 'active';
   if (inactive) return 'inactive';
   return 'unknown';
@@ -182,7 +147,7 @@ function insMark_(code, name, set) {
 }
 
 function insSave_(lead, summary) {
-  var id = insProp_('LEADS_SHEET_ID');
+  var id = insProp_('LEADS_SHEET_ID') || insProp_('SPREADSHEET_ID');
   if (!id) return;
   var lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -210,7 +175,7 @@ function insSave_(lead, summary) {
 }
 
 function insNotify_(lead, summary) {
-  var to = insProp_('NOTIFY_EMAIL');
+  var to = insProp_('NOTIFY_EMAIL') || Session.getEffectiveUser().getEmail();
   if (!to) return;
   try {
     MailApp.sendEmail({
