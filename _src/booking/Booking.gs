@@ -146,6 +146,80 @@ function apptFormsNote_(slug, svc, email, phone, ticked) {
   return found.length ? APPT_ON_FILE + found.join(', ') : '';
 }
 
+// ------------------------------------------------------------------ prepaid packages
+// Packages live in the "Packages" tab of the clinic EHR spreadsheet (a different file from the one this script is attached to).
+// A patient whose email or phone matches an Active package that covers the booked service is booked WITHOUT Stripe, and one
+// visit is counted off. Anything that goes wrong looking a package up falls back to the normal paid flow.
+//   PACKAGES_SHEET_ID   script property; defaults to the Full Lotus Clinic spreadsheet
+var PKG_SHEET = 'Packages', PKG_COLS = 14;
+var PC = { id: 1, patientId: 2, name: 3, email: 4, phone: 5, service: 6, total: 7, used: 8, left: 9, purchased: 10, price: 11, status: 12, log: 13, notes: 14 };
+// Package "Service" label (lower case) -> booking services it pays for. The 5-visit acupuncture package covers follow-up visits only.
+var PKG_COVERS = { 'acupuncture': ['acupuncture-repeat-treatment'] };
+
+function pkgSheetId_() { return prop_('PACKAGES_SHEET_ID', '1aHCaewhMlLVv6rGyEg-nq4QK6ndlr8Iw8g0NyVeH8L4'); }
+function pkgSheet_() { return SpreadsheetApp.openById(pkgSheetId_()).getSheetByName(PKG_SHEET); }
+function pkgCovers_(label, slug) {
+  var l = String(label || '').trim().toLowerCase();
+  return l === slug || (PKG_COVERS[l] || []).indexOf(slug) !== -1;
+}
+function pkgTime_(v) {
+  var t = v instanceof Date ? v.getTime() : Date.parse(String(v || ''));
+  return isNaN(t) ? Infinity : t;
+}
+/**
+ * The package that pays for this booking, or null. Active, visits left (total minus used, worked out here, never read from the
+ * formula column), covers the service, and the email (any case) or the last 10 digits of the phone match. Oldest purchase first.
+ */
+function pkgFind_(email, phone, slug) {
+  var sh = pkgSheet_();
+  if (!sh) return null;
+  var n = sh.getLastRow() - 1;
+  if (n < 1) return null;
+  var rows = sh.getRange(2, 1, n, PKG_COLS).getValues();
+  var em = String(email || '').trim().toLowerCase(), key = apptPhoneKey_(phone), best = null, bestAt = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (String(r[PC.status - 1]).trim().toLowerCase() !== 'active') continue;
+    var total = Number(r[PC.total - 1]), used = Number(r[PC.used - 1] || 0);
+    if (!(total > 0) || isNaN(used) || total - used < 1) continue;
+    if (!pkgCovers_(r[PC.service - 1], slug)) continue;
+    var byEmail = !!em && String(r[PC.email - 1]).trim().toLowerCase() === em;
+    var byPhone = !!key && apptPhoneKey_(r[PC.phone - 1]) === key;
+    if (!byEmail && !byPhone) continue;
+    var at = pkgTime_(r[PC.purchased - 1]);
+    if (!best || at < bestAt) {
+      best = { row: i + 2, id: String(r[PC.id - 1]), patientId: String(r[PC.patientId - 1] || ''), total: total, used: used, left: total - used };
+      bestAt = at;
+    }
+  }
+  return best;
+}
+/** Counts one visit off. Call inside the script lock. Re-reads the row so it never trusts an earlier read. Returns {used, total, left}. */
+function pkgUse_(pkg, visitDay) {
+  var sh = pkgSheet_();
+  var row = sh.getRange(pkg.row, 1, 1, PKG_COLS).getValues()[0];
+  if (String(row[PC.id - 1]) !== pkg.id) throw new Error('package row moved');
+  var total = Number(row[PC.total - 1]), used = Number(row[PC.used - 1] || 0) + 1;
+  if (!(used <= total)) throw new Error('package has no visits left');
+  sh.getRange(pkg.row, PC.used).setValue(used);
+  var log = String(row[PC.log - 1] || ''), entry = visitDay + ' (visit ' + used + ')';
+  sh.getRange(pkg.row, PC.log).setValue(log ? log + '; ' + entry : entry);
+  if (used >= total) sh.getRange(pkg.row, PC.status).setValue('Used up');
+  return { used: used, total: total, left: total - used };
+}
+/** One line in the EHR AuditLog. Never blocks a booking. Columns: Timestamp, User, Action, PatientID, RecordID, Model, InputTokens, OutputTokens, EstCostUSD, Detail. */
+function pkgAudit_(pkg, apptId, when, left) {
+  try {
+    var sh = SpreadsheetApp.openById(pkgSheetId_()).getSheetByName('AuditLog');
+    if (sh) sh.appendRow([new Date(), 'online booking', 'package booking', pkg.patientId, pkg.id, '', '', '', '', 'Visit ' + apptId + ', ' + when + '. ' + left + ' left.']);
+  } catch (err) { console.error('package audit: ' + err); }
+}
+/** Package bookings carry their details in the "Stripe session" column as pkg|PKG-0001|visits left|total|appt id. */
+function pkgTag_(session) {
+  var p = String(session || '').split('|');
+  return p[0] === 'pkg' && p.length === 5 ? { id: p[1], left: Number(p[2]), total: Number(p[3]) } : null;
+}
+
 // ------------------------------------------------------------------ entry points (called from Code.gs)
 function apptGet_(p) {
   if (p.action === 'appt_slots') return apptSlots_(String(p.service || ''), String(p.span || ''), String(p.after || ''));
@@ -510,7 +584,6 @@ function apptBook_(b) {
   var note = apptFormsNote_(String(b.service), svc, email, phone, b.returning === true || b.returning === 'yes');
 
   var c = cfg_(), cfg = apptCfg_();
-  if (!c.stripeKey) return { error: 'setup' };
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -523,6 +596,13 @@ function apptBook_(b) {
 
     var endMs = startMs + svc.minutes * 60000;
     var when = whenLabel_(startMs, endMs);
+
+    // A prepaid package that covers this visit: no Stripe, one visit counted off. If the packages cannot be read, fall through to payment.
+    var pkg = null;
+    try { pkg = pkgFind_(email, phone, String(b.service)); } catch (err) { console.error('package lookup: ' + err); }
+    if (pkg) return apptBookWithPackage_(b, svc, pkg, { name: name, email: email, phone: phone, note: note, startMs: startMs, endMs: endMs, when: when });
+
+    if (!c.stripeKey) return { error: 'setup' };
     var session = stripe_('post', '/v1/checkout/sessions', {
       'mode': 'payment',
       'customer_email': email,
@@ -547,6 +627,28 @@ function apptBook_(b) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** The booking is already on the sheet as paid (by package), so the visit is counted off, then the calendar event and emails follow. Runs inside apptBook_'s lock. */
+function apptBookWithPackage_(b, svc, pkg, x) {
+  var sh = apptSheet_(APPT_SHEET, APPT_HEADERS), apptId = Utilities.getUuid().slice(0, 8);
+  var tag = ['pkg', pkg.id, pkg.left - 1, pkg.total, apptId].join('|');
+  sh.appendRow([new Date(), apptId, String(b.service), svc.name, new Date(x.startMs), new Date(x.endMs), x.when, x.name, x.email, x.phone, x.note, 'paid', tag, 0, new Date(), '', '']);
+  var rowIndex = sh.getLastRow(), use;
+  try { use = pkgUse_(pkg, dayKey_(x.startMs)); }
+  catch (err) {                                                            // could not count the visit: undo the booking rather than give a free one
+    console.error('package use: ' + err);
+    apptSet_(rowIndex, { status: 'cancelled' });
+    apptCacheBump_();
+    return { error: 'server' };
+  }
+  pkgAudit_(pkg, apptId, x.when, use.left);
+  try { apptFinish_(tag); } catch (err) { console.error('package booking finish (reconcile will retry): ' + err); }
+  apptCacheBump_();
+  var found = apptFind_(tag), r = found ? found.row : [];
+  return { ok: true, package: true, left: use.left, total: use.total, when: x.when, service: svc.name, name: x.name,
+    intake: apptNeedIntake_(svc, r), skin: apptNeedSkin_(r), online: !!svc.online, series: !!svc.series,
+    intakeUrl: apptCfg_().intake, skinUrl: apptCfg_().skinIntake };
 }
 
 // ------------------------------------------------------------------ confirm, release, reconcile
@@ -610,7 +712,8 @@ function apptReconcile_() {
           freed = true;
         }
       } else if (st === 'paid' && (!r[AC.eventId - 1] || !r[AC.emailed - 1])) {
-        apptConfirm_(session);
+        if (pkgTag_(session)) { apptFinish_(session); freed = true; }   // package booking: nothing to confirm with Stripe
+        else apptConfirm_(session);
       }
     } catch (err) {
       console.error('appt reconcile ' + session + ': ' + err);
@@ -632,7 +735,7 @@ function apptFinish_(session) {
     var ev = cal.createEvent(r[AC.svcName - 1] + ' (' + r[AC.name - 1] + ')', new Date(r[AC.start - 1]), new Date(r[AC.end - 1]), {
       description: 'Booked online\n' + r[AC.name - 1] + '\n' + r[AC.email - 1] + '\n' + r[AC.phone - 1] +
         (r[AC.note - 1] ? '\nNote: ' + r[AC.note - 1] : '') +
-        '\n\nPaid: $' + Number(r[AC.amount - 1] || 0).toFixed(2) + ' (Stripe ' + session + ')' +
+        '\n\n' + (pkgTag_(session) ? 'Package visit: ' + pkgTag_(session).id + ', ' + pkgTag_(session).left + ' of ' + pkgTag_(session).total + ' visits left' : 'Paid: $' + Number(r[AC.amount - 1] || 0).toFixed(2) + ' (Stripe ' + session + ')') +
         '\nTo reschedule or cancel, call or text ' + c.phone + ' at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours\' notice are charged $95.' + intake,
       location: svc.online ? 'Online (video)' : c.address,
       guests: String(r[AC.email - 1]),
@@ -652,18 +755,20 @@ function apptEmails_(r, svc) {
     return k === 0 ? '\nPlease fill in the ' + f.name + ' form before you come: ' + f.url + '\n' : 'And the ' + f.name + ' form: ' + f.url + '\n';
   }).join('');
   var series = svc.series ? '\nIf you would like a series of treatments, we will plan the rest together after this first session.\n' : '';
+  var pk = pkgTag_(r[AC.session - 1]);
+  var paidLine = pk ? 'This visit is covered by your package: ' + pk.left + ' of ' + pk.total + ' visits left.' : 'Your payment has been received.';
   MailApp.sendEmail({
     to: email, replyTo: c.notify, name: 'Full Lotus Health',
     subject: 'Your appointment: ' + r[AC.svcName - 1] + ', ' + when.split(' at ')[0],
     body: 'Hi ' + name + ',\n\nYou are booked for ' + r[AC.svcName - 1] + ' on ' + when + '.\n\n' +
       'Where: ' + where + '\n' + intake + series + '\n' +
-      'Your payment has been received. To reschedule or cancel, reply to this email or text ' + c.phone + ' at least 24 hours ahead. ' +
+      paidLine + ' To reschedule or cancel, reply to this email or text ' + c.phone + ' at least 24 hours ahead. ' +
       'Appointments cancelled or missed with less than 24 hours\' notice are charged $95.\n\nSee you soon,\nRoozbeh\nFull Lotus Health'
   });
   MailApp.sendEmail({
     to: c.notify, replyTo: email,
     subject: 'New booking: ' + name + ', ' + r[AC.svcName - 1] + ', ' + when.split(' at ')[0],
-    body: name + ' booked ' + r[AC.svcName - 1] + ' for ' + when + ' and paid $' + Number(r[AC.amount - 1] || 0).toFixed(2) + '.\nEmail: ' + email +
+    body: name + ' booked ' + r[AC.svcName - 1] + ' for ' + when + (pk ? ' using package ' + pk.id + ' (' + pk.left + ' of ' + pk.total + ' visits left).' : ' and paid $' + Number(r[AC.amount - 1] || 0).toFixed(2) + '.') + '\nEmail: ' + email +
       '\nPhone: ' + (r[AC.phone - 1] || '-') + (r[AC.note - 1] ? '\nNote: ' + r[AC.note - 1] : '') + '\nIt is on the calendar.'
   });
 }

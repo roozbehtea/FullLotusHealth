@@ -174,6 +174,7 @@
     cal.innerHTML = ""; times.innerHTML = ""; details.innerHTML = "";
     say("<strong>You are booked.</strong> " + esc(r.service) + ", " + esc(r.when) + ". A confirmation is on its way to your email" +
       (r.online ? ", and Roozbeh will send your video link before the visit" : "") + "." +
+      (r.package ? " Booked with your package, so nothing was charged: " + esc(r.left) + " of " + esc(r.total) + " visits left." : "") +
       formsLine(r) +
       (r.series ? " If you would like a series of treatments, we will plan the rest together after this first session." : ""));
     root.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -253,6 +254,7 @@
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">Continue to payment, ' + money(sv.price) + "</button></p>" +
       '<p class="fine">You will pay securely with Stripe, and your time is held for 30 minutes while you do. Nothing is booked until payment goes through. Cancelling is free up to 24 hours ahead; less than 24 hours\' notice is charged $95.</p>' +
+      (SLUG === "acupuncture-repeat-treatment" ? '<p class="fine">Have a package? Use the same email or phone you bought it with and you will not be charged. If you are sent to pay, text <a href="sms:+18182539307">(818) 253-9307</a>.</p>' : "") +
       '<p class="gmsg" role="status" aria-live="polite"></p></form>';
     var form = details.querySelector("form"), msg = form.querySelector(".gmsg"), btn = form.querySelector("button[type=submit]");
     form.elements.name.focus({ preventScroll: true });
@@ -264,6 +266,7 @@
       post({ action: "appt_book", service: SLUG, start: s.start, name: form.elements.name.value, email: form.elements.email.value,
         phone: form.elements.phone.value, returning: !!(form.elements.returning && form.elements.returning.checked), website: form.elements.website.value })
         .then(function (r) {
+          if (r.ok && r.package) { done(r); return; }                                  // covered by a prepaid package: nothing to pay
           if (r.ok && r.url) { store(KEY, r.session); location.href = r.url; return; }
           btn.disabled = false; msg.className = "gmsg err";
           if (r.error === "taken" || r.error === "closed") {
