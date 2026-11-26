@@ -14,9 +14,9 @@ The script is `apps-script/WebInsurance.gs` in the Apps Script project named **F
 
 - `STEDI_API_KEY`
 - `STEDI_ELIGIBILITY_URL`, the 2026-06-01 eligibility-check endpoint
-- `stediList_`, `stediSummary_`, and `settingStr_`
+- `stediList_`, `stediSummary_`, `settingStr_`, and `stediPayerId_`
 
-Aetna PPO is sent as payer id `60054` with service type `30` (Health Benefit Plan Coverage). Other PPO plans are saved and are not sent to Stedi. The browser only receives `{status:"active"}`, `{status:"inactive"}`, or `{status:"unknown"}`.
+The form sends whatever the person typed as the insurance provider. `stediPayerId_` turns that name into a payer id when it can. If it cannot, the row is saved and Stedi is not called. The check uses service type `30` (Health Benefit Plan Coverage). The browser only receives `{status:"active"}`, `{status:"inactive"}`, or `{status:"unknown"}`.
 
 Leads are appended to a tab named **Insurance Leads** in the clinic spreadsheet (`SPREADSHEET_ID`), unless `LEADS_SHEET_ID` is set. A notice goes to `NOTIFY_EMAIL` when that property is set, and otherwise to the script owner's email. The email does not include the member ID or date of birth.
 

@@ -1627,7 +1627,7 @@ def insurance():
 <section class="sand" id="benefits"><div class="wrap">
   <p class="eyebrow">Benefits check</p>
   <h2>Ask us to check a plan</h2>
-  <p>Send your name and your PPO details. For Aetna PPO we can check whether the plan shows as active. For another PPO we save the request and follow up by email.</p>
+  <p>Send your name and the insurance provider on your card. We'll check what we can, and follow up by email if we can't confirm it from here.</p>
   <form id="ins-check" class="ins-form sch-form" data-email="{EMAIL}" data-phone="{PHONE_DISPLAY}" data-phone-tel="{PHONE_TEL}" aria-describedby="ins-privacy">
     <div class="sch-fields">
       <label for="ins-first">First name
@@ -1645,12 +1645,8 @@ def insurance():
       <label for="ins-phone">Phone <span class="fine">(optional)</span>
         <input id="ins-phone" name="phone" type="tel" autocomplete="tel" maxlength="30">
       </label>
-      <label for="ins-carrier">Insurance carrier
-        <select id="ins-carrier" name="carrier" required>
-          <option value="">Choose a plan</option>
-          <option>Aetna PPO</option>
-          <option>Other PPO</option>
-        </select>
+      <label class="ins-span" for="ins-carrier">Insurance provider
+        <input id="ins-carrier" name="carrier" type="text" required maxlength="80" autocomplete="off" placeholder="e.g. Aetna, Blue Shield, UnitedHealthcare" spellcheck="false">
       </label>
       <label class="ins-span" for="ins-member">Member ID
         <input id="ins-member" name="memberId" type="text" autocomplete="off" required maxlength="40" spellcheck="false">

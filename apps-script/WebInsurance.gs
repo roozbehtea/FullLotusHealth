@@ -55,13 +55,13 @@ function insLead_(body) {
   var last = insText_(body.lastName, 60);
   var email = String(body.email || '').trim().toLowerCase();
   var dob = String(body.dob || '').trim();
-  var carrier = String(body.carrier || '').trim();
+  var carrier = insText_(body.carrier, 80);
   var memberId = insText_(body.memberId, 40);
   var phone = insText_(body.phone, 30);
   var consent = body.consent === true || body.consent === 'true' || body.consent === 'on';
   if (!consent) return null;
   if (!first || !last || !memberId) return null;
-  if (carrier !== 'Aetna PPO' && carrier !== 'Other PPO') return null;
+  if (!carrier) return null;
   if (!insEmail_(email) || !insDob_(dob)) return null;
   return {
     firstName: first,
@@ -75,8 +75,9 @@ function insLead_(body) {
 }
 
 function insDecide_(lead) {
-  var payerId = INS_PAYERS[lead.carrier];
-  if (!payerId) return { status: 'unknown', summary: 'not checked (other PPO)' };
+  var payerId = '';
+  try { payerId = stediPayerId_(lead.carrier); } catch (e0) { payerId = ''; }
+  if (!payerId) return { status: 'unknown', summary: 'not checked (payer ID unknown for "' + lead.carrier + '")' };
   var key = insProp_('STEDI_API_KEY');
   if (!key) return { status: 'unknown', summary: 'not checked (missing STEDI_API_KEY)' };
   var npi = '';
