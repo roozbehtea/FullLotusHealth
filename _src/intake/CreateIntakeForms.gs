@@ -86,7 +86,7 @@ function newPatientIntake_() {
   text_(f, 'Emergency contact: name and relationship', true);
   phoneItem_(f, 'Emergency contact phone', true);
   choice_(f, 'How did you hear about us?', ['Google search', 'Google Maps / reviews', 'Friend or family', 'Instagram or social media',
-    'Global Tea Hut / tea community', 'Another practitioner', 'Walked by'], false).showOtherOption(true);
+    'Global Tea Hut / tea community', 'Another practitioner', 'Walked by', 'A tea sit at the clinic'], false).showOtherOption(true);
   text_(f, 'Primary care physician (name and phone)', false);
 
   section_(f, 'Reason for your visit');

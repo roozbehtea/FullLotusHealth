@@ -1,6 +1,6 @@
 /* Tea sits: shows upcoming sits on a month calendar; picking a day lists its sits with seats left, takes a reservation, and hands off to Stripe to pay.
    Talks to the Apps Script web app in _src/teasits (URL set as teasits_url in _src/config.json).
-   Collects name, email, optional phone and seat count. Nothing else. */
+   Collects name, email, optional phone, seat count and an optional "how did you hear about this sit". Nothing else. */
 (function () {
   var root = document.getElementById("teasits");
   if (!root) return;
@@ -8,6 +8,8 @@
   var list = root.querySelector(".ts-list");
   var status = root.querySelector(".ts-status");
   var MAX = 3, KEY = "fl-teasit-session";
+  var HEARD = ["Google search", "Google Maps / reviews", "Friend or family", "Instagram or social media", "Global Tea Hut / tea community",
+    "Another practitioner", "Walked by", "I'm a Full Lotus patient", "Other"];
 
   function say(html, err) { status.innerHTML = html; status.className = "ts-status notice" + (err ? " err" : ""); status.hidden = false; }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -132,7 +134,10 @@
       '<label>Name<input name="name" autocomplete="name" required maxlength="80"></label>' +
       '<label>Email<input name="email" type="email" inputmode="email" autocomplete="email" required maxlength="254"></label>' +
       '<label><span>Phone <span class="fine">(optional)</span></span><input name="phone" type="tel" autocomplete="tel" maxlength="30"></label>' +
-      '<label>Seats<select name="seats">' + opts + "</select></label></div>" +
+      '<label>Seats<select name="seats">' + opts + "</select></label>" +
+      '<label><span>How did you hear about this tea sit? <span class="fine">(optional)</span></span><select name="heard"><option value="">Choose one</option>' +
+      HEARD.map(function (h) { return '<option>' + esc(h) + "</option>"; }).join("") + "</select></label>" +
+      '<label class="ts-heard-other" hidden><span>Where did you hear about it?</span><input name="heardOther" maxlength="80"></label></div>' +
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">' + (s.price > 0 ? "Continue to payment, " + money(s.price) : "Reserve") + '</button></p>' +
       '<p class="fine">' + (s.price > 0 ? "You'll pay securely with Stripe. Have a coupon code? Enter it on the payment page. Seats are held for 30 minutes while you pay." : "") + ' To cancel later, reply to your confirmation email.</p>' +
@@ -143,6 +148,8 @@
     var sel = form.elements.seats;
     var label = function () { if (s.price > 0) btn.textContent = "Continue to payment, " + money(s.price * Number(sel.value)); };
     sel.addEventListener("change", label);
+    var heard = form.elements.heard, other = f.querySelector(".ts-heard-other");
+    heard.addEventListener("change", function () { other.hidden = heard.value !== "Other"; });
     form.elements.name.focus();
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -150,7 +157,8 @@
       btn.disabled = true; msg.className = "gmsg"; msg.textContent = s.price > 0 ? "Holding your seats..." : "Reserving...";
       fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow",
         body: JSON.stringify({ action: "reserve", sitId: s.id, name: form.elements.name.value, email: form.elements.email.value,
-          phone: form.elements.phone.value, seats: Number(sel.value), website: form.elements.website.value }) })
+          phone: form.elements.phone.value, seats: Number(sel.value), website: form.elements.website.value,
+          heard: heard.value === "Other" ? "Other: " + form.elements.heardOther.value.trim() : heard.value }) })
         .then(function (r) { return r.json(); })
         .then(function (r) {
           if (r.ok && r.url) { store(KEY, r.session); location.href = r.url; return; }

@@ -604,6 +604,7 @@ h2.h3 { font-size: 1.5rem; line-height: 1.3; font-weight: 500; }
 .ts-fields label, .sch-fields label { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 500; font-size: 0.9375rem; }
 .ts-fields input, .ts-fields select, .sch-fields input, .sch-fields textarea { font: inherit; font-weight: 400; padding: 0.75rem 0.9rem; color: var(--ink); background: #fffaf1; border: 2px solid var(--surface-300); border-radius: var(--radius-sm); min-width: 0; }
 .ts-fields input:focus, .ts-fields select:focus, .sch-fields input:focus, .sch-fields textarea:focus { outline: 2px solid var(--lapis); outline-offset: 1px; border-color: var(--lapis); }
+.ts-fields label[hidden] { display: none; }
 .ts-actions { margin: 1.1rem 0 0.4rem; }
 .ts-form .btn, .sch-form .btn { cursor: pointer; }
 .ts-form .btn[disabled], .sch-form .btn[disabled] { opacity: 0.6; cursor: wait; }

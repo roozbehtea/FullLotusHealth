@@ -8,14 +8,14 @@
  * Reservations: one row per reservation in the "Reservations" tab of the sheet this script is attached to.
  * Payment:      Stripe Checkout. A seat is held for 35 minutes while the guest pays, then released if unpaid.
  *
- * Collects only name, email, optional phone and seat count. No health details.
+ * Collects only name, email, optional phone, seat count and an optional "how did you hear about this sit". No health details.
  * Setup steps are in README.md next to this file.
  */
 
 // ------------------------------------------------------------------ settings
 var SHEET_NAME = 'Reservations';
-var HEADERS = ['Created', 'Sit ID', 'Sit', 'Name', 'Email', 'Phone', 'Seats', 'Status', 'Stripe session', 'Amount paid', 'Paid at', 'Emailed'];
-var COL = { created: 1, sitId: 2, sit: 3, name: 4, email: 5, phone: 6, seats: 7, status: 8, session: 9, amount: 10, paidAt: 11, emailed: 12 };
+var HEADERS = ['Created', 'Sit ID', 'Sit', 'Name', 'Email', 'Phone', 'Seats', 'Status', 'Stripe session', 'Amount paid', 'Paid at', 'Emailed', 'Heard about'];
+var COL = { created: 1, sitId: 2, sit: 3, name: 4, email: 5, phone: 6, seats: 7, status: 8, session: 9, amount: 10, paidAt: 11, emailed: 12, heard: 13 };
 var HOLD_MINUTES = 35;          // Stripe Checkout links expire after 31 minutes; holds outlast them slightly
 var MAX_SEATS_PER_BOOKING = 3;
 var WEEKS_AHEAD = 8;
@@ -116,6 +116,7 @@ function sheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
   if (sh.getLastRow() === 0) { sh.appendRow(HEADERS); sh.setFrozenRows(1); }
+  else if (sh.getRange(1, HEADERS.length).getValue() === '') sh.getRange(1, HEADERS.length).setValue(HEADERS[HEADERS.length - 1]);   // new column on an existing tab
   return sh;
 }
 
@@ -160,6 +161,7 @@ function reserve_(b) {
   var email = String(b.email || '').trim().toLowerCase();
   var phone = clean_(b.phone, 30);
   var seats = parseInt(b.seats, 10);
+  var heard = clean_(b.heard, 100);                                        // optional: how they heard about this sit
   if (!name) return { error: 'name' };
   if (!(email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) || /^[=+\-@]/.test(email)) return { error: 'email' };
   if (!(seats >= 1 && seats <= MAX_SEATS_PER_BOOKING)) return { error: 'seats' };
@@ -175,7 +177,7 @@ function reserve_(b) {
     var sh = sheet_();
     if (!(sit.price > 0)) {                                                   // free sit: no payment step
       var freeId = 'free-' + Utilities.getUuid();
-      sh.appendRow([new Date(), sit.id, sit.label, name, email, phone, seats, 'paid', freeId, 0, new Date(), '']);
+      sh.appendRow([new Date(), sit.id, sit.label, name, email, phone, seats, 'paid', freeId, 0, new Date(), '', heard]);
       sendEmails_(freeId);
       return { ok: true, free: true, sit: sit.label };
     }
@@ -197,7 +199,7 @@ function reserve_(b) {
       'success_url': c.site + '/tea-sits?paid={CHECKOUT_SESSION_ID}',
       'cancel_url': c.site + '/tea-sits?cancelled=1'
     });
-    sh.appendRow([new Date(), sit.id, sit.label, name, email, phone, seats, 'pending', session.id, '', '', '']);
+    sh.appendRow([new Date(), sit.id, sit.label, name, email, phone, seats, 'pending', session.id, '', '', '', heard]);
     return { ok: true, url: session.url, session: session.id };
   } finally {
     lock.releaseLock();
