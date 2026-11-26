@@ -66,3 +66,14 @@ Service prices and lengths live in `Booking.gs` (`APPT_SERVICES`) and in `SERVIC
 
 ## Not built yet
 Patients cancel or reschedule by text, as before. When you do, edit or delete the calendar event and mark the row in the Appointments tab as `cancelled`; refund in Stripe if you choose to.
+
+## Prepaid packages
+
+Patients with a prepaid package are booked online without Stripe. Packages live in the `Packages` tab of the clinic EHR spreadsheet ("Full Lotus Clinic"; override the file with the `PACKAGES_SHEET_ID` script property).
+
+- On a booking request, `apptBook_` looks for an **Active** package with visits left that covers the booked service and matches the email (any case) or the last 10 digits of the phone. Oldest purchase first.
+- Match: the booking is written as paid ("Stripe session" column holds `pkg|PKG-0001|visits left|total|appt id`), one visit is counted off (`VisitsUsed`, `UsageLog`, `Status` becomes `Used up` at zero), a line goes to the EHR `AuditLog`, and the usual calendar event and emails follow, with the package line added. All inside the same lock as a paid booking, so a double click uses one visit.
+- No match, wrong service, or the Packages tab cannot be read: the normal Stripe flow, unchanged.
+- `PKG_COVERS` in `Booking.gs` says which booking services a package label pays for. Acupuncture packages only come after the initial visit, so the 5-visit "Acupuncture" package covers repeat treatments only and the initial treatment is always charged.
+- Cancelling a package booking is manual for now: lower `VisitsUsed` in the Packages tab.
+- The script must be allowed to open the EHR spreadsheet (Google asks for a one-time re-authorization when the new code first runs).

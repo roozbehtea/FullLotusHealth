@@ -22,6 +22,25 @@
   function money(n) { return "$" + (n % 1 ? n.toFixed(2) : n); }
   function store(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} }
   function stored(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  // A returning patient should not retype their details: name, email and phone are kept on this device only (never sent anywhere until they book).
+  var ME = "fl-me";
+  function me() { try { var v = JSON.parse(localStorage.getItem(ME) || "null"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } }
+  function remember(v) { try { localStorage.setItem(ME, JSON.stringify({ name: v.name, email: v.email, phone: v.phone })); } catch (e) {} }
+  function forget() { try { localStorage.removeItem(ME); } catch (e) {} }
+  // A "book your next visit" link from a confirmation email carries the patient's details after the # (never sent to a server). Save them here, then clear the address bar.
+  (function () {
+    var m = /^#me=([A-Za-z0-9_-]+)$/.exec(location.hash);
+    if (!m) return;
+    try {
+      var b = m[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (b.length % 4) b += "=";
+      var bin = atob(b), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var v = JSON.parse(new TextDecoder().decode(bytes));
+      if (v && v.name && v.email) remember({ name: String(v.name).slice(0, 80), email: String(v.email).slice(0, 254), phone: String(v.phone || "").slice(0, 30) });
+    } catch (e) {}
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  })();
   var FALLBACK = 'Please text <a href="sms:+18182539307">(818) 253-9307</a> or email <a href="mailto:info@fulllotushealth.com">info@fulllotushealth.com</a> and we will find you a time.' +
     (GOOGLE ? ' You can also <a href="' + esc(GOOGLE) + '" rel="noopener">book on our Google calendar page</a>.' : "");
 
@@ -174,6 +193,7 @@
     cal.innerHTML = ""; times.innerHTML = ""; details.innerHTML = "";
     say("<strong>You are booked.</strong> " + esc(r.service) + ", " + esc(r.when) + ". A confirmation is on its way to your email" +
       (r.online ? ", and Roozbeh will send your video link before the visit" : "") + "." +
+      (r.package ? " Booked with your package, so nothing was charged: " + esc(r.left) + " of " + esc(r.total) + " visits left." : "") +
       formsLine(r) +
       (r.series ? " If you would like a series of treatments, we will plan the rest together after this first session." : ""));
     root.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -239,31 +259,37 @@
   }
 
   // ---- details and payment
-  function field(name, label, attrs) { return '<label>' + label + '<input name="' + name + '" ' + attrs + "></label>"; }
+  function field(name, label, attrs, val) { return '<label>' + label + '<input name="' + name + '" ' + attrs + (val ? ' value="' + esc(val) + '"' : "") + "></label>"; }
   function renderDetails() {
-    var sv = data.service, s = pickedSlot;
+    var sv = data.service, s = pickedSlot, saved = me(), hasSaved = !!(saved.name && saved.email);
     details.innerHTML =
       '<form novalidate class="sch-form"><h2 class="h3">Your details</h2>' +
       '<p class="sch-sum"><strong>' + esc(sv.name) + "</strong><br>" + esc(s.day.label) + " at " + esc(s.label) + " &middot; " + sv.minutes + " min &middot; " + money(sv.price) + "</p>" +
+      (hasSaved ? '<p class="fine">Welcome back. We filled in your details. <button type="button" class="linkish" data-forget>Not you?</button></p>' : "") +
       '<div class="sch-fields">' +
-      field("name", "Name", 'autocomplete="name" required maxlength="80"') +
-      field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"') +
-      field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"') +
+      field("name", "Name", 'autocomplete="name" required maxlength="80"', saved.name) +
+      field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"', saved.email) +
+      field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"', saved.phone) +
       (sv.intake ? '<label class="sch-wide sch-check"><input type="checkbox" name="returning" value="yes"> I\'ve already completed the forms</label>' : "") + "</div>" +
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">Continue to payment, ' + money(sv.price) + "</button></p>" +
       '<p class="fine">You will pay securely with Stripe, and your time is held for 30 minutes while you do. Nothing is booked until payment goes through. Cancelling is free up to 24 hours ahead; less than 24 hours\' notice is charged $95.</p>' +
+      (SLUG === "acupuncture-repeat-treatment" ? '<p class="fine">Have a package? Use the same email or phone you bought it with and you will not be charged. If you are sent to pay, text <a href="sms:+18182539307">(818) 253-9307</a>.</p>' : "") +
       '<p class="gmsg" role="status" aria-live="polite"></p></form>';
     var form = details.querySelector("form"), msg = form.querySelector(".gmsg"), btn = form.querySelector("button[type=submit]");
-    form.elements.name.focus({ preventScroll: true });
+    var fg = form.querySelector("[data-forget]");
+    if (fg) fg.addEventListener("click", function () { forget(); ["name", "email", "phone"].forEach(function (k) { form.elements[k].value = ""; }); fg.parentNode.hidden = true; form.elements.name.focus(); });
+    (hasSaved ? form.elements.email : form.elements.name).focus({ preventScroll: true });
     details.scrollIntoView({ behavior: "smooth", block: "nearest" });
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
       btn.disabled = true; msg.className = "gmsg"; msg.textContent = "Checking that time is still open…";
+      remember({ name: form.elements.name.value.trim(), email: form.elements.email.value.trim(), phone: form.elements.phone.value.trim() });
       post({ action: "appt_book", service: SLUG, start: s.start, name: form.elements.name.value, email: form.elements.email.value,
         phone: form.elements.phone.value, returning: !!(form.elements.returning && form.elements.returning.checked), website: form.elements.website.value })
         .then(function (r) {
+          if (r.ok && r.package) { done(r); return; }                                  // covered by a prepaid package: nothing to pay
           if (r.ok && r.url) { store(KEY, r.session); location.href = r.url; return; }
           btn.disabled = false; msg.className = "gmsg err";
           if (r.error === "taken" || r.error === "closed") {
