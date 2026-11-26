@@ -221,16 +221,169 @@ function pkgTag_(session) {
   return p[0] === 'pkg' && p.length === 5 ? { id: p[1], left: Number(p[2]), total: Number(p[3]) } : null;
 }
 
+// ------------------------------------------------------------------ buying a package online
+// Only patients already on file can buy: the name AND phone typed must match a patient in the EHR "Patients" tab. A package row is written as
+// "Pending payment" when Stripe Checkout starts and becomes Active only after Stripe says it was paid (the page confirms, and the 10-minute
+// reconcile catches anyone who closed the tab). Whether or not a name and phone match, the page says the same thing, so nobody can use this
+// to find out who is a patient.
+var PKG_OFFERS = { 'acupuncture-repeat-treatment': { label: 'Acupuncture', visits: 5, price: 500, name: 'Acupuncture 5-visit package' } };
+var PKG_PENDING = 'Pending payment';
+var PKG_TRIES_PER_10_MIN = 25;
+
+function nameKey_(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+/** The patient whose phone matches (last 10 digits) and whose name matches: first or preferred name first, and every word of the last name present. Demo patients never match. */
+function pkgPatientFind_(name, phone) {
+  var key = apptPhoneKey_(phone), typed = nameKey_(name).split(' ');
+  if (!key || !typed[0]) return null;
+  var sh = SpreadsheetApp.openById(pkgSheetId_()).getSheetByName('Patients');
+  if (!sh || sh.getLastRow() < 2) return null;
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, 11).getValues();      // A PatientID ... C IsDemo, D First, E Last, F Preferred, ... K Phone
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (String(r[2]).toLowerCase() === 'true' || r[2] === true) continue;
+    if (apptPhoneKey_(r[10]) !== key) continue;
+    var first = nameKey_(r[3]).split(' ')[0], pref = nameKey_(r[5]).split(' ')[0], last = nameKey_(r[4]).split(' ').filter(Boolean);
+    if (!last.length || !(typed[0] === first || (pref && typed[0] === pref))) continue;
+    if (last.every(function (w) { return typed.indexOf(w) !== -1; })) return { patientId: String(r[0]) };
+  }
+  return null;
+}
+function pkgNextId_(sh) {
+  var n = sh.getLastRow() - 1, max = 0;
+  if (n > 0) sh.getRange(2, 1, n, 1).getValues().forEach(function (r) { var m = /^PKG-(\d+)$/.exec(String(r[0])); if (m) max = Math.max(max, Number(m[1])); });
+  return 'PKG-' + ('0000' + (max + 1)).slice(-4);
+}
+function pkgRateOk_() {                                                    // a global brake on guessing name and phone pairs; call inside the lock
+  var cache = CacheService.getScriptCache(), n = Number(cache.get('pkg-tries') || 0) + 1;
+  cache.put('pkg-tries', String(n), 600);
+  return n <= PKG_TRIES_PER_10_MIN;
+}
+function pkgBySession_(sh, session) {
+  var n = sh.getLastRow() - 1;
+  if (n < 1) return null;
+  var rows = sh.getRange(2, 1, n, PKG_COLS).getValues();
+  for (var i = 0; i < rows.length; i++) if (String(rows[i][PC.notes - 1]).indexOf('Stripe ' + session) === 0) return { row: i + 2, vals: rows[i] };
+  return null;
+}
+
+function apptPackageBuy_(b) {
+  if (b.website) return { error: 'bad_request' };
+  var slug = String(b.service || ''), offer = PKG_OFFERS[slug];
+  if (!offer) return { error: 'service' };
+  var name = clean_(b.name, 80), email = String(b.email || '').trim().toLowerCase(), phone = clean_(b.phone, 30);
+  if (!name) return { error: 'name' };
+  if (!(email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) || /^[=+\-@]/.test(email)) return { error: 'email' };
+  if (!apptPhoneKey_(phone)) return { error: 'phone' };
+  var c = cfg_();
+  if (!c.stripeKey) return { error: 'setup' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    if (!pkgRateOk_()) return { error: 'busy' };
+    var sh = pkgSheet_(), pat = null;
+    try { pat = pkgPatientFind_(name, phone); } catch (err) { console.error('package patient lookup: ' + err); return { error: 'server' }; }
+    if (!sh) return { error: 'server' };
+    if (!pat) return { error: 'not_found' };
+    var have = pkgFind_(email, phone, slug);
+    if (have) return { error: 'have_package', left: have.left };
+    var session = stripe_('post', '/v1/checkout/sessions', {
+      'mode': 'payment',
+      'customer_email': email,
+      'client_reference_id': 'package:' + slug,
+      'line_items[0][quantity]': '1',
+      'line_items[0][price_data][currency]': 'usd',
+      'line_items[0][price_data][unit_amount]': String(Math.round(offer.price * 100)),
+      'line_items[0][price_data][product_data][name]': offer.name,
+      'line_items[0][price_data][product_data][description]': 'Full Lotus Health. ' + offer.visits + ' follow-up visits you book online.',
+      'allow_promotion_codes': 'true',
+      'metadata[package]': slug,
+      'metadata[patient]': pat.patientId,
+      'expires_at': String(Math.floor(Date.now() / 1000) + 31 * 60),
+      'success_url': c.site + '/book/' + slug + '?pkgpaid={CHECKOUT_SESSION_ID}',
+      'cancel_url': c.site + '/book/' + slug + '?pkgcancelled=1'
+    });
+    sh.appendRow([pkgNextId_(sh), pat.patientId, name, email, phone, offer.label, offer.visits, 0, '', '', offer.price, PKG_PENDING, '', 'Stripe ' + session.id]);
+    var row = sh.getLastRow();
+    sh.getRange(row, PC.left).setFormula('=IF(G' + row + '="","",G' + row + '-H' + row + ')');
+    return { ok: true, url: session.url, session: session.id };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Back from Stripe: if it was paid, the package becomes Active. Safe to call twice. */
+function apptPackageConfirm_(session) {
+  if (!/^cs_[A-Za-z0-9_]+$/.test(session)) return { error: 'bad_request' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try { return pkgActivate_(session); } finally { lock.releaseLock(); }
+}
+function pkgActivate_(session) {                                           // call inside the lock
+  var sh = pkgSheet_(), f = sh && pkgBySession_(sh, session);
+  if (!f) return { error: 'not_found' };
+  var v = f.vals, st = String(v[PC.status - 1]);
+  var out = { ok: true, package: true, visits: Number(v[PC.total - 1]), name: String(v[PC.name - 1]), email: String(v[PC.email - 1]), phone: String(v[PC.phone - 1]) };
+  if (st === 'Active' || st === 'Used up') return out;
+  var s = stripe_('get', '/v1/checkout/sessions/' + session);
+  if (!paidOk_(s)) return { ok: false, status: s.status };
+  sh.getRange(f.row, PC.status).setValue('Active');
+  sh.getRange(f.row, PC.purchased).setValue(dayKey_(Date.now()));
+  sh.getRange(f.row, PC.price).setValue((s.amount_total || 0) / 100);
+  try { SpreadsheetApp.openById(pkgSheetId_()).getSheetByName('AuditLog').appendRow([new Date(), 'online booking', 'package purchased', String(v[PC.patientId - 1]), String(v[PC.id - 1]), '', '', '', '', offer_(v) + ' paid $' + (s.amount_total || 0) / 100 + '.']); } catch (err) { console.error('package audit: ' + err); }
+  try { pkgPurchaseEmails_(v, (s.amount_total || 0) / 100); } catch (err) { console.error('package emails: ' + err); }
+  return out;
+}
+function offer_(v) { return String(v[PC.service - 1]) + ' ' + String(v[PC.total - 1]) + '-visit package'; }
+function pkgPurchaseEmails_(v, paid) {
+  var c = cfg_(), name = String(v[PC.name - 1]), email = String(v[PC.email - 1]), phone = String(v[PC.phone - 1]), first = name.trim().split(/\s+/)[0];
+  var link = '';
+  try { link = apptBookLink_('acupuncture-repeat-treatment', name, email, phone); } catch (err) { console.error('package link: ' + err); }
+  MailApp.sendEmail({
+    to: email, replyTo: c.notify, name: 'Full Lotus Health',
+    subject: 'Your ' + v[PC.total - 1] + '-visit ' + String(v[PC.service - 1]).toLowerCase() + ' package',
+    body: 'Hi ' + first + '!\n\nThank you so much for getting your ' + v[PC.total - 1] + '-visit ' + String(v[PC.service - 1]).toLowerCase() + ' package. It is active now, so you will not be charged when you book your visits.\n\n' +
+      'You can pick your times here whenever you are ready' + (link ? ':\n' + link + '\n(This link fills in your details on any device. Please do not forward it.)\n\n' : '.\n\n') +
+      'Or just text me at ' + c.phone + ' and we will find something together. If you book on your own, use the same email or phone you bought the package with.\n\n' +
+      'To reschedule or cancel a visit, reply to this email or text ' + c.phone + ' at least 24 hours ahead. Appointments cancelled or missed with less than 24 hours\' notice are charged $95.\n\nWarmly,\nRoozbeh\nFull Lotus Health'
+  });
+  MailApp.sendEmail({
+    to: c.notify, replyTo: email,
+    subject: 'Package bought: ' + name + ', ' + offer_(v),
+    body: name + ' bought the ' + offer_(v) + ' online and paid $' + paid + '.\nPackage ' + v[PC.id - 1] + ' is Active in the Packages tab.\nEmail: ' + email + '\nPhone: ' + phone
+  });
+}
+/** Every 10 minutes: a package paid for whose tab was closed becomes Active; one whose checkout ended unpaid is marked Cancelled. */
+function pkgReconcile_() {
+  var sh = pkgSheet_();
+  if (!sh || sh.getLastRow() < 2) return;
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, PKG_COLS).getValues(), done = 0;
+  for (var i = 0; i < rows.length && done < 20; i++) {
+    if (String(rows[i][PC.status - 1]) !== PKG_PENDING) continue;
+    var m = /^Stripe (cs_[A-Za-z0-9_]+)/.exec(String(rows[i][PC.notes - 1]));
+    if (!m) continue;
+    done++;
+    try {
+      var s = stripe_('get', '/v1/checkout/sessions/' + m[1]);
+      if (paidOk_(s)) apptPackageConfirm_(m[1]);
+      else if (s.status === 'expired' || s.status === 'complete') sh.getRange(i + 2, PC.status).setValue('Cancelled');
+    } catch (err) { console.error('package reconcile ' + m[1] + ': ' + err); }
+  }
+}
+
 // ------------------------------------------------------------------ entry points (called from Code.gs)
 function apptGet_(p) {
   if (p.action === 'appt_slots') return apptSlots_(String(p.service || ''), String(p.span || ''), String(p.after || ''));
   if (p.action === 'appt_confirm') return apptConfirm_(String(p.session || ''));
   if (p.action === 'appt_release') return apptRelease_(String(p.session || ''));
+  if (p.action === 'appt_package_confirm') return apptPackageConfirm_(String(p.session || ''));
   return { error: 'bad_request' };
 }
 
 function apptPost_(b) {
   if (b.action === 'appt_book') return apptBook_(b);
+  if (b.action === 'appt_package') return apptPackageBuy_(b);
   if (b.action === 'appt_waitlist') return apptWaitlist_(b);
   return { error: 'bad_request' };
 }
@@ -723,6 +876,7 @@ function apptReconcile_() {
     }
   }
   if (freed) apptCacheBump_();
+  try { pkgReconcile_(); } catch (err) { console.error('package reconcile: ' + err); }
 }
 
 /** Create the calendar event and send the emails. Safe to run twice: each step is skipped once done. */

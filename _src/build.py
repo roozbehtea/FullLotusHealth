@@ -1324,7 +1324,7 @@ def confirm_pages():
         if s["slug"] in APPT:
             series = '<p class="cf-new">Need a series of treatments? Book your first session now, and we will schedule the rest together after your first treatment.</p>' if APPT[s["slug"]]["series"] else ""
             if s["slug"] == ACU_PACK_SLUG:
-                series += f'<p class="cf-new">{e(acu_pack_line())}. That works out to ${ACU_PACK["per"]} a visit instead of ${s["price"]}. To start the package, book your first visit below, and we will book the rest together after your first appointment.</p>'
+                series += f'<p class="cf-new">{e(acu_pack_line())}. That works out to ${ACU_PACK["per"]} a visit instead of ${s["price"]}. Already a patient? Buy it below, then pick your visits. New here? Book your first visit below, and we will set up the package together after your first appointment.</p>'
             gl = f' data-fallback="{e(BOOKS[s["slug"]])}"' if s["slug"] in BOOKS else ""
             if SKIN_INTAKE and s["slug"] in SKIN_SLUGS:
                 gl += f' data-skin-intake="{e(SKIN_INTAKE)}"'
