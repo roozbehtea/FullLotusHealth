@@ -269,7 +269,7 @@
       '<div class="sch-fields">' +
       field("name", "Name", 'autocomplete="name" required maxlength="80"', saved.name) +
       field("email", "Email", 'type="email" inputmode="email" autocomplete="email" required maxlength="254"', saved.email) +
-      field("phone", "Phone", 'type="tel" inputmode="tel" autocomplete="tel" required maxlength="30"', saved.phone) +
+      field("phone", sv.intake ? "Phone" : "Phone (optional)", 'type="tel" inputmode="tel" autocomplete="tel" maxlength="30"' + (sv.intake ? " required" : ""), saved.phone) +
       (sv.intake ? '<label class="sch-wide sch-check"><input type="checkbox" name="returning" value="yes"> I\'ve already completed the forms</label>' : "") + "</div>" +
       '<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<p class="ts-actions"><button class="btn" type="submit">Continue to payment, ' + money(sv.price) + "</button></p>" +
