@@ -36,4 +36,4 @@ They are different tools, and some people combine them. If you are not sure wher
 
 ## Where to go from here
 
-You can read more about [cosmetic acupuncture in Burbank](/cosmetic-acupuncture-burbank), or see times and fees on the [Full Lotus Lift](/service-page/full-lotus-lift) page. Questions first? Text or call (818) 253-9307.
+You can read more about [cosmetic acupuncture in Burbank](/cosmetic-acupuncture-burbank), or see times and fees on the [Full Lotus Lift](/cosmetic-acupuncture-burbank) page. Questions first? Text or call (818) 253-9307.
