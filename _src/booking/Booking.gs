@@ -153,7 +153,8 @@ function apptFormsNote_(slug, svc, email, phone, ticked) {
 //   PACKAGES_SHEET_ID   script property; defaults to the Full Lotus Clinic spreadsheet
 var PKG_SHEET = 'Packages', PKG_COLS = 14;
 var PC = { id: 1, patientId: 2, name: 3, email: 4, phone: 5, service: 6, total: 7, used: 8, left: 9, purchased: 10, price: 11, status: 12, log: 13, notes: 14 };
-// Package "Service" label (lower case) -> booking services it pays for. The 5-visit acupuncture package covers follow-up visits only.
+// Package "Service" label (lower case) -> booking services it pays for. A package is only sold after the initial visit, so the 5-visit
+// acupuncture package covers repeat treatments only; the initial treatment is always paid for.
 var PKG_COVERS = { 'acupuncture': ['acupuncture-repeat-treatment'] };
 
 function pkgSheetId_() { return prop_('PACKAGES_SHEET_ID', '1aHCaewhMlLVv6rGyEg-nq4QK6ndlr8Iw8g0NyVeH8L4'); }
