@@ -50,4 +50,4 @@ Your serums are chosen for your skin by Roozbeh Ghobadpour, L.Ac., a licensed ac
 
 You do not have to decide before you come in. Book a session and the two of you will decide together, or text a question first at (818) 253-9307.
 
-Read more about [microneedling in Burbank](/microneedling-burbank) and [nanoneedling in Burbank](/nanoneedling-burbank), or see times and fees on the [medical microneedling session](/service-page/medical-microneedling-session) and [facial nano-needling](/service-page/facial-nano-needling) pages. If you would rather work with acupuncture points than serums, see [cosmetic acupuncture](/cosmetic-acupuncture-burbank).
+Read more about [microneedling in Burbank](/microneedling-burbank) and [nanoneedling in Burbank](/nanoneedling-burbank), or see times and fees on the [medical microneedling session](/microneedling-burbank) and [facial nano-needling](/nanoneedling-burbank) pages. If you would rather work with acupuncture points than serums, see [cosmetic acupuncture](/cosmetic-acupuncture-burbank).

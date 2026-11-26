@@ -6,7 +6,9 @@ Usage:  python3 _src/build.py            # preview build; missing links fall bac
 
 Edit _src/config.json (booking_url, intake_url), re-run, commit, push.
 Output pages are plain .html files in the repo root. GitHub Pages serves
-treatments.html at /treatments, so the old Wix addresses keep working with no redirects.
+treatments.html at /treatments. It cannot send a 301, so a Wix address that
+now has its own page is an instant redirect (see LEGACY_REDIRECTS). The other
+old addresses still serve their pages.
 """
 import json, sys, html, pathlib, datetime, struct
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -199,11 +201,44 @@ if BOOKAPI:
         _s = BY_SLUG.get(_slug)
         if not _s or _s["price"] != _a["price"] or _s["minutes"] != _a["minutes"]:
             sys.exit(f"_src/booking/Booking.gs does not match SERVICES for {_slug}: fix the price or minutes in one of them")
-# One page per treatment: the old service page points search engines here (canonical) and drops out of the sitemap.
-CANON_PAGE = {"medical-microneedling-session": "/microneedling-burbank"}
-# Search only: these old service pages also point Google to their Burbank page, but the site's own links still open the
-# service page, since it shows the fee. Move a treatment up to CANON_PAGE once its Burbank page shows its price.
-SEARCH_CANON = {"facial-nano-needling": "/nanoneedling-burbank", "full-lotus-lift": "/cosmetic-acupuncture-burbank"}
+# Old Wix /service-page/ addresses that now have their own page. GitHub Pages cannot
+# send a 301, so each old address is an instant redirect and is left out of the sitemap.
+# Internal links use the new page. A canonical tag alone was not enough: Google kept
+# the old URL, which was still a full copy of the treatment.
+LEGACY_REDIRECTS = {
+    "medical-microneedling-session": "/microneedling-burbank",
+    "facial-nano-needling": "/nanoneedling-burbank",
+    "full-lotus-lift": "/cosmetic-acupuncture-burbank",
+}
+
+
+def service_path(slug):
+    """Public page for a service. Replaced Wix slugs resolve to their new page."""
+    return LEGACY_REDIRECTS.get(slug, "/service-page/" + slug)
+
+
+def instant_redirect(dest, title, link_text, lead="", tail=""):
+    """Strongest forward GitHub Pages allows: zero-delay refresh to an absolute URL,
+    rel=canonical on that URL (without a hash), location.replace, and a plain link.
+    dest is a site path and may include a hash."""
+    url = dest if dest.startswith(("http://", "https://")) else SITE + dest
+    canon = url.split("#", 1)[0]
+    body = f'{e(lead)}<a href="{e(url)}">{e(link_text)}</a>{e(tail)}'
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{e(title)}</title>
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="{e(canon)}">
+<meta http-equiv="refresh" content="0; url={e(url)}">
+<script>location.replace({json.dumps(url)});</script>
+</head>
+<body>
+<p>{body}</p>
+</body>
+</html>
+"""
 # Visits the chat may deep-link to /book/<slug>. Tea ceremonies are text-only, on purpose.
 BOOK_SLUGS = (
     "acupuncture-initial-treatment", "acupuncture-repeat-treatment",
@@ -350,7 +385,7 @@ def business_ld():
     for s in SERVICES:
         offers.append({
             "@type": "Offer",
-            "itemOffered": {"@type": "Service", "name": s["name"], "url": f"{SITE}/service-page/{s['slug']}"},
+            "itemOffered": {"@type": "Service", "name": s["name"], "url": SITE + service_path(s["slug"])},
         })
     return {
         "@context": "https://schema.org",
@@ -383,7 +418,7 @@ def service_ld(s, url=None, desc=None, priced=True):
     d = {
         "@context": "https://schema.org", "@type": "Service",
         "name": s["name"], "description": desc or s["meta"],
-        "url": url or f"{SITE}/service-page/{s['slug']}",
+        "url": url or SITE + service_path(s["slug"]),
         "provider": {"@id": f"{SITE}/#business"},
         "areaServed": {"@type": "City", "name": "Burbank"},
     }
@@ -875,7 +910,7 @@ def webp_figure(name, alt, lazy=True, sizes="(min-width: 52rem) 46vw, 100vw", pr
 def rate_item(slug, desc=None):
     s = BY_SLUG[slug]
     meta = f'<span class="meta">{s["minutes"]} min</span>' if s["minutes"] else ""
-    return f'<li><span class="name"><a href="{CANON_PAGE.get(slug, "/service-page/" + slug)}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
+    return f'<li><span class="name"><a href="{service_path(slug)}">{e(s["name"])}</a>{meta}</span><p class="desc">{e(desc or s["short"])}</p></li>'
 
 
 # ------------------------------------------------------------------ blog posts
@@ -1196,13 +1231,11 @@ def acupuncture():
 
 def consult():
     """The old Consult & heal page now lives on the Acupuncture and Herbal Medicine page. Keep the address working."""
-    dest = "/acupuncture#herbal-medicine"
-    OUT["consult-heal.html"] = f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Acupuncture and Herbal Medicine | Full Lotus Health</title>
-<meta name="robots" content="noindex, follow"><link rel="canonical" href="{SITE}/acupuncture">
-<meta http-equiv="refresh" content="0; url={dest}"></head>
-<body><p>This page has moved to <a href="{dest}">Acupuncture and Herbal Medicine</a>.</p></body></html>
-"""
+    OUT["consult-heal.html"] = instant_redirect(
+        "/acupuncture#herbal-medicine",
+        "Acupuncture and Herbal Medicine | Full Lotus Health",
+        "Acupuncture and Herbal Medicine",
+        lead="This page has moved to ", tail=".")
 
 
 def tea():
@@ -1288,7 +1321,7 @@ def book_online():
         rows = []
         for s in [x for x in SERVICES if x["group"] == g]:
             meta = f' <span class="fine">{s["minutes"]} min</span>' if s["minutes"] else ""
-            rows.append(f'<li><span class="n"><a href="/service-page/{s["slug"]}">{e(s["name"])}</a>{meta}<span class="d">{e(descs.get(s["slug"], s["short"]))}</span></span>{book_btn("Book", small=True, slug=s["slug"])}</li>')
+            rows.append(f'<li><span class="n"><a href="{service_path(s["slug"])}">{e(s["name"])}</a>{meta}<span class="d">{e(descs.get(s["slug"], s["short"]))}</span></span>{book_btn("Book", small=True, slug=s["slug"])}</li>')
         blocks.append(f'<h2 class="bk-h">{label}</h2><ul class="svc-list np">{"".join(rows)}</ul>')
     blocks.append(f'<h2 class="bk-h">Tea</h2><ul class="svc-list np"><li><span class="n"><a href="/tea-ceremonies">Tea ceremony</a><span class="d">Private or group tea ceremonies in the clinic tea room.</span></span><a class="btn small" href="/tea-ceremonies">See options</a></li></ul>')
     fallback = ""
@@ -1347,7 +1380,7 @@ def confirm_pages():
 </div>
 <ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> {pay}</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
 {new}
-<p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
+<p class="fine"><a href="{service_path(s["slug"])}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section><script src="/assets/booking.js" defer></script>'''
             OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True, head_extra=booking_head(s["slug"]))
             continue
@@ -1362,7 +1395,7 @@ def confirm_pages():
 <div class="cf-opts{" two" if opt2 else ""}">{opt1}{opt2}</div>
 <ul class="cf-facts"><li><strong>Where:</strong> {e(where)}</li><li><strong>Payment:</strong> taken when you book your time.</li><li><strong>Cancelling:</strong> free up to 24 hours ahead. Less than 24 hours' notice is charged ${LATE_FEE}.</li></ul>
 {new}
-<p class="fine"><a href="/service-page/{s["slug"]}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
+<p class="fine"><a href="{service_path(s["slug"])}">More about {e(s["name"])}</a>. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a>.</p>
 </div></section>'''
         OUT[f"book/{s['slug']}.html"] = page(f"/book/{s['slug']}", f"Book {s['name']} | {NAME}", f"Book {s['name']} at Full Lotus Health in Burbank.", main, noindex=True, focus=True)
 
@@ -1667,7 +1700,7 @@ def beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide):
         intro, rest = body, []
     if not fig:
         fig = f'<div class="g-after-photos">{photo("gua-sha", "A jade gua sha stone, a jar of serum and a folded linen towel on a wooden tray")}</div>'
-    rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a></li>' for r in s["related"])
+    rel = "".join(f'<li><a href="{service_path(r)}">{e(BY_SLUG[r]["name"])}</a></li>' for r in s["related"])
     ask = f'Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.'
     reviews = (f'<section class="wash-g"><div class="wrap"><p class="eyebrow">Reviews</p><h2>What patients say</h2>'
                f'{g_quotes(s["slug"])}<p>{book_btn("Book", slug=s["slug"])}</p></div></section>') if qi is not None else ""
@@ -1696,8 +1729,20 @@ def beauty_service_page(s, fig, dur, loc, series_fact, series_block, guide):
 </div></section>"""
 
 
+def _booking_calendar_forward(s, dest):
+    """Old Wix /booking-calendar/<slug> addresses. Forward to the page visitors should see."""
+    OUT[f"booking-calendar/{s['slug']}.html"] = instant_redirect(
+        dest, f"{s['name']} | {NAME}", f"Continue to {s['name']}")
+
+
 def service_pages():
     for s in SERVICES:
+        dest = LEGACY_REDIRECTS.get(s["slug"])
+        if dest:
+            OUT[f"service-page/{s['slug']}.html"] = instant_redirect(
+                dest, f"{s['name']} | {NAME}", f"Continue to {s['name']}")
+            _booking_calendar_forward(s, dest)
+            continue
         parts = []
         for item in s["body"]:
             k = item[0]
@@ -1711,7 +1756,7 @@ def service_pages():
                 parts.append(f'<div class="quotes" style="columns:1"><blockquote><p>{e(item[1])}</p><cite>{e(item[2])}</cite></blockquote></div>')
             elif k == "small":
                 parts.append(f'<p class="fine">{e(item[1])}</p>')
-        rel = "".join(f'<li><a href="/service-page/{r}">{e(BY_SLUG[r]["name"])}</a> <span class="fine">${BY_SLUG[r]["price"]}</span></li>' for r in s["related"])
+        rel = "".join(f'<li><a href="{service_path(r)}">{e(BY_SLUG[r]["name"])}</a> <span class="fine">${BY_SLUG[r]["price"]}</span></li>' for r in s["related"])
         g = GUIDES.get(s["slug"])
         guide = f'<li><a href="{g[0]}">{e(g[1])}</a></li>' if g else ""
         sa = SERVICE_ART.get(s["slug"])
@@ -1750,16 +1795,9 @@ def service_pages():
     <p class="fine" style="margin-top:2rem">{NAME}, {ADDR_LINE}. Convenient to {NEARBY_TEXT}.</p>
   </div>
 </div></section>"""
-        canon_to = CANON_PAGE.get(s["slug"]) or SEARCH_CANON.get(s["slug"])
         OUT[f"service-page/{s['slug']}.html"] = page(f"/service-page/{s['slug']}", s["title"], s["meta"], main,
-            ld=[business_ld(), service_ld(s), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online"), (s["name"], f"/service-page/{s['slug']}")])],
-            canonical=(SITE + canon_to) if canon_to else None, book_slug=s["slug"] if canon_to else None)
-        # old Wix booking-calendar addresses: forward to the service page, keep out of search
-        OUT[f"booking-calendar/{s['slug']}.html"] = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{e(s['name'])} | {NAME}</title>
-<meta name="robots" content="noindex"><link rel="canonical" href="{SITE}/service-page/{s['slug']}">
-<meta http-equiv="refresh" content="0; url=/service-page/{s['slug']}"></head>
-<body><p><a href="/service-page/{s['slug']}">Continue to {e(s['name'])}</a></p></body></html>
-"""
+            ld=[business_ld(), service_ld(s), breadcrumb_ld([("Home", "/"), ("Book online", "/book-online"), (s["name"], f"/service-page/{s['slug']}")])])
+        _booking_calendar_forward(s, f"/service-page/{s['slug']}")
 
 
 # ------------------------------------------------------------------ rich guide pages (microneedling, nanoneedling)
@@ -1878,7 +1916,7 @@ def g_session(wash, head, steps, after_html, slug_photo, photo_alt):
 def g_related(svc, links):
     lis = "".join(f'<li><a href="{h}">{e(t)}</a></li>' for h, t in links)
     return f"""<section><div class="wrap g-related"><div><h2 class="h3">Fees and booking</h2>
-<p>Fees, session length and booking are on the <a href="/service-page/{svc['slug']}">{e(svc['name'])}</a> page. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>. New patients, please fill out the <a href="{INTAKE_HREF}">intake form</a> before your first visit.</p></div>
+<p>Fees, session length and booking are on the <a href="{service_path(svc['slug'])}">{e(svc['name'])}</a> page. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>. New patients, please fill out the <a href="{INTAKE_HREF}">intake form</a> before your first visit.</p></div>
 <div><h2 class="h3">Also see</h2><ul class="checks">{lis}<li><a href="/treatments">All natural beauty treatments</a></li></ul></div></div></section>"""
 
 
@@ -2212,11 +2250,12 @@ def nano_page(where):
 
 
 def landing_pages():
-    """Guide pages for the three searches that matter most. No prices here (fees stay on the service pages).
-    Microneedling and nanoneedling use the rich layout (micro_page, nano_page); cosmetic acupuncture uses the plain one."""
+    """Guide pages for the three searches that matter most.
+    Microneedling and nanoneedling use the rich layout (micro_page, nano_page); cosmetic acupuncture uses the plain one.
+    Their old /service-page/ addresses redirect here."""
     mi, na, li = BY_SLUG["medical-microneedling-session"], BY_SLUG["facial-nano-needling"], BY_SLUG["full-lotus-lift"]
     def link(slug, label=None):
-        return f'<a href="/service-page/{slug}">{e(label or BY_SLUG[slug]["name"])}</a>'
+        return f'<a href="{service_path(slug)}">{e(label or BY_SLUG[slug]["name"])}</a>'
     where = f"Full Lotus Health is at {ADDR_LINE}, convenient to {NEARBY_TEXT}."
     LIFT_FAQS = [
   ("What is cosmetic acupuncture?", "Facial acupuncture at tension-releasing and lifting points, combined with constitutional body points and red light therapy."),
@@ -2270,7 +2309,7 @@ def landing_pages():
 <section><div class="wrap split">
   <div>
     <p>{book_btn("Book a treatment")}</p>
-    <p class="fine">Fees and booking are on the <a href="/service-page/{svc['slug']}">{e(svc['name'])}</a> page. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
+    <p class="fine">Fees and booking are on the <a href="{service_path(svc['slug'])}">{e(svc['name'])}</a> page. Questions? <a href="sms:{PHONE_TEL}">Text {PHONE_DISPLAY}</a> or <a href="mailto:{EMAIL}">email</a>.</p>
     <h2 class="h3" style="margin-top:2rem">Also see</h2>
     <ul class="checks">{more}<li><a href="/treatments">All natural beauty treatments</a></li></ul>
   </div>
@@ -2353,7 +2392,7 @@ def llms_txt():
                 continue
             mins = f", {s['minutes']} min" if s.get("minutes") else ""
             blurb = ADS_SAFE_SHORT.get(s["slug"], s["short"])
-            out.append(f"- [{s['name']}]({SITE}/service-page/{s['slug']}): ${s['price']}{mins}. {blurb}")
+            out.append(f"- [{s['name']}]({SITE}{service_path(s['slug'])}): ${s['price']}{mins}. {blurb}")
         return "\n".join(out)
     series_line = series_offers()
     intake_link = INTAKE or f"{SITE}/new-patients"
@@ -2422,7 +2461,7 @@ def chat_facts():
             "short": ADS_SAFE_SHORT.get(s["slug"], s["short"]),
             "book": href,
             "bookLabel": label,
-            "page": CANON_PAGE.get(s["slug"], "/service-page/" + s["slug"]),
+            "page": service_path(s["slug"]),
         })
     return {
         "clinic": NAME,
@@ -2507,7 +2546,7 @@ def chat_post(p):
 
 
 def seo_files():
-    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in CANON_PAGE and s["slug"] not in SEARCH_CANON]
+    urls = ["/", "/treatments", "/acupuncture", "/tea-ceremonies", "/tea-sits", "/new-patients", "/book-online", "/five-element-rejuvenation", "/microneedling-burbank", "/nanoneedling-burbank", "/cosmetic-acupuncture-burbank", "/skin-conditions-burbank"] + (["/blog"] + [f"/post/{p['slug']}" for p in POSTS] if POSTS else []) + [f"/service-page/{s['slug']}" for s in SERVICES if s["slug"] not in LEGACY_REDIRECTS]
     if ADS_MICRO_PATH in urls:
         sys.exit(f"{ADS_MICRO_PATH} must stay out of the sitemap")
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -2532,6 +2571,38 @@ def seo_files():
 
 for fn in (home, treatments, acupuncture, consult, tea, tea_sits, book_online, confirm_pages, five_element, ten_years, blog, new_patients, service_pages, landing_pages, offer_landing, condition_pages, blog_posts, feed, notfound, seo_files):
     fn()
+
+
+def check_legacy_redirects():
+    """The replaced Wix URLs must be instant redirects, absent from the sitemap, and unlinked."""
+    problems = []
+    for slug, dest in LEGACY_REDIRECTS.items():
+        abs_dest = SITE + dest
+        page_html = OUT[f"service-page/{slug}.html"]
+        for need in (
+            f'rel="canonical" href="{abs_dest}"',
+            f'http-equiv="refresh" content="0; url={abs_dest}"',
+            f"location.replace({json.dumps(abs_dest)})",
+            f'href="{abs_dest}"',
+        ):
+            if need not in page_html:
+                problems.append(f"service-page/{slug}.html missing {need}")
+        book = OUT[f"booking-calendar/{slug}.html"]
+        if f'url={abs_dest}' not in book or f'href="{abs_dest}"' not in book or f'rel="canonical" href="{abs_dest}"' not in book:
+            problems.append(f"booking-calendar/{slug}.html does not forward to {abs_dest}")
+    sm = OUT["sitemap.xml"]
+    for slug in LEGACY_REDIRECTS:
+        if f"/service-page/{slug}" in sm:
+            problems.append(f"sitemap lists /service-page/{slug}")
+    for rel, content in OUT.items():
+        for slug in LEGACY_REDIRECTS:
+            if f"/service-page/{slug}" in content:
+                problems.append(f"{rel} still references /service-page/{slug}")
+    if problems:
+        sys.exit("Legacy redirect check failed:\n" + "\n".join(problems))
+
+
+check_legacy_redirects()
 
 for rel, content in OUT.items():
     p = ROOT / rel
